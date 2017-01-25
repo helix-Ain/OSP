@@ -1,0 +1,24 @@
+﻿.dcn-upload { position: relative; width: 92px; height: 92px; overflow: hidden; border: 1px solid #c7ccce; }
+.upload-btn-div { position: absolute; right: -45px; top: 2px; z-index: 5; display: none; }
+.upload-btn-comment { display: block; border: 1px solid #fff; overflow: hidden; width: 17px; height: 17px; float: left; margin-right: 2px; }
+a:hover.upload-btn-comment { border: 1px solid #c7ccce; }
+.upload-btn-upload { background-color: #fff; background-image: url(../icons/f1.png); }
+.upload-btn-delete { background-color: #fff; background-image: url(../icons/f2.png); }
+.upload-msg { color: #c7ccce; }
+.upload-msg-progress { background-image: url(../icons/onLoad.gif); background-repeat: no-repeat; background-position: left center; padding-left: 18px; height: 18px; }
+
+.upload-middle-out { width: 90px; height: 90px; position: relative; display: table-cell; vertical-align: middle; text-align: center; }
+.upload-middle-in { position: static; *position:absolute;top:50%;}
+.upload-middle-out .upload-middle-in img { position: static; *position:relative;top:-50%;left:-50%;cursor:pointer;}
+
+.upload-file-generic { background: url(../icons/file_64/Generic_Blue_document.png) no-repeat center center; width: auto; height: 64px; }
+.upload-file-jpg, .upload-file-jpge { background: url(../icons/file_64/jpg.png) no-repeat center center; }
+.upload-file-gif { background: url(../icons/file_64/gif.png) no-repeat center center; }
+.upload-file-bmp { background: url(../icons/file_64/BMP.png) no-repeat center center; }
+.upload-file-mp2 { background: url(../icons/file_64/MP2.png) no-repeat center center; }
+.upload-file-mp3 { background: url(../icons/file_64/MP3.png) no-repeat center center; }
+.upload-file-mp4 { background: url(../icons/file_64/MP4.png) no-repeat center center; }
+.upload-file-mpg { background: url(../icons/file_64/MPG.png) no-repeat center center; }
+.upload-file-exe { background: url(../icons/file_64/EXE.png) no-repeat center center; }
+.upload-file-zip { background: url(../icons/file_64/ZIP.png) no-repeat center center; }
+.upload-file-rar { background: url(../icons/file_64/rar.png) no-repeat center center; }

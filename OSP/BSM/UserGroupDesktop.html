@@ -1,0 +1,379 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body style="display: none;">
+    <style type="text/css">
+        .layout-body { overflow: auto; background: none; }
+    </style>
+    <div class="easyui-layout" data-options="fit:true,border:false">
+        <div data-options="region:'north',border:false" style="height: 160px;">
+            <div class="easyui-panel" data-options="border:false,title:'桌面插件',fit:true" style="padding: 10px;">
+                <form id="desktop_Form_Edit" method="post" novalidate="novalidate" action="">
+                <table style="min-width: 700px; text-align: left;">
+                    <tr>
+                        <td class="tabletext">
+                            插件列表：
+                        </td>
+                        <td colspan="3">
+                            <div id="div_PlugInUnit">
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                <table style="min-width: 600px; text-align: left;">
+                    <tr>
+                        <td class="tabletext">
+                            顶部空隙：
+                        </td>
+                        <td class="tableinput">
+                            <input id="txt_Interspace" type="text" name="iInterspace" class="TextEdit " />
+                        </td>
+                        <td class="tabletext" style="width: 100px;">
+                            背景对齐方式：
+                        </td>
+                        <td class="tableinput">
+                            <input id="ddl_BCRepeat" name="iBCRepeat" class="easyui-combobox" data-options="editable:false,width:150" />
+                        </td>
+                    </tr>
+                    <tr style="height: 40px; overflow: hidden; vertical-align: top;">
+                        <td class="tabletext">
+                            背景图：
+                        </td>
+                        <td class="tableinput">
+                            <input id="txt_DisplayName" name="cDisplayName" type="text" class="TextEdit" group="BC" />
+                        </td>
+                        <td>
+                            <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-cancel" plain="true"
+                                onclick="desktop_BC_Clear()" style="float: left;" title="清除"></a>
+                            <div id="div_PhotoUpload">
+                                <input id="input_Photo" type="file" style="display: none;" />
+                            </div>
+                            <input id="hidd_ServerID" type="hidden" name="iServerID" group="BC" />
+                            <input id="hidd_FileName" type="hidden" name="cFileName" group="BC" />
+                            <input id="hidd_FileUrl" type="hidden" name="cFilePath" group="BC" />
+                        </td>
+                        <td style="width: 380px;">
+                            <div id="div_PhotoQueue" style="z-index: 9999; position: relative;">
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                </form>
+            </div>
+        </div>
+        <div data-options="region:'center',border:false,title:'预览（拖动标题可改变插件排列）'">
+            <div id="div_Desktop" class="easyui-layout" data-options="fit:true,border:false">
+                <div data-options="region:'north',border:false">
+                </div>
+                <div data-options="region:'center',border:false">
+                    <div id="div_Portal" style="position: relative;">
+                        <div style="width: 60%" value="0">
+                        </div>
+                        <div style="width: 40%;" value="1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+            <div class="ButtonBar" style="position: inherit; min-width: 150px;">
+                <a id="desktop_desktop_btn_Save" href="javascript:void(0)" class="easyui-linkbutton"
+                    onclick="desktop_SaveData()">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                        onclick="cancelSelf();">关闭</a>
+            </div>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var desktop_iDesktopExID = 0;
+
+        checkPagePower({ onload: function() { desktop_InitPage(); }, showMask: false, check: false });
+
+        function desktop_InitPage() {
+            bindCodeMasterData({
+                controlID: "ddl_BCRepeat",
+                cat: "ugdex",
+                subCat: "BCRepeat",
+                valueField: "cCodeItem",
+                success: function() {
+                    $('#ddl_BCRepeat').combobox({
+                        onChange: function(newValue, oldValue) {
+                            if (newValue != oldValue) {
+                                desktop_BC_Update();
+                            }
+                        }
+                    });
+                }
+            });
+            $('#txt_Interspace').numberbox({
+                min: 0,
+                onChange: function(newValue, oldValue) {
+                    if (newValue != oldValue) {
+                        desktop_BC_Update();
+                    }
+                }
+            });
+
+            var m_objScriptList = [];
+            //m_objScriptList.push(_strSysUrl + "CSS/dcnRadioList.css");
+            m_objScriptList.push(_strSysUrl + "JS/EsayUI/portal.css");
+            m_objScriptList.push(_strSysUrl + "JS/EsayUI/jquery.portal.js");
+            m_objScriptList.push(_strSysUrl + "JS/uploadify-v2.1.4/css/uploadify.css");
+            m_objScriptList.push(_strSysUrl + "JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js");
+            m_objScriptList.push(_strSysUrl + "JS/uploadify-v2.1.4/scripts/swfobject.js");
+            m_objScriptList.push('ComboList');
+
+            dcnloader.load(m_objScriptList, function() {
+                $('#div_Portal').portal({
+                    border: false,
+                    fit: true
+                });
+                desktop_uploadInit();
+
+                desktop_GetPlugInUnit();
+            });
+        }
+
+        function desktop_uploadInit() {
+            $("#input_Photo").uploadify({
+                'uploader': _strSysUrl + 'JS/uploadify-v2.1.4/scripts/uploadify.swf',
+                'cancelImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/cancel.png',
+                'buttonImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/upload_btn.png',
+                'script': getInterfaceName("DcCdAttachmentManage", true),
+                'scriptData': { Action: 'upload', iType: 0, UserCertification: getCookie('UserCertification') },
+                'queueID': 'div_PhotoQueue',
+                'auto': true,
+                'multi': false,
+                'width': 55,
+                'height': 22,
+                'buttonText': '',
+                method: 'post',
+                onSelect: function(e, queueId, fileObj) { $('#desktop_btn_Save').linkbutton('disable'); },
+                onCancel: function(event, queueId, fileObj, data) { $('#desktop_btn_Save').linkbutton('enable'); },
+                onComplete: function(event, queueId, fileObj, response, data) {
+                    var m_result = convertToJson(response);
+                    if (m_result.DcCode != undefined && m_result.DcCode == 0) {
+                        if (m_result.rows != undefined && m_result.rows.length > 0) {
+                            $('#hidd_ServerID').val(m_result.rows[0].iServerID);
+                            $('#hidd_FileName').val(m_result.rows[0].cFileName);
+                            $('#hidd_FileUrl').val(m_result.rows[0].cFilePath);
+                            $('#txt_DisplayName').val(m_result.rows[0].cDisplayName);
+
+                            if ($('#ddl_BCRepeat').combobox('getValue') == '') {
+                                $('#ddl_BCRepeat').combobox('select', 1);
+                            }
+
+                            desktop_BC_Update();
+                        }
+                    }
+                    else {
+                        if (m_result.DcMessage != undefined && m_result.DcMessage != '') {
+                            $.messager.alert('提示', m_result.DcMessage, 'info');
+                        }
+                        else {
+                            $.messager.alert('提示', '上传失败！', 'info');
+                        }
+                    }
+                    $('#desktop_btn_Save').linkbutton('enable');
+                },
+                onError: function(event, ID, fileObj, errorObj) {
+                    if (errorObj.type === "File Size") {
+                        $("#input_Photo").uploadifyCancel(ID);
+                        $.messager.alert('提示', '超过文件上传大小限制！', 'info');
+                    }
+                    else {
+                        $.messager.alert('提示', '上传失败！', 'info');
+                    }
+                    $('#desktop_btn_Save').linkbutton('enable');
+                }
+            });
+        }
+
+        function desktop_BC_Clear() {
+            $('[group=BC]').val('');
+            desktop_BC_Update();
+        }
+
+        function desktop_BC_Update() {
+            var m_iHeight = parseInt($('#txt_Interspace').numberbox('getValue'));
+            if (isNaN(m_iHeight)) {
+                m_iHeight = 0;
+            }
+            $('#div_Desktop').layout("panel", "north").panel("options").height = m_iHeight;
+            $('#div_Desktop').layout('resize');
+            var m_strBC = 'none';
+            if ($.trim($('#hidd_FileUrl').val()) != '') {
+                m_strBC = 'url("../' + $('#hidd_FileUrl').val() + '")';
+                switch ($('#ddl_BCRepeat').combobox('getValue')) {
+                    case '2':
+                        m_strBC += ' no-repeat';
+                        break;
+                    case '3':
+                        break;
+                    default:
+                        m_strBC += ' no-repeat center 0px';
+                        break;
+                }
+            }
+            $('#div_Desktop').css('background', m_strBC);
+        }
+
+        function desktop_GetPlugInUnit() {
+            postData({
+                url: "DcCdPlugInUnitManage",
+                isSys: true,
+                params: { Action: "Get" },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        $('#div_PlugInUnit').combolist({
+                            valueField: 'iUnitID',
+                            textField: 'cName',
+                            multiple: true,
+                            data: ci_result.rows,
+                            onUnselect: function(record) {
+                                $('#div_Portal').portal('remove', $('#div_Panel_' + record.iUnitID));
+                                $('#div_Portal').portal('resize');
+                            },
+                            onLoadSuccess: function() {
+                                desktop_GetUserGroupDesktop();
+                                desktop_GetUserGroupDesktopEx();
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function desktop_GetUserGroupDesktop() {
+            if ($('[id*=div_Panel_]').length > 0) {
+                for (; $('[id*=div_Panel_]').length > 0; ) {
+                    $('#div_Portal').portal('remove', $($('[id*=div_Panel_]')[0]));
+                }
+            }
+            $('#ul_Plugin').find('div[value]').removeClass('active');
+            postData({
+                url: 'DcCdUserGroupDesktopManage',
+                params: { Action: 'GetList', iUserGroupID: _iID },
+                isSys: true,
+                success: function(ci_result) {
+                    $('#div_PlugInUnit').combolist({ onSelect: function(record) { } });
+                    if (existData(ci_result)) {
+                        var m_objData = $('#div_PlugInUnit').combolist('getData');
+                        ci_result.rows.sort(function(a, b) { return a.iRowIndex - b.iRowIndex; });
+                        $.each(ci_result.rows, function(index, value) {
+                            $('#div_PlugInUnit').combolist('select', value.iUnitID);
+                            $.each(m_objData, function() {
+                                if (this.iUnitID == value.iUnitID) {
+                                    this.iDesktopID = value.iDesktopID;
+                                    value.cName = this.cName;
+                                    return true;
+                                }
+                            });
+                            desktop_AddPanel(value);
+                        });
+                        $('#div_PlugInUnit').combolist('setData', m_objData);
+                    }
+                    $('#div_PlugInUnit').combolist({
+                        onSelect: function(record) {
+                            var m_objData = { iUnitID: record.iUnitID, cName: record.cName, iColumnIndex: $('[id*=div_Panel_]').length % 2 };
+                            desktop_AddPanel(m_objData);
+                        }
+                    });
+                }
+            });
+        }
+
+        function desktop_GetUserGroupDesktopEx() {
+            desktop_BC_Clear();
+            postData({
+                url: 'DcCdUserGroupDesktopExManage',
+                params: { Action: 'GetList', iUserGroupID: _iID },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        desktop_iDesktopExID = ci_result.rows[0].iDesktopExID;
+                        $('#desktop_Form_Edit').form('load', ci_result.rows[0]);
+                        desktop_BC_Update();
+                    }
+                }
+            });
+        }
+
+        function desktop_CheckboxClick(ci_obj) {
+            if ($(ci_obj).hasClass('active')) {
+                $(ci_obj).removeClass('active');
+
+                $('#div_Portal').portal('remove', $('#div_Panel_' + $(ci_obj).attr('value')));
+                $('#div_Portal').portal('resize');
+            }
+            else {
+                $(ci_obj).addClass('active')
+                var m_objData = { iUnitID: $(ci_obj).attr('value'), cName: $(ci_obj).html(), iColumnIndex: $('[id*=div_Panel_]').length % 2 };
+                desktop_AddPanel(m_objData);
+            }
+        }
+
+        function desktop_AddPanel(ci_objData) {
+            var m_div = $('<div id="div_Panel_' + ci_objData.iUnitID + '" />').appendTo('body');
+            m_div.panel({ closable: false, collapsible: false, title: ci_objData.cName });
+
+            $('#div_Portal').portal('add', {
+                panel: m_div,
+                columnIndex: ci_objData.iColumnIndex
+            });
+            $('#div_Portal').portal('resize');
+        }
+
+        function desktop_SaveData() {
+            var m_objDetail = [];
+            var m_objData = $('#div_PlugInUnit').combolist('getData');
+            $.each(m_objData, function() {
+                var m_objData = [];
+                if (!parseInt(this.iDesktopID) > 0) {
+                    this.iDesktopID = 0;
+                }
+                this.iDesktopID = parseInt(this.iDesktopID);
+                if (this.selected) {
+                    var m_objPanel = $('#div_Panel_' + this.iUnitID);
+                    m_objData.push(this.iDesktopID);
+                    m_objData.push(this.iUnitID);
+                    m_objData.push(m_objPanel.parent().parent().attr('value'));
+                    m_objData.push(m_objPanel.parent().index());
+
+                    m_objDetail.push(m_objData.join(getSeparativeSign()));
+                }
+                else {
+                    if (this.iDesktopID > 0) {
+                        m_objData.push(this.iDesktopID * -1);
+                        m_objData.push(this.iUnitID);
+                        m_objData.push(0);
+                        m_objData.push(0);
+
+                        m_objDetail.push(m_objData.join(getSeparativeSign()));
+                    }
+                }
+            });
+
+            if (m_objDetail.length > 0) {
+                postData({
+                    url: 'DcCdUserGroupDesktopManage',
+                    params: { Action: 'UpdateData', iUserGroupID: _iID, DetailData: m_objDetail.join(getSeparativeSign() + ',' + getSeparativeSign()), iDesktopExID: desktop_iDesktopExID },
+                    isSys: true,
+                    form: 'desktop_Form_Edit',
+                    success: function(ci_result) {
+                        desktop_GetUserGroupDesktop();
+                        desktop_GetUserGroupDesktopEx();
+                        $.messager.alert('提示', '保存成功', 'info');
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '保存成功', 'info');
+            }
+        }
+    </script>
+
+</body>
+</html>

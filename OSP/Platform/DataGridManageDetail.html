@@ -1,0 +1,279 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js"></script>
+
+</head>
+<body style="display: none;">
+    <div id="div_Body" class="easyui-tabs" data-options="fit:true">
+        <div id="div_Detail" title="基本资料">
+            <div style="max-width: 800px; min-width: 500px;" class="TableCenter">
+                <form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+                <table style="min-width: 100%;">
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>DataGrid编号：
+                        </td>
+                        <td>
+                            <input name="cCode" class="easyui-validatebox" data-options="required:true" style="width: 400px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>所属视图：
+                        </td>
+                        <td>
+                            <input id="txt_View" type="text" name="cViewDesc" class="easyui-validatebox" data-options="required:true"
+                                style="width: 400px;" />
+                            <input id="hidd_ViewID" name="iViewID" type="hidden" />
+                            <a id="btn_View" href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-search"
+                                plain="true" title="查询" onclick="openSearch()" style="display: none;"></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext" style="width: 30%;">
+                            描述：
+                        </td>
+                        <td class="tableinput" style="width: 70%;">
+                            <textarea rows="2" name="cDesc" class="TextEdit" style="width: 400px;"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            排序字段：
+                        </td>
+                        <td>
+                            <input id="ddl_SortViewColumnID" name="iSortViewColumnID" class="easyui-combobox"
+                                data-options="editable:false,width:150" />
+                            <a class="dcn-clearbutton" targetid="#ddl_SortViewColumnID"></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            排序类型：
+                        </td>
+                        <td>
+                            <div id="div_SortType" name="iSortType">
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                </form>
+            </div>
+            <div class="ButtonBar">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveDetail()">保存</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+            </div>
+        </div>
+        <div title="字段列表" group="Ex">
+        </div>
+        <div title="查询条件" group="Ex">
+        </div>
+        <div title="数据预览" group="Ex">
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iID = 0;
+    var _iViewID = 0;
+    var _strAction = "";
+    var _strFun = '';
+
+    initReady(function() {
+        setControlEnable("txt_View", false);
+
+        _strAction = getHashValue("Action");
+        if (_strAction == "new") {
+            newData();
+        }
+
+        _strFun = getHashValue("Fun");
+        if (_strFun != '') {
+            _strFun += '(m_iID)';
+        }
+
+        $('#div_Body').tabs({
+            onSelect: function(title, index) {
+                $('div[group="Ex"]').empty();
+                $('.easyui-dialog').dialog('destroy');
+                var m_obj = $('#div_Body').tabs('getTab', index);
+                switch (index) {
+                    case 1:
+                        m_obj.panel('refresh', 'DataGridManageColumns.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 2:
+                        m_obj.panel('refresh', 'DataGridManageQuery.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 3:
+                        m_obj.panel('refresh', 'DataGridManageData.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                }
+            }
+        });
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        $('#ddl_SortViewColumnID').combobox({
+            onShowPanel: function() {
+                var m_objData = $(this).combobox('getData');
+                if (m_objData.length == 0) {
+                    $.messager.alert('提示', '请选择数据来源', 'info', function() { $('#ddl_SortViewColumnID').combobox('hidePanel'); });
+                }
+            }
+        });
+
+        dcnloader.load(['ListBox', 'ComboList', 'ClearButton'], function() {
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'rep', subCat: 'SortType' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_SortType').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            data: ci_result.rows
+                        });
+                    }
+                    if (_strAction != "GridAdd") {
+                        _iID = getHashValue("ID");
+                        getDetail(_iID);
+                    }
+                    $('[name="cCode"]').focus();
+                }
+            });
+        });
+    }
+
+    function cancelSelf() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function cancel() {
+        closedPopupDialog();
+    }
+
+    function newData() {
+        _iID = 0;
+        _strAction = 'GridAdd';
+        $('#btn_View').css('display', '');
+        while ($('#div_Body').tabs('exists', 1)) {
+            $('#div_Body').tabs('close', 1);
+        }
+    }
+
+    function getDetail(ci_iID) {
+        if (ci_iID > 0) {
+            postData({
+                url: "DcCdDataGridManage",
+                params: { Action: "GridGetList", iDataGridID: ci_iID },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        var m_objData = ci_result.rows[0];
+                        _strAction = "GridUpdate";
+
+                        getViewColumns(m_objData.iViewID, function() {
+                            $('#form_Edit').form('load', m_objData);
+                            $('#div_SortType').combolist('select', m_objData.iSortType);
+                            $('#div_Type').combolist('select', m_objData.iType);
+                            $('#div_Type').combolist('disable');
+                        });
+                        parent.dialogSetTitle('数据网格【' + m_objData.cCode + '】详细资料');
+                    }
+                    else {
+                        $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+                    }
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+        }
+    }
+
+    function saveDetail() {
+        postData({
+            url: 'DcCdDataGridManage',
+            params: { Action: _strAction, iDataGridID: _iID },
+            validate: true,
+            form: 'form_Edit',
+            success: function(ci_result) {
+                var m_iID = 0;
+                if (_strAction == 'GridAdd') {
+                    if (existData(ci_result)) {
+                        m_iID = ci_result.rows[0].iDataGridID;
+                        location.hash = '#ID=' + m_iID + '&Fun=' + _strFun;
+                        setTimeout(function() {
+                            location.reload();
+                        }, 500);
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存成功', 'info');
+                    parent.dialogSetTitle('数据网格【' + this.params.cCode + '】详细资料');
+                }
+                if (_strFun != '') {
+                    eval(_strFun);
+                }
+            }
+        });
+    }
+
+    function openSearch() {
+        popupDialog('SearchView.html', 'parent.readDBColumn', '数据表查询');
+    }
+
+    function readDBColumn(ci_objData) {
+        closedPopupDialog();
+        if (ci_objData != undefined && ci_objData.length > 0) {
+            $('#txt_View').val(ci_objData[0].cDesc);
+            $('#hidd_ViewID').val(ci_objData[0].iViewID);
+
+            getViewColumns(ci_objData[0].iViewID);
+        }
+    }
+
+    function getViewColumns(ci_iViewID, ci_fun) {
+        postData({
+            url: 'DcCdDataViewManage',
+            params: { Action: "ColGetList", iViewID: ci_iViewID },
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    $.each(ci_result.rows, function() {
+                        if (this.cDesc == '') {
+                            this.cDesc = this.cColumnName;
+                        }
+                    });
+
+                    $('#ddl_SortViewColumnID').combobox({
+                        data: ci_result.rows,
+                        valueField: "iViewColumnID",
+                        textField: "cDesc"
+                    });
+                }
+                if (ci_fun != undefined) {
+                    ci_fun();
+                }
+            }
+        });
+    }
+</script>
+

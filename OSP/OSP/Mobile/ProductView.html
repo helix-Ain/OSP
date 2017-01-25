@@ -1,0 +1,65 @@
+<ion-modal-view ng-cloak style='background-color: rgba(0,0,0,0.7);'>
+	<ion-header-bar align-title='center' style='background-image: none;background-color: transparent;'>
+		<button style='color:#FFFFFF;' class='button button-clear button-primary' ng-click="switchProductSlide()"><span ng-show='productSlideFlag==0'>咨询</span><span ng-show='productSlideFlag==1'>查看</span><span ng-show='productSlideFlag==2'>返回</span></button>
+		<h1 class="title" style='color:#FFFFFF;'>产品细节</h1>
+		<button style='color:#FFFFFF;' class="button button-clear button-primary" ng-click="hideModal()">关闭</button>
+	</ion-header-bar>
+	<ion-content>
+		<ion-slide-box ng-show='productSlideFlag==0'>
+			<ion-slide ng-repeat='item in product'>
+				<div style='padding:10px;'>
+					<img ng-src='{{"/"+productFilePath+"/500/"+item}}' style='width:100%;height:auto;' />
+				</div>
+			</ion-slide>
+		</ion-slide-box>
+		<div class="list list-inset" ng-show='productSlideFlag==1' style='background-color: transparent;'>
+			<label class="item item-input" style='background-color: transparent;'>
+				<div class="input-label" style='color:#FFFFFF;'>
+              		标题<span style='color:red;'>*</span>
+              	</div>
+    			<input ng-model="consult.cTitle" type="text" placeholder="标题" style='color:#FFFFFF;'>
+  			</label>
+			<label class="item item-input" style='background-color:transparent;'>
+				<div class='input-label' style='color:#FFFFFF;'>
+					姓名<span style='color:red;'>*</span>
+				</div>
+   				<input ng-model="consult.cUsername" type="text" placeholder="姓名" style='color:#FFFFFF;'>
+ 			</label>
+			<label class="item item-input" style='background-color:transparent;'>
+				<div class='input-label' style='color:#FFFFFF;'>
+					电话<span style='color:red;'>*</span>
+				</div>
+   				<input ng-model="consult.cTel" type="text" placeholder="电话" style='color:#FFFFFF;'>
+ 			</label>
+			<label class="item item-input" style='background-color: transparent;'>
+				<div class='input-label' style='color:#FFFFFF;'>
+					邮箱<span style='color:red;'>*</span>
+				</div>
+   				<input ng-model="consult.cEmail" type="text" placeholder="邮箱" style='color:#FFFFFF;'>
+ 			</label>
+			<label class="item item-input" style='background-color: transparent;'>
+ 				<textarea ng-model="consult.cDemand" placeholder="在这里输入需求..." rows='5' style='resize: none;background-color: transparent;color:#FFFFFF;'></textarea>
+ 			</label>
+ 			<div class='item' style='background-color: transparent;text-align: center;border:none;'>
+ 				<button ng-click='submitConsult()' class='button button-brown' style='width:85%;height:37px;min-height: 37px;padding:0;font-size:17px;line-height:37px;'>提交</button>
+ 			</div>
+		</div>
+		<div class="card" style='height: auto;background-color:transparent;' ng-show='productSlideFlag==2'>
+			<div ng-repeat='item in productProperty'>
+				<div class="item item-divider" style='height: auto;background-color: transparent;color:#FFFFFF;font-size:14px;' ng-bind-html='item.cName'>
+				</div>
+				<div class="item item-text-wrap" style='height:auto;background-color: transparent;color: #FFFFFF;font-size: 13px;' ng-bind-html='item.cContent'>
+				</div>
+			</div>
+		</div>
+	</ion-content>
+	<ion-footer-bar style='background-image: none;background-color: transparent;' align-title='center'>
+		<h1 class='title' ng-show='productSlideFlag!=1' style='text-align: center;'>
+			<div ng-click='switchProductProperty()' style='margin:7px 0;display: inline-block;width:30px;height:30px;background-image: url(Images/pano-icon.png);background-position: -180px -30px;background-size: 240px 210px;'></div>
+			<div ng-show='pMusicSwitch' ng-click='switchProductMusic()' style='margin:7px 25px;display: inline-block;width:30px;height:30px;background-image: url(Images/pano-icon.png);background-position: -180px -60px;background-size: 240px 210px;'></div>
+			<div ng-show='!pMusicSwitch' ng-click='switchProductMusic()' style='margin:7px 25px;display: inline-block;width:30px;height:30px;background-image: url(Images/pano-icon.png);background-position: -210px -60px;background-size: 240px 210px;'></div>
+			<div ng-show='pExplainSwitch' ng-click='switchProductExplain()' style='margin:7px 0;display: inline-block;width:30px;height:30px;background-image: url(Images/pano-icon.png);background-position: -180px -90px;background-size: 240px 210px;'></div>
+			<div ng-show='!pExplainSwitch' ng-click='switchProductExplain()' style='margin:7px 0;display: inline-block;width:30px;height:30px;background-image: url(Images/pano-icon.png);background-position: -210px -90px;background-size: 240px 210px;'></div>
+		</h1>
+	</ion-footer-bar>
+</ion-modal-view>

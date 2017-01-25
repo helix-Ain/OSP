@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+        style="height: 120px;">
+        <ul class="searchForm1">
+            <li>
+                <input name="cLoginName" type="text" class="dc-search dc-input" dc-tip="登录ID" />
+            </li>
+            <li>
+                <input name="cUserChiName" type="text" class="dc-search dc-input" dc-tip="姓名" />
+            </li>
+            <li>
+                <input id="ddl_Search_Org" name="iOrgID" class="dc-search dc-input easyui-combobox"
+                    data-options="editable:true,width:150" dc-tip="组织" />
+            </li>
+            <li><a href="javascript:void(0)" onclick="searchData()" class="dc-button">查询</a></li>
+            <div>
+                <li>
+                    <input name="cMobileNO" type="text" class="dc-search dc-input" dc-tip="手机号码" />
+                </li>
+                <li>
+                    <input name="cEmail" type="text" class="dc-search dc-input" dc-tip="用户邮箱" style="width: 300px;" />
+                </li>
+            </div>
+        </ul>
+    </div>
+    <div data-options="region:'center',border:false,onResize:function(){try{$('#'+_strDetailiFrameID).panel('resize');}catch(ex){}}">
+        <table id="tab_List" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true">
+                    </th>
+                    <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iUserID);}">
+                        <div style="width: 50px; height: 5px; display: block;">
+                        </div>
+                    </th>
+                    <th data-options="field:'cLoginName',width:80,sortable:true">
+                        登录ID
+                    </th>
+                    <th data-options="field:'cUserChiName',width:80,sortable:true">
+                        姓名
+                    </th>
+                    <th data-options="field:'cEmail',width:140,sortable:true">
+                        邮箱
+                    </th>
+                    <th data-options="field:'cStatusDesc',width:40,sortable:true">
+                        用户状态
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="div_Toolbar" class="GridButtonBar" style="display: none;">
+            <span class="GridButtonBarIco"></span><a id="btn_Add" class="easyui-linkbutton" iconcls="dc-icon-pencil"
+                plain="true" onclick="resetPassword()">重置密码</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                    iconcls="dc-icon-pencil" plain="true" onclick="newData()">添加</a> <a href="javascript:void(0)"
+                        class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="deleteData()">
+                        删除</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-pencil"
+                            plain="true" onclick="userAgent()">用户代理</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript" language="javascript">
+    var _strDetailiFrameID = "div_UserDetail";
+    var _iDDLCount = 0;
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        postData({
+            url: "DcCdOrganizationManage",
+            params: { Action: 'Query' },
+            isSys: true,
+            success: function(ci_result) {
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                    $('#ddl_Search_Org').combobox({
+                        data: ci_result.rows,
+                        valueField: 'iOrgID',
+                        textField: 'cName'
+                    });
+                }
+                _iDDLCount++;
+                _init();
+            }
+        });
+
+        function _init() {
+            if (_iDDLCount == 1) {
+                _iDDLCount = 0;
+
+                setMyDataGrid(true);
+            }
+        }
+    }
+
+    function getSearchParameter(ci_bIsBase) {
+        var m_objParams = { Action: "Query", NonOrgID: -1 };
+        if (!ci_bIsBase) {
+            return getSearchParameters($(".searchForm1"), m_objParams);
+        }
+        return m_objParams;
+    }
+
+    function setMyDataGrid(ci_bIsBase) {
+        setDataGrid('tab_List', 'div_Toolbar', 'DcCdUserManage', getSearchParameter(ci_bIsBase), 'iUserID', 'cLoginName', '', {
+            checkOnSelect: true,
+            selectOnCheck: true,
+            singleSelect: false,
+            onClickRow: function(rowIndex, rowData) { $("#tab_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+            onDblClickRow: function(rowIndex, rowData) { $("#tab_List").datagrid("selectRow", rowIndex); editData(rowData.iUserID); }
+        });
+    }
+
+    function searchData(ci_iID) {
+        if (ci_iID != undefined && parseInt(ci_iID) > 0) {
+            editData(ci_iID);
+        }
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function cancel() {
+        closedPopupDialog(_strDetailiFrameID);
+    }
+
+    function newData() {
+        popupDialog('UserManageDetail.html#Action=new', 'parent.searchData', "添加用户", false, 510, 450, 'dc-icon-dialog-title', _strDetailiFrameID);
+    }
+
+    function editData(ci_iID) {
+        cancel();
+        if (ci_iID > 0) {
+            popupDialog('UserManageDetail.html#UserID=' + ci_iID, 'parent.searchData', '用户详细资料', true, 0, 0, 'dc-icon-dialog-title', _strDetailiFrameID);
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function deleteData() {
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            $.messager.confirm('提示', '确定要删除所选' + m_row.length + '条记录吗？', function(r) {
+                if (r) {
+                    var m_arrID = [];
+                    $.each(m_row, function(index, value) { m_arrID[index] = value.iUserID; });
+                    postData({
+                        url: "DcCdUserManage",
+                        params: { iUserID: m_arrID.join(","), Action: "Del" },
+                        success: function(ci_result) {
+                            $.messager.alert('提示', '删除成功，请更新权限缓存', 'info', function() { $('#tab_List').datagrid('reload'); })
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function resetPassword() {
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            $.messager.confirm('提示', '确定要重置所选' + m_row.length + '用户密码吗？', function(r) {
+                if (r) {
+                    var m_arrID = [];
+                    $.each(m_row, function(index, value) { m_arrID[index] = value.iUserID; });
+                    postData({
+                        url: "DcCdUserManage",
+                        params: { iUserID: m_arrID.join(","), Action: "ResetPassword" },
+                        success: function(ci_result) {
+                            $.messager.alert('提示', '重置成功', 'info', function() { $('#tab_List').datagrid('reload'); })
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function userAgent() {
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            if (m_row.length == 1) {
+                postData({
+                    url: "DcCdUserManage",
+                    params: { iUserID: m_row[0].iUserID, Action: "UserAgent" },
+                    success: function(ci_result) {
+                        $.messager.alert('提示', '代理成功', 'info', function() { top.window.location.href = top.window.location.href; })
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '只能选择一条记录', 'info');
+            }
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+</script>
+

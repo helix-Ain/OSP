@@ -1,0 +1,60 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title></title>  
+    <meta charset="UTF-8">
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+    <script type='text/javascript' src='JS/Constants.js'></script>
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+</head>
+<body style="display: none;">
+    <div id="tab_Data" class="easyui-tabs" data-options="fit:true">
+        <div title="图片管理" group="data"></div>
+        <div title="视频管理" group="data"></div>
+        <div title="手册管理" group="data"></div>
+        <div title="注释管理" group="data"></div>
+        <div title="音频管理" group="data"></div>
+        <div title="场景说明" group="data"></div>
+        <div title="外链管理" group="data"></div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        $('#tab_Data').tabs({
+            onSelect: function(title, index) {
+                $('div[group="data"]').empty().html('');
+                $('.easyui-dialog').dialog('destroy');
+                var m_obj = $('#tab_Data').tabs('getTab', index);
+                switch (index) {
+                    case 0:
+                        m_obj.panel('refresh', 'DataAttachmentManage.html#iObjectID=1');
+                        break;
+                    case 1:
+                        m_obj.panel('refresh', 'DataAttachmentManage.html#iObjectID=2');
+                        break;
+                    case 2:
+                        m_obj.panel('refresh', 'DataBookManage.html');
+                        break;
+                    case 3:
+                        m_obj.panel('refresh', '../Platform/GeneralListPage.html?Code=60005004');
+                        break;
+                    case 4:
+                        m_obj.panel('refresh', '../Platform/GeneralListPage.html?Code=60005005');
+                        break;
+                    case 5:
+                        m_obj.panel('refresh', '../Platform/GeneralListPage.html?Code=60005006');
+                        break;
+                    case 6:
+                        m_obj.panel('refresh', '../Platform/GeneralListPage.html?Code=60005007');
+                        break;
+                }
+                $('#tab_Data').tabs('resize');
+            }
+        });
+    }
+</script>

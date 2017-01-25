@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../JS/lightbox2/css/lightbox.min.css,../JS/lightbox2/js/lightbox.min.js,../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js"></script>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+			</div>
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>外链名称：
+						</td>
+						<td>
+							<input id='cName' name='cName' maxlength="50" class='easyui-validatebox' data-options='required:true' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class="tabletext">
+							<span class="require_sign">*</span>外链类型：
+						</td>
+						<td>
+							<input id="iType" name="iType" class="easyui-combobox" data-options="required:true,width:150,valueField:'id', textField:'text',editable:false" />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>外链图标：
+						</td>
+						<td>
+							<img id='cValue3' src='' style='width:35px;height:35px;' />
+							<div id='btn-upload' class='easyui-linkbutton' style='display: inline-block;position: relative;top:3.5px;margin:0 5px;'><input id='input_Upload' type='file' style='display: none;' /></div>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>外链地址：
+						</td>
+						<td>
+							<input id='cUrl' name='cUrl' class='easyui-validatebox' data-options='required:true,validType:"url"' style='width:550px;' />
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = getHashValue('Action');
+			var _iObjectID = getHashValue('iObjectID');
+			var _iParentID = getHashValue('iParentID');
+			var _iLinkID = getHashValue('iLinkID');
+			var _strFun = getHashValue('Fun');
+			var _iServerID = 0;
+			var _cFilename = '';
+			var _iTypeFilename = [];
+
+			checkPagePower({
+				onload: function() {
+					initPage();
+					setUpload();
+				}
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Link',
+						cSubCat: 'Type'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								if(i != 0) {
+									data.push({
+										'text': item.cDesc,
+										'id': item.cCodeItem
+									});
+								} else {
+									data.push({
+										'text': item.cDesc,
+										'id': item.cCodeItem,
+										'selected': true
+									});
+								}
+								_iTypeFilename.push({
+									'cCodeItem': item.cCodeItem,
+									'cValue3': item.cValue3
+								});
+							});
+							$('#iType').combobox({
+								onChange: function(newValue, oldValue) {
+									$.each(_iTypeFilename, function(i, item) {
+										if(item.cCodeItem == newValue) {
+											if(newValue != 255) {
+												$('#btn-upload').hide();
+											} else {
+												$('#btn-upload').show();
+											}
+											$('#cValue3').attr('src', '/' + item.cValue3);
+											_iServerID = 0;
+											_cFilename = item.cValue3;
+										}
+									});
+								}
+							});
+							$('#iType').combobox('loadData', data);
+							if(_Action == 'Add') {
+								$('#cUrl').val('http://');
+							} else if(_Action == 'Update') {
+								postData({
+									url: 'DcCdDataManage',
+									params: {
+										Action: 'GetLinkList',
+										iLinkID: _iLinkID
+									},
+									success: function(ci_result) {
+										if(existData(ci_result)) {
+											var m_objData = ci_result.rows[0];
+											$('#cName').val(m_objData.cName);
+											$('#cUrl').val(m_objData.cUrl);
+											$('#iType').combobox('setValue', m_objData.iType);
+											_iServerID = m_objData.iServerID;
+											_cFilename = m_objData.cFilename;
+											if(m_objData.iType == 255 && m_objData.cFilename != 'OSP/Images/Link255.png') {
+												$('#cValue3').attr('src', '/OSP/' + m_objData.cFilePath + '/72/' + m_objData.cFilename);
+											}
+										}
+									}
+								});
+							}
+						}
+					}
+				});
+			}
+
+			function setUpload() {
+				$("#input_Upload").uploadify({
+					'uploader': _strSysUrl + 'JS/uploadify-v2.1.4/scripts/uploadify.swf',
+					'cancelImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/cancel.png',
+					'buttonImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/upload_btn.png',
+					'script': getInterfaceName("DcCdAttachmentManage", true),
+					'queueID': 'div_FileQueue',
+					'auto': true,
+					'multi': false,
+					'width': 55,
+					'height': 22,
+					'buttonText': '',
+					'method': 'post',
+					'onError': function(event, ID, fileObj, errorObj) {
+						if(errorObj.type === "File Size") {
+							$("#input_Upload").uploadifyCancel(ID);
+							$.messager.alert('提示', '超过文件上传大小限制！', 'info');
+						} else {
+							$.messager.alert('提示', '上传失败！', 'info');
+						}
+					},
+					'onSelect': function(e, queueId, fileObj) {
+						var iType = iObjectIDToiType(parseInt(_iObjectID));
+						$('#input_Upload').uploadifySettings('scriptData', {
+							Action: 'Upload',
+							iType: iType,
+							cObjectCode: 'OSP'
+						});
+					},
+					'onComplete': function(event, queueId, fileObj, response, data) {
+						var m_result = convertToJson(response);
+						if(m_result.DcCode != undefined && m_result.DcCode == 0) {
+							var m_objData = m_result.rows[0];
+							_iServerID = m_objData.iServerID;
+							_cFilename = m_objData.cFileName;
+							alert(m_objData.cFilePath);
+							$('#cValue3').attr('src', '/' + m_objData.cFilePath);
+						} else {
+							if(m_result.DcMessage != undefined && m_result.DcMessage != '') {
+								$.messager.alert('提示', m_result.DcMessage, 'info');
+							} else {
+								$.messager.alert('提示', '上传失败！', 'info');
+							}
+						}
+					}
+				});
+			}
+
+			function saveData() {
+				if(_Action == 'Add') {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'AddLink'
+						},
+						form: 'form_Edit',
+						validate: true,
+						onPost: function() {
+							this.params.iType = $('#iType').combobox('getValue');
+							this.params.iServerID = _iServerID;
+							this.params.cFilename = _cFilename;
+							this.params.iGroupID = _iParentID;
+							return true;
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								if(_strFun != '') {
+									eval(_strFun);
+								}
+								cancelSelf();
+							}
+						}
+					});
+				} else if(_Action == 'Update') {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'UpdateLink'
+						},
+						form: 'form_Edit',
+						validate: true,
+						onPost: function() {
+							this.params.iLinkID = _iLinkID;
+							this.params.iType = $('#iType').combobox('getValue');
+							this.params.iServerID = _iServerID;
+							this.params.cFilename = _cFilename;
+							this.params.iGroupID = _iParentID;
+							return true;
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								$.messager.alert('提示', '保存成功', 'info');
+								if(_strFun != '') {
+									eval(_strFun);
+								}
+							}
+						}
+					});
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog();
+			}
+
+			function iObjectIDToiType(iObjectID) {
+				var iType = 0;
+				if(iObjectID > 0 && iObjectID < 9) {
+					iType = 60 + iObjectID;
+				}
+				return iType;
+			}
+		</script>
+	</body>
+
+</html>

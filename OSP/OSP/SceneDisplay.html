@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<script src='JS/krpano.js'></script>
+		<script src='JS/jquery.qrcode.min.js'></script>
+		<style>
+			div.backdrop {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, .4);
+				visibility: hidden;
+				opacity: 0;
+				-webkit-transition: .1s opacity linear;
+				transition: .1s opacity linear;
+			}
+			
+			.backdrop.visible {
+				visibility: visible;
+			}
+			
+			.backdrop.active {
+				opacity: 1;
+			}
+			
+			div.backdrop {
+				z-index: 9999;
+			}
+			
+			#markContent {
+				text-align: center;
+				vertical-align: middle;
+				margin: 25px 150px;
+			}
+			
+			#markContent * {
+				text-align: center;
+				vertical-align: middle;
+			}
+			
+			#markContent img {
+				margin-top: 35px;
+				height: 500px;
+				width: 750px;
+			}
+			
+			#markContent h3 {
+				margin: 35px;
+			}
+			
+			#markContent h3,
+			#markContent p {
+				color: #FFFFFF;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id='pano' style='width:100%;height:100%;'></div>
+			<div id='pageview' style='position:absolute;left:10px;top:10px;color: #FFFFFF;font-size: 17px;font-weight: 400;display: none;'></div>
+			<div id='mask' class='backdrop visible active' style="display: none;">
+				<div style='width:50px;height: 50px;line-height: 50px;position: absolute;top:5px;right:-5px;' onclick="closeMask()">
+					<div style="width:50px;height: 50px;cursor: pointer; pointer-events: auto; background-image: url(/OSP/Images/pano-icon.png); background-position: -100px -599px;"></div>
+				</div>
+				<div style='text-align: center;'>
+					<div id='markContent'></div>
+					<video id='video' style='display: none;margin-top:35px;' height="500px;" controls="controls" loop="loop"></video>
+				</div>
+			</div>
+		</div>
+		<script>
+			var _krpano;
+			var _strFun = getHashValue('Fun');
+			var _iSceneID = getQueryStringValue('iSceneID');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _bgMusic;
+			var _explain;
+			var _iDDLCount = 0;
+			var _firstLoad = true;
+			var _audioFirstLoad = true;
+			var _iToScenes = [];
+			var _Angle;
+
+			$(function() {
+				initPage();
+			});
+
+			function initPage() {
+				var swf = '/Attachment/VR/' + _iSceneID + '/vtour/tour.swf';
+				var xml = '/krpano/templates/xml/main.xml';
+				embedpano({
+					swf: swf,
+					xml: xml,
+					target: 'pano',
+					html5: 'auto',
+					mobilescale: 1.0,
+					passQueryParameters: true,
+					onready: panoReady
+				});
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'SceneVisitedAdd',
+						iSceneID: _iSceneID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						console.log(ci_result.DcCode + ':' + ci_result.DcMessage);
+					}
+				});
+			}
+
+			function panoReady(krpanoObj) {
+				_krpano = krpanoObj;
+				_iToScenes.push(parseInt(_iSceneID));
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'SceneList',
+						VRID: _iSceneID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							_Angle = m_objData.cAngle;
+							_krpano.call('loadpano("/Attachment/VR/' + _iSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+							postData({
+								url: 'DcCdAppInterface',
+								params: {
+									Action: 'SceneList',
+									ListID: _iSceneID
+								},
+								showMask: false,
+								success: function(ci_result) {
+									if(existData(ci_result)) {
+										var m_objData = ci_result.rows;
+										$.each(m_objData, function(i, item) {
+											_krpano.call('loadpano("/Attachment/VR/' + item.iSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+											_iToScenes.push(parseInt(item.iSceneID));
+										});
+									}
+									_krpano.call('startup()');
+									_krpano.call('skin_setup_littleplanetintro()');
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function initData(sceneid) {
+				if(_firstLoad) {
+					_firstLoad = false;
+					return;
+				}
+				if(sceneid != undefined) {
+					_iSceneID = sceneid;
+				}
+				setTimeout(function() {
+					initSpecialEfficiency();
+					initRoamingPoint();
+					initMarkPoint();
+					initAudio();
+					initSceneData();
+				}, 100);
+				_krpano.set('layer["pcGroup"].visible', 'true');
+			}
+
+			function initSceneData() {
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'SceneList',
+						VRID: _iSceneID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							_Angle = m_objData.cAngle;
+							$(document).attr('title', m_objData.cSceneName);
+							$('#pageview').text('访问量：' + m_objData.iVisited).show();
+						}
+					}
+				});
+			}
+
+			function initSpecialEfficiency(iSceneID) {
+				if(iSceneID == undefined) {
+					iSceneID = _iSceneID;
+				}
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'SceneEffectsList',
+						iSceneID: iSceneID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							setSpecialEfficiency(m_objData.iEffects);
+						}
+					}
+				});
+			}
+
+			function initRoamingPoint() {
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'RoamingPointList',
+						iSceneID: _iSceneID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								if(item.iAttribute == 2) {
+									item.iDirection = item.iDirection + 8;
+								}
+								if(item.iType == 1) {
+									_krpano.call('initHotspotFun(3,' + item.iPointID + ',' + item.iToSceneID + ',' + item.cToSceneName + ',' + item.iDirection + ',' + item.iAttribute + ',' + item.iEffect + ',' + item.bIsPreview + ',' + item.fImageY + ',' + item.fImageX + ',' + item.cToImage + ')');
+								} else {
+									_krpano.call('initHotspotFun(4,' + item.iPointID + ',' + item.iDirection + ',' + item.iAttribute + ',' + item.cUrl + ',' + item.bIsPreview + ',' + item.fImageY + ',' + item.fImageX + ')');
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function initMarkPoint() {
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'MarkPointList',
+						iSceneID: _iSceneID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								if(item.iRecordID != 0) {
+									var tooltip;
+									if([1, 2, 3, 4].indexOf(parseInt(item.iObjectID)) != -1) {
+										tooltip = item.rRecords[0].cName;
+									} else if(item.iObjectID == 8) {
+										tooltip = item.cExt3;
+										if(tooltip.length > 25) {
+											tooltip = tooltip.substr(0, 25) + '...';
+										}
+									} else if(item.iObjectID == 10) {
+										tooltip = item.rRecords[0].cProductName;
+									}
+									if(item.iStyle == 1 || item.iExt1 == 2) {
+										var type = getTypeFromObjectID(item.iObjectID);
+										if(type != 'video') {
+											_krpano.call('initMarkPointFun(' + item.iID + ',' + type + ',' + tooltip + ',' + item.fImageY + ',' + item.fImageX + ',' + 1 + ')');
+										} else {
+											var videoPath = '../' + item.rRecords[0].cFilePath + '/' + item.rRecords[0].cFilename;
+											_krpano.call('initMarkPointFun(' + item.iID + ',' + type + ',' + tooltip + ',' + item.fImageY + ',' + item.fImageX + ',' + 1 + ',' + videoPath + ')');
+										}
+									} else if(item.iExt1 == 1) {
+										var pointname = 'F' + item.iID;
+										var wh = item.cArea.split(';')[0];
+										var oxoy = item.cArea.split(';')[1];
+										var w = wh.split(',')[0];
+										var h = wh.split(',')[1];
+										var ox = oxoy.split(',')[0];
+										var oy = oxoy.split(',')[1];
+										_krpano.call('addhotspot(\'' + pointname + '\')');
+										_krpano.set("hotspot[" + pointname + "].atv", item.fImageX);
+										_krpano.set("hotspot[" + pointname + "].ath", item.fImageY);
+										_krpano.set("hotspot[" + pointname + "].ox", ox);
+										_krpano.set("hotspot[" + pointname + "].oy", oy);
+										_krpano.set("hotspot[" + pointname + "].width", w);
+										_krpano.set("hotspot[" + pointname + "].height", h);
+										_krpano.set("hotspot[" + pointname + "].distorted", true);
+										_krpano.set("hotspot[" + pointname + "].url", '%SWFPATH%/plugins/videoplayer.js');
+										_krpano.set("hotspot[" + pointname + "].alturl", '%SWFPATH%/plugins/videoplayer.swf');
+										_krpano.set("hotspot[" + pointname + "].videourl", '/' + item.rRecords[0].cFilePath + '/' + item.rRecords[0].cFilename);
+										_krpano.set("hotspot[" + pointname + "].loop", true);
+										_krpano.set("hotspot[" + pointname + "].edge", 'center');
+										_krpano.set("hotspot[" + pointname + "].scale", '1.0');
+										_krpano.set("hotspot[" + pointname + "].onclick", 'togglepause()');
+										if(item.iExt2 == 1) {
+											_krpano.set("hotspot[" + pointname + "].pausedonstart", false);
+										} else {
+											_krpano.set("hotspot[" + pointname + "].pausedonstart", true);
+										}
+									} else if(item.iStyle == 2) {
+										var pointname = 'E' + item.iID;
+										var points = item.cArea.split(';');
+										_krpano.call('addhotspot(\'' + pointname + '\')');
+										_krpano.call('hotspot[\'' + pointname + '\'].loadstyle(drawhotspotReleaseStyle)');
+										_krpano.set('hotspot[\'' + pointname + '\'].tooltip', tooltip);
+										for(var i = 0; i < points.length; i++) {
+											if(points[i] != '') {
+												_krpano.set('hotspot[\'' + pointname + '\'].point[' + i + '].ath', points[i].split(',')[1]);
+												_krpano.set('hotspot[\'' + pointname + '\'].point[' + i + '].atv', points[i].split(',')[0]);
+											}
+										}
+										_krpano.set('hotspot[\'' + pointname + '\'].onclick', 'js(showMarkPointContent(' + item.iID + '))');
+									}
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function initAudio() {
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'ScenedDataList',
+						iSceneID: _iSceneID,
+						iType: 1
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							if(m_objData[0] != undefined && m_objData[0].iRecordID != 0) {
+								_bgMusic = '/' + m_objData[0].rRecords[0].cFilePath + '/' + m_objData[0].rRecords[0].cFilename;
+								if(_audioFirstLoad) {
+									_krpano.call('playsound(bgsnd,' + _bgMusic + ',0)');
+									_audioFirstLoad = false;
+								}
+							}
+							if(m_objData[1] != undefined && m_objData[1].iRecordID != 0) {
+								_explain = '/' + m_objData[1].rRecords[0].cFilePath + '/' + m_objData[1].rRecords[0].cFilename;
+								_krpano.call('playsound(epsnd,' + _explain + ',0)');
+							}
+						}
+					}
+				});
+			}
+
+			function shareScene() {
+				$('#markContent').append('<div id="qrcode" style="width:550px;height:350px;margin:35px auto;padding:95px;background-color: #FFFFFF;"><div id="code"></div><div style="font-size:20px;margin-top:25px;">用微信扫描二维码，分享给好友</div></div>');
+				if(location.port == '') {
+					$('#code').qrcode(location.protocol + '//' + location.hostname + '/' + location.pathname.split('/')[1] + '/Mobile/' + location.pathname.split('/')[2] + location.search);
+				} else {
+					$('#code').qrcode(location.protocol + '//' + location.hostname + ':' + location.port + '/' + location.pathname.split('/')[1] + '/Mobile/' + location.pathname.split('/')[2] + location.search);
+				}
+				$('#mask').show();
+				$('#markContent').show();
+			}
+
+			function closeMask() {
+				$('#mask,#video,#markContent').hide();
+				$('#markContent').html('');
+			}
+
+			function showMarkPointContent(iID) {
+				postData({
+					url: 'DcCdAppInterface',
+					params: {
+						Action: 'MarkPointList',
+						iID: iID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							var m_rRecord = m_objData.rRecords[0];
+							switch(m_objData.iObjectID) {
+								case 1:
+									$('#markContent').html('<img src="/' + m_rRecord.cFilePath + '/' + m_rRecord.cFilename + '"/>');
+									break;
+								case 2:
+									var videoPath = '/' + m_rRecord.cFilePath + '/' + m_rRecord.cFilename;
+									$('#video').attr('src', videoPath).show();
+									break;
+								case 3:
+									break;
+								case 4:
+									$('#markContent').html('<h3>' + m_rRecord.cName + '</h3><p>' + m_rRecord.cContent.replace(/&lt;/g, "<").replace(/&gt;/g, ">") + '</p>');
+									break;
+								case 10:
+									break;
+							}
+							if(m_objData.iObjectID != 8) {
+								$('#mask').show();
+								$('#markContent').show();
+							} else {
+								window.location = m_objData.cExt3;
+							}
+						}
+					}
+				});
+			}
+
+			function looktoBycAngle() {
+				var angle = _Angle;
+				switch(angle) {
+					case 'R':
+						angle = 90;
+						break;
+					case 'F':
+						angle = 0;
+						break;
+					case 'L':
+						angle = -90;
+						break;
+					case 'A':
+						angle = -180;
+						break;
+					default:
+						angle = 0;
+				};
+				_krpano.call('lookto(' + angle + ',0)');
+			}
+
+			function sceneTransition(iToSceneID, iEffect, cAngle) {
+				_Angle = cAngle
+				if(_iToScenes.indexOf(parseInt(iToSceneID)) == -1) {
+					_krpano.call('loadpano("/Attachment/VR/' + iToSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+					_iToScenes.push(parseInt(iToSceneID));
+				}
+				_krpano.call('loadscene(scene_' + iToSceneID + ',null,MEGER,get(blendmodes[' + iEffect + '].blend))');
+				looktoBycAngle();
+			}
+
+			function setSpecialEfficiency(iEffects) {
+				iEffects = parseInt(iEffects);
+				switch(iEffects) {
+					case 1:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('defaultsnow()');
+						break;
+					case 2:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('snowballs()');
+						break;
+					case 3:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('snowflakes()');
+						break;
+					case 4:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('silverstars()');
+						break;
+					case 5:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('hearts()');
+						break;
+					case 6:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('rain()');
+						break;
+					case 7:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('heavyrain()');
+						break;
+					case 8:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('leaves()');
+						break;
+					case 9:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('treeleaf()');
+						break;
+					default:
+						_krpano.set('plugin[snow].visible', 'false');
+				}
+			}
+
+			function getTypeFromObjectID(iObjectID) {
+				var type;
+				switch(parseInt(iObjectID)) {
+					case 1:
+						type = 'pic';
+						break;
+					case 2:
+						type = 'video';
+						break;
+					case 3:
+						type = 'book';
+						break;
+					case 4:
+						type = 'info';
+						break;
+					case 8:
+						type = 'link';
+						break;
+					case 10:
+						type = 'product';
+						break;
+				}
+				return type;
+			}
+		</script>
+	</body>
+
+</html>

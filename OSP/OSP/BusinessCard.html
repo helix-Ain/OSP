@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>公司名称:
+						</td>
+						<td>
+							<input id='cCompany' name='cCompany' class='easyui-validatebox' data-options='required:true' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>联系电话：
+						</td>
+						<td>
+							<input id='cTel' name='cTel' class='easyui-validatebox' data-options='required:true' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>E-mail：
+						</td>
+						<td>
+							<input id='cEmail' name='cEmail' class='easyui-validatebox' data-options='required:true,validType:"email"' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>公司地址：
+						</td>
+						<td>
+							<input id='cAddress' name='cAddress' class='easyui-validatebox' data-options='required:true' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							官方微博账号：
+						</td>
+						<td>
+							<input id='cWeiboAccount' name='cWeiboAccount' class='easyui-validatebox' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							官方微博地址：
+						</td>
+						<td>
+							<input id='cWeiboAddress' name='cWeiboAddress' class='easyui-validatebox' style='width:550px;' s/>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							企业微信公众账号：
+						</td>
+						<td>
+							<input id='cWeixin' name='cWeixin' class='easyui-validatebox' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							QQ号码：
+						</td>
+						<td>
+							<input id=='cQQ' name='cQQ' class='easyui-validatebox' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							备注：
+						</td>
+						<td>
+							<textarea id="cRemarks" rows="10" style="width: 550px;height: 250px;"></textarea>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = '';
+			var _iCardID = 0;
+			var _strFun = getHashValue('Fun');
+			var _iGroupID = getHashValue('iGroupID');
+			var _iSceneID = getHashValue('iSceneID');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				dcnloader.load(['ComboList', 'Clearbutton', 'DCNDiv', 'Kindeditor', 'Uploadify'], function() {
+					$('#cRemarks').kindeditor({
+						width: 550,
+						minWidth: 200
+					});
+					if(_iGroupID != '') {
+						var params = {
+							Action: 'GetList',
+							iGroupID: _iGroupID
+						};
+					}
+					if(_iSceneID != '') {
+						var params = {
+							Action: 'GetList',
+							iSceneID: _iSceneID
+						};
+					}
+					if(params != undefined) {
+						postData({
+							url: 'DcCdBusinessCardManage',
+							params: params,
+							success: function(ci_result) {
+								if(existData(ci_result)) {
+									var m_objData = ci_result.rows[0];
+									_Action = 'Update';
+									_iCardID = m_objData.iCardID;
+									$('#cCompany').val(m_objData.cCompany);
+									$('#cTel').val(m_objData.cTel);
+									$('#cEmail').val(m_objData.cEmail);
+									$('#cAddress').val(m_objData.cAddress);
+									$('#cWeiboAccount').val(m_objData.cWeiboAccount);
+									$('#cWeiboAddress').val(m_objData.cWeiboAddress);
+									$('#cWeixin').val(m_objData.cWeixin);
+									$('#cQQ').val(m_objData.cQQ);
+									$('#cRemarks').kindeditor('editor').html(m_objData.cRemarks.replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
+								} else {
+									_Action = 'Add';
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function saveData() {
+				var params = {
+					Action: _Action,
+					cRemarks: $('#cRemarks').kindeditor('editor').html()
+				};
+				if(_Action == 'Update') {
+					params.iCardID = _iCardID;
+				}
+				postData({
+					url: 'DcCdBusinessCardManage',
+					params: params,
+					form: 'form_Edit',
+					validate: true,
+					onPost: function() {
+						if(_iGroupID != '') {
+							this.params.iGroupID = _iGroupID;
+							this.params.iSceneID = 0;
+						} else if(_iSceneID != '') {
+							this.params.iSceneID = _iSceneID;
+							this.params.iGroupID = 0;
+						}
+						return true;
+					},
+					success: function(ci_result) {
+						if(ci_result.DcCode == 0) {
+							$.messager.alert('提示', '保存成功', 'info');
+							if(_strFun != '') {
+								eval(_strFun);
+							}
+						}
+					}
+				});
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog();
+			}
+		</script>
+	</body>
+
+</html>

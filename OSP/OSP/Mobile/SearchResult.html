@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html ng-app='app'>
+
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<link rel='stylesheet' href='CSS/Ionic/ionic.min.css' />
+		<script src="JS/Ionic/ionic.bundle.min.js"></script>
+		<script src="JS/Constants.js"></script>
+		<script src="JS/Common.js?v=1.0"></script>
+		<script src='http://api.map.baidu.com/api?v=2.0&ak=D85e9f5f1c47381984bbce6eaffcff42'></script>
+		<style>
+			.menu-item:hover {
+				background-color: #EEEEEE;
+			}
+		</style>
+	</head>
+
+	<body ng-controller='app' ng-init='init()' ng-cloak>
+		<ion-header-bar align-title='center' style='background-color:#A4684B;'>
+			<button class='button button-icon icon ion-ios-arrow-left' onclick="back()" style='color:#FFFFFF;'>返回</button>
+			<h1 class='title' style='color:#FFFFFF;'>搜索结果</h1>
+			<button ng-click='goMap()' class='button button-icon icon' style='margin-right: 5px;width:25px;background: url(Images/map.png) no-repeat;background-size:20px;20px:;background-position-y: 7px;'></button>
+		</ion-header-bar>
+		<ion-content style='background-color: #FFFFFF;padding-bottom: 15px;'>
+			<div class="list">
+				<div class="item item-input item-select">
+				    <div class="input-label">
+				      	距离范围
+				    </div>
+				    <select ng-model='filter.Distance'>
+				      <option selected value=''>全部</option>
+				      <option value='1000'>1千米</option>
+				      <option value='3000'>3千米</option>
+				      <option value='5000'>5千米</option>
+				      <option value='10000'>10千米</option>
+				    </select>
+				</div>
+				<a class="item item-thumbnail-left item-icon-right" href="#" ng-repeat='item in sceneList' ng-click='viewDetail(item.iSceneID,item.bIsVR)'>
+					<img ng-if='item.bIsVR' style='border-radius: 2px;' ng-src="{{'/Attachment/VR/'+item.iSceneID+'/vtour/panos/'+item.iSceneID+'.tiles/thumb.jpg'}}" />
+					<img ng-if='!item.bIsVR' style='border-radius: 2px;' src="/OSP/Mobile/Images/default.png" />
+					<h2 style='font-size: 14px;margin-top:4px;'>
+						{{item.cSceneName}}
+						<img ng-if='item.bIsVR' src='Images/scene.png' style='width:14px;height:17px;position: relative;top:2px;left:5px;'/>
+					</h2>
+					<p style='font-size: 13.5px;'><span style='color:#FE8400;'>{{item.iVisited}}</span>人访问</p>
+					<p style='font-size: 13.5px;'>{{item.fDistance!=-1? item.fDistance+'m':'距离无法计算'}}</p>
+					<i class="icon ion-ios-arrow-right"></i>
+				</a>
+			</div>
+		</ion-content>
+		<script>
+			var _iParentID = getQueryStringValue('iParentID');
+			var _Keyword = decodeURI(getQueryStringValue('Keyword'));
+			app.controller('app', function($scope, $timeout,$window, commonService) {
+				$scope.sceneList = [];
+				$scope.filter = {
+					Distance: ''
+				};
+				$scope.init = function() {
+					initPage();
+				}
+
+				$scope.$watch('filter.Distance', function(newValue, oldValue) {
+					initData(newValue);
+				});
+
+				$scope.viewDetail = function(iSceneID, bIsVR) {
+					if(bIsVR == true) {
+						bIsVR = 1;
+					} else {
+						bIsVR = 0;
+					}
+					$window.location = 'BusinessDetail.html?iSceneID=' + iSceneID + '&bIsVR=' + bIsVR;
+				}
+
+				$scope.goMap = function() {
+					$window.location = 'MapDisplay.html?bIsVR=1&keyword=' + _Keyword;
+				}
+
+				function initPage() {
+					initData('');
+				}
+
+				function initData(Distance) {
+					commonService.showMask();
+					if(_iParentID != '') {
+						var params = {
+							Action: 'SceneQuery',
+							CategoryID: _iParentID
+						};
+					} else {
+						var params = {
+							Action: 'SceneQuery',
+							Keyword: _Keyword
+						};
+					}
+					var geolocation = new BMap.Geolocation();
+					//使用百度地址定位当前位置经纬度
+					geolocation.getCurrentPosition(function(r) {
+						if(this.getStatus() == BMAP_STATUS_SUCCESS) {
+							params.Longitude = r.point.lng;
+							params.latitude = r.point.lat;
+							if(Distance != '') {
+								params.Distance = Distance;
+							}
+							commonService.postData({
+								url: 'DcCdAppInterface',
+								params: params,
+								showMask: false,
+								success: function(ci_result) {
+									if(existData(ci_result)) {
+										var m_objData = ci_result.rows;
+										m_objData.forEach(function(value) {
+											value.fDistance = parseInt(value.fDistance);
+										});
+										$scope.sceneList = m_objData;
+									}else{
+										$scope.sceneList = [];
+									}
+									commonService.hideMask();
+								}
+							});
+						} else {
+							commonService.showAlert('failed' + this.getStatus());
+						}
+					}, {
+						enableHighAccuracy: true
+					});
+				}
+			});
+
+			function back() {
+				history.back();
+			}
+		</script>
+	</body>
+
+</html>

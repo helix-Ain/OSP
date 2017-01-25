@@ -1,0 +1,24 @@
+<ion-modal-view ng-cloak>
+	<ion-content id='allmap' style='position: absolute;bottom: 110px;'>
+	</ion-content>
+	<ion-footer-bar align-title='center' style='padding:10px 15px;height: 110px;'>
+		<div class='row' style='padding:0;'>
+			<div class='col' style='padding:0;'>
+				<div style='height: 25px;margin-bottom:2px;word-break: keep-all;white-space: nowrap;overflow: hidden;text-overflow:ellipsis;'>
+					<span style='font-size: 16px;font-weight: 500;margin-right:3px;word-break: keep-all;white-space: nowrap;'>{{modalInfo.cSceneName}}</span>
+					<img src='/OSP/Mobile/Images/scene3.png' style='width:21px;height: 21px;position: relative;top:3px;' />
+				</div>
+				<div style='height:25px;color:#AFB0B4;margin-bottom: 2px;'>
+					<i class='icon ion-navigate' style='font-size: 17px;margin-left:-25px;'></i>
+					<span>{{modalInfo.fDistance}}</span>
+				</div>
+				<div style='height:25px;margin-bottom:2px;'>
+					<img ng-click='hideModal(1)' src='/OSP/Mobile/Images/btn-lookscene.png' style='display: inline-block;width:95px;height:30px;cursor: pointer;' />
+				</div>
+			</div>
+			<div class='col' style='padding:0;'>
+				<img ng-click='hideModal(1)' src='/OSP/Mobile/Images/btn-return.png' style='position: relative;top:7px;width:70px;height:75px;cursor: pointer;' />
+			</div>
+		</div>
+	</ion-footer-bar>
+</ion-modal-view>

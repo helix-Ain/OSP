@@ -1,0 +1,25 @@
+<ion-modal-view ng-cloak>
+	<ion-header-bar align-title='center' style='background: #A4684B;'>
+		<button ng-click='hideModal({{modalInfo.level}})' class='button button-icon icon ion-ios-arrow-left' style='color:#FFFFFF;'>返回</button>
+		<h1 class='title' style='color:#FFFFFF;'>留言({{modalInfo.iUserMessage}})</h1>
+	</ion-header-bar>
+	<ion-content style='background-color:#F3F4F6;padding-bottom: 15px;'>
+		<div class='list list-inset' style='background-color: #F3F4F6;'>
+			<li class='item' ng-repeat='item in modalInfo.userMessage' style='padding:0;font-size: 14px;margin-bottom: 10px;'>
+				<div style='padding:7px;border:1px solid #A4684B;background-color:#A4684B;color:#FFFFFF;'>
+					<span>标题：{{item.cTitle}}</span>
+				</div>
+				<div style='padding:7px;border-bottom: 1px solid #ECECED;font-size: 13px;'>
+					<span style='color:#FFA53F;'>{{item.cUsername}}</span>
+					<span style='float:right;color:#CECECE;'>{{item.dCreationDt.split(' ')[0]}}</span>
+				</div>
+				<div style='padding:7px;'>
+					<span>{{item.cContent}}</span>
+				</div>
+			</li>
+		</div>
+	</ion-content>
+	<ion-footer-bar align-title='center' class='bar-light footer-menu' style='cursor:pointer;' ng-click='openWriteMessage({{modalInfo.level+1}})'>
+		<h1 class='title'><i style='color:#FFA53F;' class='icon ion-edit'></i>&nbsp;写留言</h1>
+	</ion-footer-bar>
+</ion-modal-view>

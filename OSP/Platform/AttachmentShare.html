@@ -1,0 +1,224 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>用户查询</title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'west',border:false" style="width: 350px;">
+        <div id="div_UserToolbar" style="display: none; height: 15px;" class="panel-header">
+            用户列表
+        </div>
+        <table id="tab_User" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field: 'ck', checkbox: true">
+                    </th>
+                    <th data-options="field: 'cLoginName', width: 100, sortable: true">
+                        登录ID
+                    </th>
+                    <th data-options="field: 'cUserChiName', width: 100, sortable: true">
+                        姓名
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div data-options="region:'center',border:false" style="text-align: center;">
+        <input type="button" value=">>" title="添加" style="margin-top: 150px;" onclick="addPower()" />
+        <input type="button" value="<<" title="取消" style="margin-top: 10px;" onclick="deletePower()" />
+    </div>
+    <div data-options="region:'east',border:false" style="width: 350px;">
+        <div id="div_PowerToolbar" style="display: none; background-color: White; height: 50px;
+            padding: 0px;">
+            <div style="height: 15px; top: 0; left: 0" class="panel-header">
+                共享用户列表
+            </div>
+            <label><input id="chk_All" type="checkbox" onclick="selectAll()" />全部用户可见</label>
+        </div>
+        <table id="tab_Power" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field: 'ck', checkbox: true">
+                    </th>
+                    <th data-options="field: 'cLoginName', width: 100, sortable: true">
+                        登录ID
+                    </th>
+                    <th data-options="field: 'cUserChiName', width: 100, sortable: true">
+                        姓名
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <div data-options="region:'south',border:false" style="height: 35px;">
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">确定</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="canecl();">关闭</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iRefRecordID = 0;
+    var _iLocation = 0;
+    var _iType = 0;
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        _iRefRecordID = getHashValue("iRefRecordID");
+        _iLocation = getHashValue("iLocation");
+        _iType = getHashValue("iType");
+
+        setDataGrid("tab_Power", "div_PowerToolbar", "DcCdAttachmentManage", {
+            Action: 'GetPower', iRefRecordID: _iRefRecordID, iLocation: _iLocation, iType: _iType
+        }, "iUserID", "cUserChiName", "", {
+            pagination: false,
+            checkOnSelect: true,
+            selectOnCheck: true,
+            singleSelect: false,
+            onLoadSuccess: function(ci_PowerData) {
+                if (ci_PowerData.rows.length == 0) {
+                    $('#chk_All').attr('checked', 'checked');
+                }
+                setDataGrid("tab_User", "div_UserToolbar", "DcCdUserManage", { Action: "query" }, "iUserID", "cUserChiName", "", {
+                    pagination: false,
+                    checkOnSelect: true,
+                    selectOnCheck: true,
+                    singleSelect: false,
+                    loadFilter: function(ci_UserData) {
+                        if (ci_UserData.rows.length > 0) {
+                            for (var j = 0; j < ci_UserData.rows.length; j++) {
+                                if (ci_UserData.rows[j].cLoginName == top._objUserData.cLoginName) {
+                                    ci_UserData.rows.splice(j, 1);
+                                    break;
+                                }
+                            }
+                            if (ci_PowerData.rows.length > 0) {
+                                for (var i = 0; i < ci_PowerData.rows.length; i++) {
+                                    for (var j = 0; j < ci_UserData.rows.length; j++) {
+                                        if (ci_PowerData.rows[i].iUserID == ci_UserData.rows[j].iUserID) {
+                                            ci_UserData.rows.splice(j, 1);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return ci_UserData;
+                    }
+                }, true);
+            }
+        }, true);
+    }
+
+    function addPower() {
+        var m_objUser = $('#tab_User').datagrid('getSelections');
+        if (m_objUser.length > 0) {
+            for (var i = 0; i < m_objUser.length; ) {
+                var value = m_objUser[i];
+                if (value.iID == undefined) {
+                    value.iID = 0;
+                }
+                $('#tab_Power').datagrid('appendRow', { iID: value.iID, iRefRecordID: _iRefRecordID, iUserID: value.iUserID, cLoginName: value.cLoginName, cUserChiName: value.cUserChiName });
+                $('#tab_User').datagrid('deleteRow', $('#tab_User').datagrid('getRowIndex', value));
+            }
+            $('#chk_All').removeAttr('checked');
+        }
+        else {
+            $.messager.alert('提示', '请选择用户', 'info');
+        }
+    }
+
+    function deletePower() {
+        var m_objUser = $('#tab_Power').datagrid('getSelections');
+        if (m_objUser.length > 0) {
+            for (var i = 0; i < m_objUser.length; ) {
+                var value = m_objUser[i];
+                $('#tab_User').datagrid('appendRow', { iID: value.iID, iUserID: value.iUserID, cLoginName: value.cLoginName, cUserChiName: value.cUserChiName });
+                $('#tab_Power').datagrid('deleteRow', $('#tab_Power').datagrid('getRowIndex', value));
+            }
+            m_objUser = $('#tab_Power').datagrid('getData');
+            if (m_objUser.rows.length == 0) {
+                $('#chk_All').attr('checked', 'checked');
+            }
+        }
+        else {
+            $.messager.alert('提示', '请选择用户', 'info');
+        }
+    }
+
+    function selectAll() {
+        var m_objUser = $('#tab_Power').datagrid('getData');
+        if (m_objUser.rows.length > 0) {
+            $('#tab_Power').datagrid('selectAll');
+            deletePower();
+        }
+        $('#chk_All').attr('checked', 'checked');
+    }
+
+    function saveData() {
+        var m_bAdd = true;
+        var m_bDelete = true;
+        var m_objAdd = [];
+        var m_objDelete = [];
+
+        $.each($('#tab_Power').datagrid('getData').rows, function(index, value) {
+            if (value.iID == 0) {
+                m_objAdd.push(value.iUserID);
+            }
+        });
+        if (m_objAdd.length > 0) {
+            m_bAdd = false;
+            postData({
+                url: "DcCdAttachmentManage",
+                params: { Action: 'AddPower', iUserID: m_objAdd.join(','), iRefRecordID: _iRefRecordID, iType: _iType, iLocation: _iLocation },
+                success: function(ci_result) {
+                    m_bAdd = true;
+                    functionComplete();
+                }
+            });
+        }
+
+        $.each($('#tab_User').datagrid('getData').rows, function(index, value) {
+            if (value.iID > 0) {
+                m_objDelete.push(value.iID);
+            }
+        });
+        if (m_objDelete.length > 0) {
+            m_bDelete = false;
+            postData({
+                url: "DcCdAttachmentManage",
+                params: { Action: 'DeletePower', iID: m_objDelete.join(','), iLocation: _iLocation },
+                success: function(ci_result) {
+                    m_bDelete = true;
+                    functionComplete();
+                }
+            });
+        }
+
+        functionComplete();
+
+        function functionComplete() {
+            if (m_bAdd && m_bDelete) {
+                parent.showMessage("设置成功");
+                if (_iLocation == 2) {
+                    parent.pageInit();
+                }
+                setTimeout('canecl();', 100);
+                //$.messager.alert('提示', '设置成功', 'info');
+            }
+        }
+    }
+
+    function canecl() {
+        parent.closedPopupDialog();
+    }
+</script>
+

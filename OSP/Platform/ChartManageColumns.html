@@ -1,0 +1,163 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <div class="TableCenter" style="width: 800px">
+        <form action="" id="form_Column_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 100%;">
+            <tr>
+                <td class="tabletext" style="width: 30%;">
+                    <span class="require_sign">*</span>X轴字段：
+                </td>
+                <td style="width: 70%;">
+                    <input id="ddl_Column_XViewColumn" class="easyui-combobox text-radius" data-options="editable:false,width:150,required:true" />
+                </td>
+            </tr>
+            <tr group="column_count">
+                <td class="tabletext">
+                    <span class="require_sign">*</span>合计字段：
+                </td>
+                <td>
+                    <input id="ddl_Column_CountColumn" class="easyui-combobox text-radius" data-options="editable:false,width:150" />
+                </td>
+            </tr>
+            <tr group="column_ycolumn">
+                <td class="tabletext">
+                    分组字段：
+                </td>
+                <td>
+                    <input id="ddl_Column_YViewColumn" class="easyui-combobox text-radius" data-options="editable:false,width:150" />
+                    <a class="easyui-linkbutton" data-options="plain:true" onclick="clearText('#ddl_Column_YViewColumn');">
+                        清空</a>
+                </td>
+            </tr>
+        </table>
+        </form>
+    </div>
+    <div class="ButtonBar">
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="column_saveData()">保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf()">关闭</a>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var _column_iXID = 0;
+        var _column_iYID = 0;
+        var _column_iCountID = 0;
+        var _column_iDDLCount = 0;
+        var _column_iSearchType = 0;
+        var _column_strAction = '';
+
+        checkPagePower({ onload: function() { column_initPage(); }, showMask: false, parse: false, check: false });
+
+        function column_initPage() {
+            if (_iChartType == 1) {
+                $('[group="column_ycolumn"]').css('display', '');
+            }
+            else {
+                $('[group="column_ycolumn"]').css('display', 'none');
+            }
+
+            postData({
+                url: 'DcCdDataViewManage',
+                params: { Action: "ColGetList", iViewID: _iViewID },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $.each(ci_result.rows, function() {
+                            if (this.cDesc == '') {
+                                this.cDesc = this.cColumnName;
+                            }
+                        });
+                        $('#ddl_Column_XViewColumn,#ddl_Column_YViewColumn,#ddl_Column_CountColumn').combobox({
+                            data: ci_result.rows,
+                            valueField: "iViewColumnID",
+                            textField: "cDesc",
+                            onLoadSuccess: function() {
+                                $('span.combo,span.spinner').addClass('text-radius');
+                                $('#div_Column_CountType').combolist('selectFirst');
+                            }
+                        });
+                    }
+                    column_getData();
+                }
+            });
+        }
+
+        function column_getData() {
+            _column_iXID = 0;
+            _column_iYID = 0;
+            _column_iCountID = 0;
+            postData({
+                url: 'DcCdReportManage',
+                params: { Action: "ColGetList", iReportID: _iID },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Column_CountType').combolist('select', 2);
+                        $.each(ci_result.rows, function() {
+                            switch (this.iType) {
+                                case 1:
+                                    _column_iXID = this.iReportColumnID;
+                                    $('#ddl_Column_XViewColumn').combobox('selectEx', this.iViewColumnID);
+                                    if (this.iTotalType > 0) {
+                                        $('#div_Column_CountType').combolist('select', 1);
+                                    }
+                                    break;
+                                case 2:
+                                    _column_iYID = this.iReportColumnID;
+                                    $('#ddl_Column_YViewColumn').combobox('selectEx', this.iViewColumnID);
+                                    break;
+                                case 0:
+                                    if (this.iTotalType > 0) {
+                                        _column_iCountID = this.iReportColumnID;
+                                        $('#ddl_Column_CountColumn').combobox('selectEx', this.iViewColumnID);
+                                    }
+                                    break;
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function column_saveData() {
+            postData({
+                url: 'DcCdReportManage',
+                params: { Action: 'coledit', iReportID: _iID },
+                validate: true,
+                form: 'form_Column_Edit',
+                onPost: function() {
+                    var m_objData = [];
+                    m_objData.push(_column_iXID + ',' + $('#ddl_Column_XViewColumn').combobox('getValue') + ',1,0');
+                    m_objData.push(_column_iCountID + ',' + $('#ddl_Column_CountColumn').combobox('getValue') + ',0,3');
+                    if (_iChartType == 1) {
+                        if ($('#ddl_Column_YViewColumn').combobox('getValue') != '') {
+                            m_objData.push(_column_iYID + ',' + $('#ddl_Column_YViewColumn').combobox('getValue') + ',2,0');
+                        }
+                        else if (_column_iYID > 0) {
+                            m_objData.push((_column_iYID * -1) + ',,2,0');
+                        }
+                    }
+                    this.params.DataList = m_objData.join(';');
+                    return true;
+                },
+                success: function(ci_result) {
+                    column_getData();
+                }
+            });
+        }
+
+        function column_setCountDisplay(ci_iType) {
+            if (ci_iType == 1) {
+                $('[group="column_count"]').css('display', 'none');
+                $('#ddl_Column_CountColumn').combobox('clear').combobox('textbox').validatebox({ required: false });
+            }
+            else {
+                $('[group="column_count"]').css('display', '');
+                $('#ddl_Column_CountColumn').combobox('clear').combobox('textbox').validatebox({ required: true });
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+<krpano>
+
+
+	<!-- the snow plugin -->
+	<plugin name="snow" zorder="1"
+	        url="%SWFPATH%/plugins/snow.swf"
+	        alturl="%SWFPATH%/plugins/snow.js"
+	        floor="0.7"
+	        />
+
+	<action name="defaultsnow">
+		set(plugin[snow].mode,          snow);
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        4000);
+		set(plugin[snow].color,         0xFFFFFF);
+		set(plugin[snow].speed,         1.0);
+		set(plugin[snow].shake,         4.0);
+		set(plugin[snow].speedvariance, 2.0);
+		set(plugin[snow].spreading,     4.0);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="snowballs">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/snowball.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        2000);
+		set(plugin[snow].imagescale,    0.5);
+		set(plugin[snow].speed,         1.0);
+		set(plugin[snow].shake,         4.0);
+		set(plugin[snow].speedvariance, 2.0);
+		set(plugin[snow].spreading,     2.0);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="snowflakes">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/snowflake.png');
+		set(plugin[snow].blendmode,     add);
+		set(plugin[snow].flakes,        2000);
+		set(plugin[snow].imagescale,    0.4);
+		set(plugin[snow].speed,         0.5);
+		set(plugin[snow].shake,         8.0);
+		set(plugin[snow].speedvariance, 2.0);
+		set(plugin[snow].spreading,     2.0);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="silverstars">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/silverstar.png');
+		set(plugin[snow].blendmode,     add);
+		set(plugin[snow].flakes,        2000);
+		set(plugin[snow].imagescale,    0.3);
+		set(plugin[snow].speed,         1.0);
+		set(plugin[snow].shake,         4.0);
+		set(plugin[snow].speedvariance, 2.0);
+		set(plugin[snow].spreading,     2.0);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="goldenstars">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/star.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        1000);
+		set(plugin[snow].imagescale,    1.0);
+		set(plugin[snow].speed,         1.0);
+		set(plugin[snow].shake,         4.0);
+		set(plugin[snow].speedvariance, 2.0);
+		set(plugin[snow].spreading,     1.9);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="hearts">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/heart.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        250);
+		set(plugin[snow].imagescale,    0.5);
+		set(plugin[snow].speed,         1.0);
+		set(plugin[snow].shake,         4.0);
+		set(plugin[snow].speedvariance, 2.0);
+		set(plugin[snow].spreading,     1.5);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="smileys">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/smiley.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        1000);
+		set(plugin[snow].imagescale,    1.0);
+		set(plugin[snow].speed,         1.0);
+		set(plugin[snow].shake,         4.0);
+		set(plugin[snow].speedvariance, 2.0);
+		set(plugin[snow].spreading,     1.5);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="money">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/money.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        500);
+		set(plugin[snow].imagescale,    0.8);
+		set(plugin[snow].speed,         0.8);
+		set(plugin[snow].shake,         8.0);
+		set(plugin[snow].speedvariance, 3.0);
+		set(plugin[snow].spreading,     2.5);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+	<action name="rain">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,     '/OSP/Images/rain.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        2000);
+		set(plugin[snow].color,         0x7FAFFF);
+		set(plugin[snow].speed,         6.5);
+		set(plugin[snow].shake,         1.0);
+		set(plugin[snow].speedvariance, 1.0);
+		set(plugin[snow].spreading,     3.0);
+		set(plugin[snow].rainwidth,     1.0);
+		set(plugin[snow].rainalpha,     0.5);
+		set(plugin[snow].wind,          2.0);
+	</action>	
+	
+	<action name="heavyrain">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,     '/OSP/Images/rain.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        4000);
+		set(plugin[snow].color,         0x9FAFFF);
+		set(plugin[snow].speed,         8.5);
+		set(plugin[snow].shake,         0.0);
+		set(plugin[snow].speedvariance, 1.5);
+		set(plugin[snow].spreading,     4.0);
+		set(plugin[snow].rainwidth,     1.5);
+		set(plugin[snow].rainalpha,     0.3);
+		set(plugin[snow].wind,          3.0);
+	</action>
+
+	<action name="leaves">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/leaves.png');
+		set(plugin[snow].speed,         1.5);
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        300);
+		set(plugin[snow].color,         0x9FAFFF);
+		set(plugin[snow].shake,         0.0);
+		set(plugin[snow].speedvariance, 1.5);
+		set(plugin[snow].spreading,     4.0);
+		set(plugin[snow].rainwidth,     1.5);
+		set(plugin[snow].rainalpha,     0.3);
+		set(plugin[snow].wind,          1.0);
+	</action>
+
+	<action name="treeleaf">
+		set(plugin[snow].mode,          image);
+		set(plugin[snow].imageurl,      '/OSP/Images/treeleaf.png');
+		set(plugin[snow].blendmode,     normal);
+		set(plugin[snow].flakes,        500);
+		set(plugin[snow].imagescale,    1.0);
+		set(plugin[snow].speed,         0.8);
+		set(plugin[snow].shake,         0.0);
+		set(plugin[snow].speedvariance, 8.0);
+		set(plugin[snow].spreading,     2.5);
+		set(plugin[snow].wind,          0.0);
+	</action>
+	
+
+</krpano>

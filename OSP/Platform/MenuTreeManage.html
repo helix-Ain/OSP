@@ -1,0 +1,496 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>菜单管理</title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'center',title:'查询',iconCls:'dc-icon-search'">
+        <div id="div_MenuTree" class="easyui-tree" data-options="animate: true">
+        </div>
+    </div>
+    <div id="div_Menu" data-options="region:'east',split:true,onResize:function(){resizeDetail();}"
+        style="width: 500px">
+        <div id="div_Edit" class="easyui-panel" data-options="fit:true,noheader:true,border:false">
+        </div>
+    </div>
+    <input id="hidd_Action" type="hidden" />
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _IsEdit = false;
+    
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        postData({
+            url: "DcCdMenuTreeManage",
+            params: { action: "getmenutree" },
+            success: function(result) {
+                if (result.DcCode >= 0 && result.rows != null) {
+                    $('#div_MenuTree').tree({ animate: true, dnd: true, data: result.rows });
+                    $.parser.parse($('#div_MenuTree'));
+                }
+            },
+            failure: function(result) {
+                hiddMask();
+                $.messager.alert('提示', '读取失败', 'error');
+            }
+        });
+
+        $('#div_MenuTree').tree({
+            onClick: function(node) {
+                switch ($("#hidd_Action").val()) {
+                    case "delete":
+                        if (node.attributes.type != 'I') {
+                            if ($('#div_MenuTree').tree('isLeaf', node.target)) {
+                                if (confirm('确定删除？')) {
+                                    deleteMenu(node.attributes.id, node.attributes.type, node);
+                                }
+                            }
+                            else {
+                                $.messager.alert('提示', '删除该栏目前，请先删除子栏目', 'info');
+                            }
+                        }
+                        else {
+                            if (confirm('确定删除？')) {
+                                deleteMenu(node.attributes.id, node.attributes.type, node);
+                            }
+                        }
+                        break;
+                    case "add":
+                        var m_strCType;
+                        switch (node.attributes.type) {
+                            case "M":
+                                m_strCType = "G";
+                                break;
+                            case "G":
+                                m_strCType = "I";
+                                break;
+                            case "I":
+                                m_strCType = "F";
+                                break;
+                        }
+                        var m_NodeChildren = $('#div_MenuTree').tree('getChildren', node.target);
+                        var m_NCArr = [];
+                        var ci_i = 0;
+                        $.each(m_NodeChildren, function(index, value) { if (m_NodeChildren[index].attributes.type == m_strCType) { m_NCArr[ci_i] = m_NodeChildren[index].attributes.id; ci_i++; } })
+                        var m_iOrder = m_NCArr.length;
+                        var m_strParams = "parentid=" + node.attributes.id + "&parentchiname=" + node.attributes.title + "&order=" + m_iOrder;
+                        showAdd(node.attributes.type, m_strParams);
+                        break;
+                }
+                if ($("#hidd_Action").val() != 'delete') {
+                    setTimeout('showDetail("edit", "' + node.attributes.type + '", "' + node.attributes.id + '", "parentid=' + node.attributes.parentid + '");', 100);
+                }
+                else {
+                    var m_div_Edit = document.getElementById("div_Edit");
+                    m_div_Edit.innerHTML = "";
+                }
+                setAction("");
+            },
+            onBeforeDrop: function(target, source, point) {
+                var _GetTarget = $('#div_MenuTree').tree('getNode', target);
+                var _GetNode = $('#div_MenuTree').tree('getNode', source);
+                var _GetChildren = $('#div_MenuTree').tree('getChildren', target);
+                if (confirm('确定移动吗？')) {
+                    if (point == 'append') {
+                        if ((_GetTarget.attributes.type == 'I' && _GetNode.attributes.type == 'F') || (_GetTarget.attributes.type == 'G' && _GetNode.attributes.type == 'I') || (_GetTarget.attributes.type == 'M' && _GetNode.attributes.type == 'G')) {
+                            return true;
+                        }
+                        else {
+                            $.messager.alert('提示', '只能在同级别中移动', 'info');
+                            return false;
+                        }
+                    }
+
+                    else {
+                        if ((_GetTarget.attributes.type == 'F' && _GetNode.attributes.type == 'F') || (_GetTarget.attributes.type == 'I' && _GetNode.attributes.type == 'I') || (_GetTarget.attributes.type == 'G' && _GetNode.attributes.type == 'G') || (_GetTarget.attributes.type == 'M' && _GetNode.attributes.type == 'M')) {
+                            return true;
+                        }
+                        else {
+                            $.messager.alert('提示', '只能在同级别中移动', 'info');
+                            return false;
+                        }
+
+                    }
+                }
+                else {
+                    return false;
+                }
+
+            },
+            onDrop: function(target, source, point) {
+                changeOrder(target, source, point);
+            }
+        });
+    }
+
+    function setAction(ci_strAction) {
+        $("#hidd_Action").val(ci_strAction);
+    }
+
+    function deleteMenu(ci_strID, ci_strType, ci_objNode) {
+        var m_IDArr = new Array();
+        var m_OrderArr = new Array();
+        var m_objC = new Array();
+        if (ci_objNode != undefined && ci_objNode != null) {
+            var _PNode = $('#div_MenuTree').tree('getParent', ci_objNode.target);
+            if (_PNode != null && _PNode != "") {
+                _CNodes = $('#div_MenuTree').tree('getChildren', _PNode.target);
+                if (_CNodes != null && _CNodes != "") {
+                    var j = 0;
+                    for (var i = 0; i < _CNodes.length; i++) {
+                        if (_CNodes[i].attributes.parentid == ci_objNode.attributes.parentid) {
+                            m_objC[j] = _CNodes[i];
+                            j++;
+                        }
+                    }
+                    j = 0;
+                    var n = parseInt(ci_objNode.attributes.order);
+                    if (m_objC != null && m_objC != "") {
+                        for (var i = 0; i < m_objC.length; i++) {
+                            if (parseInt(m_objC[i].attributes.order) > parseInt(ci_objNode.attributes.order)) {
+                                m_IDArr[j] = m_objC[i].attributes.id;
+                                m_OrderArr[j] = n;
+                                j++;
+                                n++;
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                var roots = $('#div_MenuTree').tree('getRoots');
+                if (roots != null && roots != "") {
+                    var j = 0;
+                    var n = parseInt(ci_objNode.attributes.order);
+                    for (var i = 0; i < roots.length; i++) {
+                        if (parseInt(roots[i].attributes.order) > parseInt(ci_objNode.attributes.order)) {
+                            m_IDArr[j] = roots[i].attributes.id;
+                            m_OrderArr[j] =n;
+                            j++;
+                            n++;
+                        }
+                    }
+                }
+            }
+        }
+        if (ci_strType == 'F') {
+            $.post(getInterfaceName("DcCdFunGroupManage"), { "action": "del", "id": ci_strID }, function(result) {
+                result = convertToJson(result); if (checkReturnJson(result)) {
+                    if (m_IDArr.length > 0 && m_OrderArr.length > 0) {
+                        $.post(getInterfaceName("DcCdFunGroupManage"), { "action": "changeorder", "id[]": m_IDArr, "iOrder[]": m_OrderArr }, function(result) { result = convertToJson(result); if (checkReturnJson(result)) { $.messager.alert('提示', '保存成功', 'info'); initPage(); } else { $.messager.alert('提示', '保存失败', 'error'); } }, 'json');
+                    }
+                    else {
+                        $.messager.alert('提示', '保存成功', 'info', function() { initPage(); });
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存失败', 'error', function() { initPage(); });
+                }
+            }, 'json')
+        }
+        else {
+            $.post(getInterfaceName("DcCdMenuManage"), { "action": "del", "id": ci_strID }, function(result) {
+                result = convertToJson(result); if (checkReturnJson(result)) {
+                    if (m_IDArr.length > 0 && m_OrderArr.length > 0) {
+                        $.post(getInterfaceName("DcCdMenuManage"), { "action": "changeorder", "id[]": m_IDArr, "iOrder[]": m_OrderArr }, function(result) { result = convertToJson(result); if (checkReturnJson(result)) { $.messager.alert('提示', '保存成功', 'info'); initPage(); } else { $.messager.alert('提示', '保存失败', 'error'); } }, 'json');
+                    }
+                    else {
+                        $.messager.alert('提示', '保存成功', 'info', function() { initPage(); });
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存失败', 'error',function() { initPage(); });
+                }
+            }, 'json')
+        }
+    }
+
+    function showAdd(ci_strType, ci_strParams) {
+        switch (ci_strType) {
+            case "M":
+                ci_strType = "G";
+                break;
+            case "G":
+                ci_strType = "I";
+                break;
+            case "I":
+                ci_strType = "F";
+                break;
+        }
+        setTimeout('showDetail("add", "' + ci_strType + '", "", "' + ci_strParams + '");', 100);
+    }
+
+    function resizeDetail() {
+        if (_IsEdit) {
+            $('#div_Detail').dialog({ fit: true, modal: true }).dialog('open');
+        }
+    }
+
+    function showDetail(ci_strAction, ci_strType, ci_strID, ci_strParams) {
+        $('#div_Edit').html("");
+        var m_strUrl = "";
+        var m_strTitle = "";
+        if (ci_strType == undefined) {
+            ci_strType = "";
+        }
+        switch (ci_strType) {
+            case "M":
+                m_strUrl = 'MainMenuManage.html';
+                m_strTitle = '新增主菜单';
+                break;
+            case "G":
+                m_strUrl = 'MenuGroupManage.html';
+                m_strTitle = '新增菜单组';
+                break;
+            case "I":
+                m_strUrl = 'MenuManage.html';
+                m_strTitle = '新增菜单';
+                break;
+            case "F":
+                m_strUrl = 'FunGroupManage.html';
+                m_strTitle = '新增功能组';
+                break;
+        }
+        if (m_strUrl != "") {
+            if (ci_strAction == undefined) {
+                ci_strAction = "";
+            }
+            if (ci_strID == undefined) {
+                ci_strID = "";
+            }
+            m_strUrl += "#action=" + ci_strAction + "&id=" + ci_strID;
+            if (ci_strParams != undefined && ci_strParams != "") {
+                m_strUrl += "&" + ci_strParams;
+            }
+            var m_div_Edit = document.getElementById("div_Edit");
+            switch (ci_strAction) {
+                case "add":
+                    var m_div_Detail = document.getElementById("div_Detail");
+                    if (m_div_Detail == null) {
+                        m_div_Detail = document.createElement("div");
+                        m_div_Detail.setAttribute('id', "div_Detail");
+                        m_div_Detail.setAttribute('data-options', "closed:true,modal:true,border:false,title:'" + m_strTitle + "',iconCls:'dc-icon-dialog-title'");
+                        m_div_Detail.className = "easyui-dialog";
+                        m_div_Edit.appendChild(m_div_Detail);
+                        $.parser.parse($('#div_Detail'));
+                    }
+                    $('#div_Detail').dialog({ width: 350, height: 320, modal: true, title: m_strTitle }).dialog('open');
+                    m_div_Detail.innerHTML = '<iframe id="ifr_" scrolling="yes" frameborder="0"  src="' + m_strUrl + '" style="width:100%;height:100%;"></iframe>';
+                    _IsEdit = true;
+                    break;
+                case "edit":
+                    m_div_Edit.innerHTML = '<iframe id="ifr_" scrolling="yes" frameborder="0"  src="' + m_strUrl + '" style="width:100%;height:100%;"></iframe>';
+                    break;
+            }
+        }
+    }
+
+    function closeDetail() {
+        $('#div_Detail').dialog("close");
+        var m_div = document.getElementById("div_Detail");
+        m_div.innerHTML = "";
+        _IsEdit = false;
+    }
+
+    function changeOrder(ci_objT,ci_objS,ci_strP) {
+        var m_SNodeTarget = $('#div_MenuTree').tree('find', ci_objS.id);
+
+        var m_TParent = $('#div_MenuTree').tree('getParent', ci_objT); //target父节点
+        var m_SParent = $('#div_MenuTree').tree('getParent', m_SNodeTarget.target); //source父节点
+        var m_TNode = $('#div_MenuTree').tree('getNode', ci_objT); //target节点对象
+        var m_SNode = $('#div_MenuTree').tree('getNode', m_SNodeTarget.target); //source节点对象
+        var m_SType = ci_objS.attributes.type;
+        var m_SOrder = ci_objS.attributes.order;
+
+        var m_ID = ci_objS.attributes.id; //source节点ID
+        var m_OrderNo;//source节点排序位置
+        var m_ParentID;//source节点排序后父节点
+        var m_SOrderArr = new Array();//排序后source排序数组
+        var m_TOrderArr = new Array();//排序后target排序数组
+        var m_OrderIDArr = new Array();//更新数据库ID数组
+        var m_OrderNoArr = new Array();//更新数据库Order数组
+        
+        if (ci_strP == 'append') {
+            var m_TChildren = $('#div_MenuTree').tree('getChildren', ci_objT); //获取target子项Children
+            if (m_TChildren.length > 0) {
+                m_TOrderArr = []; //清空source排序数组
+                var i = 0;
+                $.each(m_TChildren, function(index, value) { if (m_TChildren[index].attributes.type == m_SType) { m_TOrderArr[i] = m_TChildren[index].attributes.id; i++; } })
+            }
+            var m_SPChildren;
+            if (m_SParent != null && m_SParent != '') {
+                m_SPChildren = $('#div_MenuTree').tree('getChildren', m_SParent.target);
+                if (m_SPChildren.length > 0) {
+                    m_SOrderArr = [];
+                    var i = 0;
+                    $.each(m_SPChildren, function(index, value) { if (m_SPChildren[index].attributes.type == m_SType) { m_SOrderArr[i] = m_SPChildren[index].attributes.id; i++; } })
+
+                    if (m_SOrderArr.length > parseInt(ci_objS.attributes.order) + 1) {
+                        m_OrderIDArr = [];
+                        m_OrderNoArr = [];
+                        var j = 0;
+                        for (n = parseInt(m_SOrder); n < m_SOrderArr.length; n++) {
+                            m_OrderIDArr[j] = m_SOrderArr[n];
+                            m_OrderNoArr[j] = n;
+                            j++;
+                        }
+                    }
+                }
+            }
+
+            m_ParentID = m_TNode.attributes.id;
+            m_OrderNo = m_TOrderArr.length - 1;
+
+        }
+        else {
+            if (m_TParent != null && m_TParent != '') {
+                m_ParentID = m_TParent.attributes.id;
+            }
+            else {
+                m_ParentID = '0';
+            }
+            m_OrderIDArr = [];
+            m_OrderNoArr = [];
+            var m_TPChildren;
+            if (m_TParent != null && m_TParent != '') {
+                m_TPChildren = $('#div_MenuTree').tree('getChildren', m_TParent.target);
+            }
+            else {
+                m_TPChildren = $('#div_MenuTree').tree('getRoots');
+            }
+            m_TOrderArr = [];
+            var i = 0;
+            $.each(m_TPChildren, function(index, value) { if (m_TPChildren[index].attributes.type == m_SType) { m_TOrderArr[i] = m_TPChildren[index].attributes.id; i++; } })
+            m_OrderIDArr = [];
+            m_OrderNoArr = [];
+            for (n = 0; n < m_TOrderArr.length; n++) {
+                m_OrderIDArr[n] = m_TOrderArr[n];
+                m_OrderNoArr[n] = n;
+            }
+            var m_SPChildren;
+            if (m_SParent != null && m_SParent != '') {
+                m_SPChildren = $('#div_MenuTree').tree('getChildren', m_SParent.target);
+            }
+            else {
+                m_SPChildren = $('#div_MenuTree').tree('getRoots');
+            }
+
+            m_SOrderArr = [];
+            i = 0;
+            $.each(m_SPChildren, function(index, value) { if (m_SPChildren[index].attributes.type == m_SType) { m_SOrderArr[i] = m_SPChildren[index].attributes.id; i++; } })
+            var j = m_OrderIDArr.length;
+            for (n = 0; n < m_SOrderArr.length; n++) {
+                m_OrderIDArr[j] = m_SOrderArr[n];
+                m_OrderNoArr[j] = n;
+                j++
+            }
+
+            if (ci_strP == 'top') {
+                m_OrderNo = m_TNode.attributes.order;
+            }
+            else {
+                m_OrderNo = parseInt(m_TNode.attributes.order) + 1;
+            }
+        }
+
+        if (m_SType == 'F') {
+            $.post(getInterfaceName("DcCdFunGroupManage"), { "action": "changelevel", "id": m_ID, "iMenuID": m_ParentID, "iOrder": m_OrderNo }, function(result) {
+                result = convertToJson(result);
+                if (checkReturnJson(result)) {
+                    if (m_OrderIDArr.length > 0 && m_OrderNoArr.length > 0) {
+                        $.post(getInterfaceName("DcCdFunGroupManage"), { "action": "changeorder", "id[]": m_OrderIDArr, "iOrder[]": m_OrderNoArr }, function(result) { result = convertToJson(result); if (checkReturnJson(result)) { $.messager.alert('提示', '保存成功', 'info'); } else { $.messager.alert('提示', '保存失败', 'error'); } }, 'json');
+                    }
+                    else {
+                        $.messager.alert('提示', '保存成功', 'info');
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存失败', 'error');
+                }
+            }, 'json')
+        }
+        else {
+            $.post(getInterfaceName("DcCdMenuManage"), { "action": "changelevel", "id": m_ID, "iParentID": m_ParentID, "iOrder": m_OrderNo }, function(result) {
+                result = convertToJson(result);
+                if (checkReturnJson(result)) {
+                    if (m_OrderIDArr.length > 0 && m_OrderNoArr.length > 0) {
+                        $.post(getInterfaceName("DcCdMenuManage"), { "action": "changeorder", "id[]": m_OrderIDArr, "iOrder[]": m_OrderNoArr }, function(result) { result = convertToJson(result); if (checkReturnJson(result)) { $.messager.alert('提示', '保存成功', 'info'); } else { $.messager.alert('提示', '保存失败', 'error'); } }, 'json');
+                    }
+                    else {
+                        $.messager.alert('提示', '保存成功', 'info');
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存失败', 'error');
+                }
+            }, 'json')
+        }
+
+
+    }
+
+    function treeOrder(ci_objT, ci_objS, ci_strP, ci_strTreeName) {
+        var m_SPID = ci_objS.attributes.patentid;
+        var m_SType = ci_objS.attributes.type;
+        var m_SOrder = ci_objS.attributes.order;
+        var m_SID = ci_objS.attributes.id;
+        var m_SOrderArr = new Array(); //排序后source排序数组
+        var m_TOrderArr = new Array(); //排序后target排序数组
+        var m_OrderIDArr = new Array(); //更新数据库ID数组
+        var m_OrderNoArr = new Array(); //更新数据库Order数组
+
+        if (ci_strP == 'append') {
+            
+        }
+        else {
+            if (ci_strP == 'top') {
+                m_OrderNo = m_TNode.attributes.order;
+            }
+            else {
+                m_OrderNo = parseInt(m_TNode.attributes.order) + 1;
+            }
+        }
+
+        if (m_SType == 'F') {
+            $.post(getInterfaceName("DcCdFunGroupManage"), { "action": "changelevel", "id": m_ID, "iMenuID": m_ParentID, "iOrder": m_OrderNo }, function(result) {
+                result = convertToJson(result);
+                if (checkReturnJson(result)) {
+                    if (m_OrderIDArr.length > 0 && m_OrderNoArr.length > 0) {
+                        $.post(getInterfaceName("DcCdFunGroupManage"), { "action": "changeorder", "id[]": m_OrderIDArr, "iOrder[]": m_OrderNoArr }, function(result) { result = convertToJson(result); if (checkReturnJson(result)) { $.messager.alert('提示', '保存成功', 'info'); } else { $.messager.alert('提示', '保存失败', 'error'); } }, 'json');
+                    }
+                    else {
+                        $.messager.alert('提示', '保存成功', 'info');
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存失败', 'error');
+                }
+            }, 'json')
+        }
+        else {
+            $.post(getInterfaceName("DcCdMenuManage"), { "action": "changelevel", "id": m_ID, "iParentID": m_ParentID, "iOrder": m_OrderNo }, function(result) {
+                result = convertToJson(result);
+                if (checkReturnJson(result)) {
+                    if (m_OrderIDArr.length > 0 && m_OrderNoArr.length > 0) {
+                        $.post(getInterfaceName("DcCdMenuManage"), { "action": "changeorder", "id[]": m_OrderIDArr, "iOrder[]": m_OrderNoArr }, function(result) { result = convertToJson(result); if (checkReturnJson(result)) { $.messager.alert('提示', '保存成功', 'info'); } else { $.messager.alert('提示', '保存失败', 'error'); } }, 'json');
+                    }
+                    else {
+                        $.messager.alert('提示', '保存成功', 'info');
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存失败', 'error');
+                }
+            }, 'json')
+        }
+    }
+</script>
+

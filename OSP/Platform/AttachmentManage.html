@@ -1,0 +1,843 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../js/CommonScript.js?script=../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js"></script>
+
+</head>
+<body style="display: none;">
+    <div id="div_Msg" class="file_message easyui-panel" data-options="noheader:true,fit:false,width:120,collapsed:true">
+    </div>
+    <div style="min-width: 710px; margin: 10px 10px auto 10px;">
+        <div class="header_bar">
+            <div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+            </div>
+            <div id="div_TopMenu" style="margin-top: 5px;">
+                <div style="float: left; margin-left: 5px; height: 32px;">
+                    <a id="menu_Location" href="javascript:void(0)" class="easyui-menubutton" data-options="plain:true,menu:'#div_Menu_Location'">
+                        我的文件</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-reload"
+                            plain="true" onclick="pageInit();showMessage('文件列表已刷新');">刷新</a>
+                </div>
+                <div id="div_New" style="float: left; height: 32px;">
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-editadd"
+                        plain="true" onclick="addFolder()" style="float: left;">新建文件夹</a>
+                    <div class="easyui-linkbutton" style="float: left; margin: 2px  2px auto 5px;">
+                        <input id="input_Upload" type="file" style="display: none;" />
+                    </div>
+                </div>
+                <div id="div_Space" style="float: right;">
+                    <div id="div_SpaaceBar" class="easyui-progressbar" data-options="value:0,width:150"
+                        style="height: 12px;">
+                    </div>
+                    <div id="div_SpaceText" style="margin-top: 2px;">
+                    </div>
+                </div>
+                <div id="div_Navigation" style="border: solid 1px #E0E0E0; overflow: hidden; height: 27px;
+                    line-height: 27px; vertical-align: middle; margin: 5px 10px 0px 10px; position: relative;">
+                    <label folderid="0" style="margin-left: 5px;">
+                        全部文件</label>
+                </div>
+            </div>
+        </div>
+        <div style="display: block; height: 56px; width: 100%; background-color: White;">
+        </div>
+        <div id="div_List_Folder" style="border-left: solid 1px #E0E0E0; border-right: solid 1px #E0E0E0;">
+        </div>
+        <div id="div_List_File" style="border-left: solid 1px #E0E0E0; border-right: solid 1px #E0E0E0;">
+        </div>
+        <div style="margin-bottom: 20px;">
+        </div>
+    </div>
+    <div id="div_Dialog_Folder" class="easyui-dialog" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'"
+        title="移动到：">
+        <div style="width: auto; height: 290px; overflow: auto;">
+            <div id="div_Tree_Folder">
+            </div>
+        </div>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="moveFile2()">确定</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="javascript:$('#div_Dialog_Folder').dialog('close')">
+                取消</a>
+        </div>
+    </div>
+    <div id="div_Menu_Pop" class="easyui-menu" style="width: 120px; display: none;">
+        <div data-options="iconCls:'dc-icon-move'" onclick="moveFile();">
+            移动
+        </div>
+        <div data-options="iconCls:'dc-icon-rename'" onclick="renameFile();">
+            重命名
+        </div>
+        <div data-options="iconCls:'dc-icon-delete'" onclick="deleteFile();">
+            删除
+        </div>
+    </div>
+    <div id="div_Menu_Location" class="easyui-menu" style="width: 120px; display: none;"
+        data-options="onClick:changeLocation">
+        <div class="icon_menuselect" name="1">
+            我的文件
+        </div>
+        <div name="2">
+            公共文件
+        </div>
+        <div name="3">
+            网络共享
+        </div>
+        <div name="4">
+            回收站
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iLocation = 1;
+    var _iCurrFolderID = 0;
+    var _iMsgTimeoutID = null;
+    var _objMenuList = [];
+    var _iMenuDelay = 800;
+    var _iWidth = 370;
+    var _strFileName = '';
+    var _objWidthObject = null;
+
+    initReady(function() {
+        _objWidthObject = $('#div_List_Folder');
+
+        $(window).resize(function() {
+            $('.file_name').width($('#div_List_File').width() - _iWidth);
+            $('#div_Navigation,#div_TopMenu').width(_objWidthObject.width());
+        });
+
+        $('#div_Dialog_Folder').dialog({ onClose: function() { $('#div_Tree_Folder').empty(); } });
+
+        $('#div_Menu_Pop').menu({ onHide: function() { $('.menu_more').removeClass('menu_more_click'); } });
+
+        $("#menu_Location").bind('mouseenter', function() { cancelMenuCloseTime('div_Menu_Location'); }).bind('mouseleave', function() { setMenuCloseTime('div_Menu_Location'); });
+        $("#div_Menu_Location").bind('mouseenter', function() { cancelMenuCloseTime('div_Menu_Location'); });
+    });
+
+    function setMenuCloseTime(ci_strMenuID) {
+        for (var i = 0; i < _objMenuList.length; i++) {
+            if (_objMenuList[i].menuID == ci_strMenuID) {
+                _objMenuList[i].timer = window.setTimeout("$('#" + ci_strMenuID + "').menu('hide')", _iMenuDelay);
+                return;
+            }
+        }
+        _objMenuList.push({ menuID: ci_strMenuID, timer: window.setTimeout("$('#" + ci_strMenuID + "').menu('hide')", _iMenuDelay) });
+    }
+
+    function cancelMenuCloseTime(ci_strMenuID) {
+        for (var i = 0; i < _objMenuList.length; i++) {
+            if (_objMenuList[i].menuID == ci_strMenuID) {
+                if (_objMenuList[i].timer) {
+                    window.clearTimeout(_objMenuList[i].timer);
+                    _objMenuList[i].timer = null;
+                }
+                return;
+            }
+        }
+    }
+
+    function showMessage(ci_strMsg) {
+        if (_iMsgTimeoutID != null) {
+            clearTimeout(_iMsgTimeoutID);
+            _iMsgTimeoutID = null;
+            $('#div_Msg').panel('collapse');
+        }
+        $('#div_Msg').html(ci_strMsg).panel('expand', true);
+        _iMsgTimeoutID = setTimeout("$('#div_Msg').panel('collapse', true);", 2000);
+    }
+
+    function getFolderParameter() {
+        var m_objParams = { Action: '' };
+        switch (_iLocation) {
+            case 1:
+                m_objParams.Action = 'GetUserFolder';
+                m_objParams.iParentID = _iCurrFolderID;
+                break;
+            case 2:
+                m_objParams.Action = 'GetOrgFolder';
+                m_objParams.iParentID = _iCurrFolderID;
+                break;
+            case 3:
+                if (_iCurrFolderID == 0) {
+                    m_objParams.Action = 'GetShareFolder';
+                }
+                break;
+            case 4:
+                m_objParams.Action = "GetUserFolder";
+                m_objParams.bIsValid = "0";
+                break;
+        }
+        return m_objParams;
+    }
+
+    function getFileParameter() {
+        var m_objParams = { Action: '' };
+        switch (_iLocation) {
+            case 1:
+                m_objParams.Action = 'GetUserFile';
+                m_objParams.iFolderID = _iCurrFolderID;
+                break;
+            case 2:
+                m_objParams.Action = 'GetOrgFile';
+                m_objParams.iFolderID = _iCurrFolderID;
+                break;
+            case 3:
+                if (_iCurrFolderID > 0) {
+                    m_objParams.Action = 'GetShareFile';
+                    m_objParams.iCreatedBy = _iCurrFolderID;
+                }
+                break;
+            case 4:
+                m_objParams.Action = "GetUserFile";
+                m_objParams.bIsValid = "0";
+                break;
+        }
+        return m_objParams;
+    }
+
+    checkPagePower({ onload: function() { setUpload(); pageInit(); getUserSpace(); } });
+
+    function setUpload() {
+        $("#input_Upload").uploadify({
+            'uploader': _strSysUrl + 'JS/uploadify-v2.1.4/scripts/uploadify.swf',
+            'cancelImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/cancel.png',
+            'buttonImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/upload_btn.png',
+            'script': getInterfaceName("DcCdAttachmentManage", true),
+            'queueID': 'div_FileQueue',
+            'auto': true,
+            'multi': false,
+            'width': 55,
+            'height': 22,
+            'buttonText': '',
+            method: 'post',
+            'onError': function(event, ID, fileObj, errorObj) {
+                if (errorObj.type === "File Size") {
+                    $("#input_Upload").uploadifyCancel(ID);
+                    $.messager.alert('提示', '超过文件上传大小限制！', 'info'); ;
+                }
+                else {
+                    $.messager.alert('提示', '上传失败！', 'info');
+                }
+            },
+            'onSelect': function(e, queueId, fileObj) {
+                $('#input_Upload').uploadifySettings('scriptData', { Action: 'upload', iFolderID: _iCurrFolderID, iType: _iLocation, UserCertification: getCookie('UserCertification') });
+            },
+            onComplete: function(event, queueId, fileObj, response, data) {
+                var m_result = convertToJson(response);
+                if (m_result.DcCode != undefined && m_result.DcCode == 0) {
+                    showMessage('上传成功');
+                    pageInit(2);
+                    getUserSpace();
+                }
+                else {
+                    if (m_result.DcMessage != undefined && m_result.DcMessage != '') {
+                        $.messager.alert('提示', m_result.DcMessage, 'info');
+                    }
+                    else {
+                        $.messager.alert('提示', '上传失败！', 'info');
+                    }
+                }
+            }
+        });
+    }
+
+    function pageInit(ci_iType) {
+        var m_bFolder = true;
+        var m_bFile = true;
+
+        switch (ci_iType) {
+            case 1:
+                getFolderList();
+                break;
+            case 2:
+                getFileList();
+                break;
+            default:
+                getFolderList();
+                getFileList();
+                break;
+        }
+        funComplete();
+        function getFolderList() {
+            $('#div_List_Folder').empty();
+            var m_objParams = getFolderParameter();
+            if (m_objParams.Action != '') {
+                m_bFolder = false;
+                postData({
+                    url: "DcCdAttachmentManage",
+                    params: m_objParams,
+                    success: function(ci_result) {
+                        m_bFolder = true;
+                        if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                            ci_result.rows.sort(function(a, b) {
+                                if (a.iType == b.iType) {
+                                    return (a.dCreationDt > b.dCreationDt ? -1 : 1);
+                                }
+                                if (a.iType > 0) {
+                                    return -1;
+                                }
+                                if (b.iType > 0) {
+                                    return 1;
+                                }
+                            });
+                            for (var i = 0; i < ci_result.rows.length; i++) {
+                                $(getFolderRowItem(ci_result.rows[i])).appendTo('#div_List_Folder');
+                            }
+                        }
+                        funComplete();
+                    }
+                });
+            }
+        }
+        function getFileList() {
+            $('#div_List_File').empty();
+            var m_objParams = getFileParameter();
+            if (m_objParams.Action != '') {
+                m_bFile = false;
+                postData({
+                    url: "DcCdAttachmentManage",
+                    params: m_objParams,
+                    success: function(ci_result) {
+                        m_bFile = true;
+                        if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                            ci_result.rows.sort(function(a, b) { return (a.dCreationDt > b.dCreationDt ? -1 : 1); });
+                            for (var i = 0; i < ci_result.rows.length; i++) {
+                                $(getFileRowItem(ci_result.rows[i])).appendTo('#div_List_File');
+                            }
+                        }
+                        funComplete();
+                    }
+                });
+            }
+        }
+        function funComplete() {
+            if (m_bFile && m_bFolder) {
+                if ($('#div_List_File').children().length == 0 && $('#div_List_Folder').children().length == 0) {
+                    var m_strMsg = "该文件夹为空";
+                    if (_iLocation == 1) {
+                        m_strMsg += '，您可以点击"上传"按钮上传文件。';
+                    }
+                    $('<div id="div_Empty" class="file_empty">' + m_strMsg + '</div>').appendTo('#div_List_Folder');
+                    $('#div_List_Folder').css('display', '')
+                }
+                else if ($('#div_List_Folder').children().length == 0) {
+                    _objWidthObject = $('#div_List_File');
+                }
+                else {
+                    _objWidthObject = $('#div_List_Folder');
+                }
+                $('#div_Navigation,#div_TopMenu').width(_objWidthObject.width());
+                setRowFunction();
+            }
+        }
+    }
+
+    function getUserSpace() {
+        var m_strDisplay = '';
+        var m_strAction = '';
+
+        switch (_iLocation) {
+            case 1:
+                m_strAction = 'GetUserSpace';
+                break;
+            case 2:
+                m_strAction = 'GetOrgSpace';
+                break;
+            case 3:
+            case 4:
+                m_strDisplay = 'none';
+
+                break;
+        }
+        $('#div_Space').css('display', m_strDisplay);
+        if (m_strAction != '') {
+            var m_fRatio = 0;
+            var m_strSpace = '';
+            postData({
+                url: "DcCdAttachmentManage",
+                params: { Action: m_strAction },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        m_fRatio = ci_result.rows[0].cUsedRatio;
+                        m_strSpace = ci_result.rows[0].cSpaceUsed + ' / ' + ci_result.rows[0].cStorageSpace
+                    }
+                    $('#div_SpaceText').html(m_strSpace);
+                    $('#div_SpaaceBar').progressbar({
+                        value: m_fRatio
+                    });
+                }
+            });
+        }
+    }
+
+    function getFolderRowItem(ci_objData) {
+        var m_item = $('<div class="file_item" />');
+        var m_strHtml = [];
+        m_strHtml.push('<span class="file_checkbox">');
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span name="FileMain" ');
+        if (_iLocation != 4) {
+            m_strHtml.push('onclick="openFolder(this);" ');
+        }
+        m_strHtml.push('FolderID="' + ci_objData.iFolderID + '" Type="' + ci_objData.iType + '">');
+        m_strHtml.push('<span class="file_type');
+        if (_iLocation == 3) {
+            m_strHtml.push(' icon_folder">');
+        }
+        else {
+            m_strHtml.push(' icon_folder">');
+        }
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span class="file_name" title="' + ci_objData.cName + '">');
+        m_strHtml.push(ci_objData.cName);
+        m_strHtml.push('</span>');
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span style="float: right;">');
+        m_strHtml.push('<span class="file_updatedate">');
+        m_strHtml.push(ci_objData.dUpdateDt);
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span class="file_size"></span>');
+        m_strHtml.push('<span class="file_menu">');
+        switch (_iLocation) {
+            case 1:
+            case 2:
+                if (ci_objData.iType == 0) {
+                    if (_iLocation == 2) {
+                        m_strHtml.push('<a href="javascript:void(0)" hidefocus="no" title="共享" onclick="setTimeout(\'shareFile(2);\', 100);" class="menu_share"></a>');
+                    }
+                    m_strHtml.push('<a href="javascript:void(0)" hidefocus="no" title="重命名" onclick="setTimeout(\'renameFile();\', 100);" class="menu_rename"></a>');
+                    m_strHtml.push('<a href="javascript:void(0)" hidefocus="no" title="删除" onclick="deleteFolder()" class="menu_delete"></a>');
+                }
+                break;
+            case 4:
+                m_strHtml.push('<a href="javascript:void(0)" hidefocus="no" title="还原" onclick="setTimeout(\'undoFile();\', 100);" class="menu_undo"></a>');
+                break;
+        }
+        m_strHtml.push('</span>');
+        m_strHtml.push('</span>');
+        $(m_strHtml.join('')).appendTo(m_item);
+        return m_item;
+    }
+
+    function getFileRowItem(ci_objData) {
+        var m_item = $('<div class="file_item" />');
+        var m_strHtml = [];
+        m_strHtml.push('<span class="file_checkbox">');
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span name="FileMain" ');
+        if (_iLocation != 4) {
+            m_strHtml.push('onclick="openFile(this);" ');
+        }
+        m_strHtml.push('Preview="' + ci_objData.Preview + '" FolderID="' + ci_objData.FolderID + '" AttachmentID="' + ci_objData.AttachmentID + '" Key="' + ci_objData.Key + '">');
+        m_strHtml.push('<span class="file_type');
+        var m_strClass = 'none';
+        if ((ci_objData.Thumbnail == undefined || ci_objData.Thumbnail == '') && ci_objData.Title != "") {
+            var m_strName = ci_objData.Title.split('.');
+            if (m_strName.length > 1) {
+                m_strClass = m_strName[m_strName.length - 1];
+            }
+            else {
+                m_strClass = '';
+            }
+        }
+        if (m_strClass != '') {
+            m_strClass = 'icon_' + m_strClass;
+        }
+        m_strHtml.push(' ' + m_strClass + '">');
+        if (ci_objData.Thumbnail != undefined && ci_objData.Thumbnail != '') {
+            m_strHtml.push('<div class="file_thumbnail"><img src="' + ci_objData.Thumbnail + '" unselectable="on" onload="resizeImage(this)" /></div>');
+        }
+        m_strHtml.push('</span>');
+        var m_strFileName = "";
+        if (ci_objData.Title != undefined) {
+            m_strFileName = ci_objData.Title;
+        }
+        m_strHtml.push('<span class="file_name" title="' + m_strFileName + '">');
+        m_strHtml.push(m_strFileName);
+        m_strHtml.push('</span>');
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span style="float: right;">');
+        m_strHtml.push('<span class="file_updatedate">');
+        m_strHtml.push(ci_objData.UpdateDt);
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span class="file_size">');
+        m_strHtml.push(ci_objData.Size);
+        m_strHtml.push('</span>');
+        m_strHtml.push('<span class="file_menu">');
+        switch (_iLocation) {
+            case 1:
+            case 2:
+                m_strHtml.push('<a href="javascript:void(0)" hidefocus="no" title="共享" onclick="setTimeout(\'shareFile();\', 100);" class="menu_share"></a>');
+                m_strHtml.push('<a href="' + ci_objData.Download + '" hidefocus="no" title="下载" class="menu_down"></a>');
+                m_strHtml.push('<a href="javascript:void(0)" hidefocus="no" title="更多操作" class="menu_more"></a>');
+                break;
+            case 3:
+                m_strHtml.push('<a href="' + ci_objData.Download + '" hidefocus="no" title="下载" class="menu_down"></a>');
+                break;
+            case 4:
+                m_strHtml.push('<a href="javascript:void(0)" hidefocus="no" title="还原" onclick="setTimeout(\'undoFile();\', 100);" class="menu_undo"></a>');
+                break;
+        }
+        m_strHtml.push('</span>');
+        m_strHtml.push('</span>');
+        $(m_strHtml.join('')).appendTo(m_item);
+        return m_item;
+    }
+
+    function setRowFunction() {
+        $('.file_name').width(_objWidthObject.width() - _iWidth);
+        $('.file_item').bind('click', function() {
+            $('.file_item').removeClass('file_item_select');
+            $(this).addClass('file_item_select');
+        }).bind('mouseover', function() {
+            $(this).addClass('file_item_over');
+        }).bind('mouseout', function() {
+            $(this).removeClass('file_item_over');
+        });
+        $('.menu_rename,.menu_move,.menu_delete,.menu_share,.menu_down,.menu_undo').bind('mouseover', function() {
+            $(this).attr('class', $(this).attr('class').replace('_over', '') + '_over');
+        }).bind('mouseout', function() {
+            $(this).attr('class', $(this).attr('class').replace('_over', ''));
+        });
+        $('.menu_more').bind('click', function() {
+            $(this).addClass('menu_more_click');
+            $('#div_Menu_Pop').menu('show', { left: $(this).position().left, top: $(this).position().top + 30 });
+        }).bind('mouseover', function() { $(this).addClass('menu_more_over'); }).bind('mouseout', function() { $(this).removeClass('menu_more_over'); });
+    }
+
+    function resizeImage(ci_img) {
+        var m_strSize = 'width';
+        var m_img = $(ci_img);
+        if ($(m_img).width() < $(m_img).height()) {
+            m_strSize = 'height';
+        }
+        m_img.css(m_strSize, '34px');
+    }
+
+    function addNavigation(ci_iFolderID, ci_strFolderName) {
+        var m_objLast = $('#div_Navigation').children().last();
+        if (m_objLast.length > 0) {
+            $('<a href="javascript:void(0)" onclick="navigationClick(this)" class="easyui-linkbutton" plain="true" FolderID="' + m_objLast.attr('FolderID') + '">' + m_objLast.html() + '</a>').insertBefore(m_objLast);
+            $('<span>></span>').insertBefore(m_objLast);
+            m_objLast.attr('FolderID', ci_iFolderID);
+            m_objLast.html(ci_strFolderName);
+            $.parser.parse('#div_Navigation');
+        }
+    }
+
+    function navigationClick(ci_obj) {
+        var m_obj = $(ci_obj);
+        if (m_obj.length > 0) {
+            if (m_obj.attr('FolderID') >= 0) {
+                _iCurrFolderID = m_obj.attr('FolderID');
+                while (true) {
+                    if (m_obj.next().length > 0) {
+                        m_obj.next().remove();
+                    }
+                    else {
+                        var m_objChildren = m_obj.find('span');
+                        if (m_objChildren.length > 0) {
+                            $('<label FolderID="' + _iCurrFolderID + '" style="margin-left: 5px;">' + $(m_objChildren[m_objChildren.length - 1]).html() + '</label>').insertBefore(m_obj);
+                            m_obj.remove();
+                        }
+                        break;
+                    }
+                }
+                pageInit();
+            }
+        }
+    }
+
+    function changeLocation(item) {
+        _iLocation = parseInt(item.name);
+        var m_strDisplay = "none";
+        switch (_iLocation) {
+            case 1:
+            case 2:
+                m_strDisplay = '';
+                break;
+        }
+        $('#div_New').css('display', m_strDisplay);
+        $('#menu_Location').menubutton({ text: item.text });
+        $('#div_Menu_Location div').removeClass('icon_menuselect');
+        $('#div_Menu_Location').find('[name=' + _iLocation + ']').addClass('icon_menuselect');
+        navigationClick($('#div_Navigation').find('[FolderID=0]'));
+        getUserSpace();
+    }
+
+    function openFile(ci_obj) {
+        var m_obj = $(ci_obj);
+        if (m_obj.length > 0) {
+            if (m_obj.attr("Preview") != "") {
+                window.open(m_obj.attr("Preview"), '');
+            }
+        }
+    }
+
+    function openFolder(ci_obj) {
+        var m_obj = $(ci_obj);
+        if (m_obj.length > 0) {
+            _iCurrFolderID = m_obj.attr("FolderID");
+            addNavigation(_iCurrFolderID, $(m_obj.children()[1]).html());
+            pageInit();
+        }
+    }
+
+    function addFolder() {
+        var m_item = $(getFolderRowItem({ iType: 0 })).prependTo('#div_List_Folder');
+        var m_edit = m_item.find('.file_name');
+        m_edit.addClass('file_edit');
+        m_item.find('.file_menu').css('display', 'none');
+
+        var m_input = $('<input type="text" style="width:98%" />').prependTo(m_edit);
+        m_input.bind('blur', function() { addFolder2(this); }).bind('keydown.pagination', function(e) { if (e.keyCode == 13) { addFolder2(this); return false; } });
+        m_input.focus();
+
+        setRowFunction();
+        $("html").animate({ scrollTop: 0 }, 800);
+    }
+
+    function addFolder2(ci_obj) {
+        var m_item = $(ci_obj).parent().parent().parent();
+        if ($(ci_obj).val() == "") {
+            m_item.remove();
+        }
+        else {
+            postData({
+                url: "DcCdAttachmentManage",
+                params: { Action: "AddFolder", iParentID: _iCurrFolderID, cName: $(ci_obj).val(), iLocation: _iLocation },
+                isSys: true,
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        showMessage('新建文件夹成功');
+                        var m_name = m_item.find('.file_name');
+                        m_name.empty();
+                        m_name.removeClass('file_edit');
+                        m_name.html(ci_result.rows[0].cName);
+                        m_name.parent().attr('FolderID', ci_result.rows[0].iFolderID);
+                        m_item.find('.file_updatedate').html(ci_result.rows[0].dCreationDt)
+                        m_item.find('.file_menu').removeAttr('style');
+                        $('#div_Empty').remove();
+                        var m_objSys = $('#div_List_Folder').find('[name=FileMain][Type!=0]');
+                        if (m_objSys.length > 0) {
+                            $(m_item).insertAfter($(m_objSys).parent());
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    function deleteFile() {
+        $.messager.confirm('提示', '确定要删除吗？', function(r) {
+            if (r) {
+                var m_main = $('.file_item_select').find('[name=FileMain]');
+                if (m_main.length > 0) {
+                    if (m_main.attr("Key") != undefined) {
+                        postData({
+                            url: 'DcCdAttachmentManage',
+                            params: { Action: 'Delete' + (_iLocation == 1 ? 'User' : 'Org'), cKey: m_main.attr("Key"), iLocation: _iLocation },
+                            isSys: true,
+                            success: function(ci_result) {
+                                showMessage('删除成功');
+                                getUserSpace();
+                                m_main.parent().remove();
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    function deleteFolder() {
+        $.messager.confirm('提示', '确定要删除吗？', function(r) {
+            if (r) {
+                var m_main = $('.file_item_select').find('[name=FileMain]');
+                if (m_main.length > 0) {
+                    if (m_main.attr("FolderID") > 0) {
+                        postData({
+                            url: 'DcCdAttachmentManage',
+                            params: { Action: 'DeleteFolder', iFolderID: m_main.attr("FolderID"), iLocation: _iLocation },
+                            isSys: true,
+                            success: function(ci_result) {
+                                showMessage('删除成功');
+                                m_main.parent().remove();
+                            }
+                        });
+                    }
+                }
+            }
+        });
+    }
+
+    function renameFile() {
+        var m_name = $('.file_item_select').find('.file_name');
+        if (m_name.length > 0) {
+            m_name.addClass('file_edit');
+            $('.file_item_select').find('.file_menu').css('display', 'none');
+
+            _strFileName = m_name.html();
+            m_name.html('');
+            var m_input = $('<input type="text" style="width:98%" />').appendTo(m_name);
+            m_input.val(_strFileName);
+            m_input.bind('blur', function() { renameFile2(this); }).bind('keydown.pagination', function(e) { if (e.keyCode == 13) { renameFile2(this); return false; } });
+            m_input.focus().select();
+            setRowFunction();
+        }
+    }
+
+    function renameFile2(ci_obj) {
+        var m_name = $(ci_obj).parent();
+        if ($(ci_obj).val() == "") {
+            m_name.removeClass('file_edit');
+            m_name.empty();
+            m_name.html(_strFileName);
+            $('.file_item_select').find('.file_menu').removeAttr('style');
+            _strFileName = "";
+        }
+        else {
+            var m_main = $('.file_item_select').find('[name=FileMain]');
+            if (m_main.length > 0) {
+                var m_bIsFolder = false;
+                var m_objParams = { Action: '' };
+                if (m_main.attr("AttachmentID") != undefined && m_main.attr("AttachmentID") != '') {
+                    m_objParams.Action = 'Update' + (_iLocation == 1 ? 'User' : 'Org');
+                    m_objParams.iAttachmentID = m_main.attr("AttachmentID");
+                    m_objParams.cDisplayName = $(ci_obj).val();
+                }
+                else if (m_main.attr("FolderID") > 0) {
+                    m_bIsFolder = true;
+                    m_objParams.Action = 'UpdateFolder';
+                    m_objParams.iFolderID = m_main.attr("FolderID");
+                    m_objParams.cName = $(ci_obj).val();
+                    m_objParams.iLocation = _iLocation;
+                }
+                if (m_objParams.Action != '') {
+                    postData({
+                        url: 'DcCdAttachmentManage',
+                        params: m_objParams,
+                        isSys: true,
+                        success: function(ci_result) {
+                            showMessage('重命名成功');
+                            m_name.html($(ci_obj).val());
+                            m_name.removeClass('file_edit');
+                            $('.file_item_select').find('.file_menu').removeAttr('style');
+                            _strFileName = "";
+                            if (!m_bIsFolder) {
+                                var m_type = m_main.find('.file_type');
+                                if (!m_type.hasClass('icon_none')) {
+                                    var m_strClass = '';
+                                    var m_strName = m_name.html().split('.');
+                                    if (m_strName.length > 1) {
+                                        m_strClass = 'icon_' + m_strName[m_strName.length - 1];
+                                    }
+                                    m_strClass = 'file_type ' + m_strClass;
+                                    m_type.attr('class', m_strClass);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    function moveFile() {
+        postData({
+            url: 'DcCdAttachmentManage',
+            params: { Action: "GetFolderTree", iLocation: _iLocation },
+            isSys: true,
+            success: function(ci_result) {
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                    $('#div_Tree_Folder').tree({
+                        data: ci_result.rows,
+                        animate: true
+                    });
+                }
+                $('#div_Dialog_Folder').dialog({ width: 300, height: 350 }).dialog('open');
+            }
+        });
+    }
+
+    function moveFile2() {
+        var m_obj = $('#div_Tree_Folder').tree('getSelected');
+        if (m_obj != null) {
+            var m_main = $('.file_item_select').find('[name=FileMain]');
+            if (m_main.length > 0) {
+                if (m_main.attr("AttachmentID") != undefined && m_main.attr("AttachmentID") != '') {
+                    postData({
+                        url: 'DcCdAttachmentManage',
+                        params: { Action: 'Update' + (_iLocation == 1 ? 'User' : 'Org'), iAttachmentID: m_main.attr("AttachmentID"), iFolderID: m_obj.id },
+                        success: function(ci_result) {
+                            showMessage('移动成功');
+                            pageInit();
+                            $('#div_Dialog_Folder').dialog('close');
+                        }
+                    });
+                }
+            }
+        }
+        else {
+            $.messager.alert('提示', '请选择文件夹', 'info');
+        }
+    }
+
+    function shareFile(ci_iType) {
+        if (ci_iType == undefined) {
+            ci_iType = 1;
+        }
+        var m_main = $('.file_item_select').find('[name=FileMain]');
+        if (m_main.length > 0) {
+            var m_iRefRecordID = 0;
+            switch (ci_iType) {
+                case 1:
+                    if (m_main.attr("AttachmentID") != undefined && m_main.attr("AttachmentID") != '') {
+                        m_iRefRecordID = m_main.attr("AttachmentID");
+                    }
+                    break;
+                case 2:
+                    if (m_main.attr("FolderID") != undefined && m_main.attr("FolderID") != '') {
+                        m_iRefRecordID = m_main.attr("FolderID");
+                    }
+                    break;
+            }
+            if (m_iRefRecordID > 0) {
+                popupDialog("AttachmentShare.html#iRefRecordID=" + m_iRefRecordID + "&iLocation=" + _iLocation + "&iType=" + ci_iType, '', "共享设置", false, 750, 450);
+            }
+        }
+    }
+
+    function undoFile() {
+        var m_main = $('.file_item_select').find('[name=FileMain]');
+        if (m_main.length > 0) {
+            var m_objParams = { Action: '' };
+            if (m_main.attr("AttachmentID") != undefined && m_main.attr("AttachmentID") != '') {
+                m_objParams.Action = 'UndoUser';
+                m_objParams.iAttachmentID = m_main.attr("AttachmentID");
+            }
+            else if (m_main.attr("FolderID") > 0) {
+                m_objParams.Action = 'UndoFolder';
+                m_objParams.iFolderID = m_main.attr("FolderID");
+            }
+            if (m_objParams.Action != '') {
+                postData({
+                    url: 'DcCdAttachmentManage',
+                    params: m_objParams,
+                    isSys: true,
+                    success: function(ci_result) {
+                        m_main.parent().remove();
+                        showMessage('还原成功');
+                    }
+                });
+            }
+        }
+    }
+</script>
+

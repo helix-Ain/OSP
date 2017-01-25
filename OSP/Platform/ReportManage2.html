@@ -1,0 +1,778 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+    <style>
+        .item
+        {
+            text-align: center;
+            border: 1px solid #499B33;
+            background: #fafafa;
+            color: #444;
+            width: 100px;
+        }
+        .left
+        {
+            width: 120px;
+            height: 100%;
+        }
+        .right
+        {
+            float: left;
+            width: 500px;
+        }
+        .right tr
+        {
+            border: solid 1px #000000;
+            height: 20px;
+        }
+        .right td
+        {
+            color: #444;
+            text-align: center;
+        }
+        .right td.drop
+        {
+        }
+        .right td.over
+        {
+            background: #FBEC88;
+        }
+        .del
+        {
+            width: 25px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .name
+        {
+            width: 150px;
+            text-align: center;
+        }
+        .sum
+        {
+            width: 60px;
+            text-align: center;
+        }
+        .namemove
+        {
+            border: 1px solid #499B33;
+            background-color: #F9F9F9;
+        }
+        .footer
+        {
+            background-color: #F9F9F9;
+        }
+        .indicator
+        {
+            position: absolute;
+            font-size: 9px;
+            width: 10px;
+            height: 10px;
+            display: none;
+            color: red;
+        }
+    </style>
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display:none;">
+    <div data-options="region:'north',border:false">
+        <table id="tab_Report" class="searchTable" border="0" cellpadding="0" cellspacing="0"
+            style="height: 70px;">
+            <tr>
+                <td class="searchTd">
+                    报表名
+                </td>
+                <td class="searchTd">
+                    <input id="txt_ReportName" type="text" class="easyui-validatebox" data-options="prompt:'请输入报表名',required:true" />
+                </td>
+                <td class="searchTd">
+                    报表文件夹
+                </td>
+                <td class="searchTd">
+                    <select id="ddl_Folder" class="easyui-combobox" height="30" style="height: 30px;
+                        width: 152px;" editable="false" required="true">
+                    </select>
+                </td>
+                <td class="searchTd">
+                    报表主模块
+                </td>
+                <td class="searchTd">
+                    <select id="ddl_MainTable" class="easyui-combobox" height="30" style="height: 30px;
+                        width: 152px;" editable="false" required="true" data-options="onSelect:function(record){changeTable(record.iTableID);}">
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div data-options="region:'center',border:false,">
+        <div id="div_Detail" class="easyui-tabs" data-options="fit:true,plain:true" style="overflow: auto;">
+            <div title="报表类型" style="padding: 10px;">
+                <table>
+                    <tr>
+                        <td style="width: 250px;">
+                            <input name="rad_ReportType" type="radio" onclick="reportTypeSelect(1);" value="1" /><b>表格报表</b>
+                            <div style="margin-left: 20px;">
+                                表格报表以较简单的表单列出数据。
+                            </div>
+                        </td>
+                        <td style="width: 250px;">
+                            <input name="rad_ReportType" type="radio" onclick="reportTypeSelect(2);" value="2" /><b>摘要报表</b>
+                            <div style="margin-left: 20px;">
+                                摘要报表允许查看数据和小计、分组及其它摘要信息。
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <img src="../Image/tabular.gif" />
+                        </td>
+                        <td>
+                            <img src="../Image/summarize.gif" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div title="报表字段" style="padding: 10px;">
+                <div style="width: 690px;">
+                    <div style="float: left;">
+                        &nbsp;
+                        <div class="left">
+                        </div>
+                    </div>
+                    <div class="right">
+                        <table id="tab_Test" rules="rows">
+                            <tr name="Header" style="background-color: #F9F9F9;">
+                                <th style="width: 25px;">
+                                </th>
+                                <th class="name">
+                                    字段
+                                </th>
+                                <th class="sum">
+                                    总计
+                                </th>
+                                <th class="sum">
+                                    平均数
+                                </th>
+                                <th class="sum">
+                                    最小值
+                                </th>
+                                <th class="sum">
+                                    最大值
+                                </th>
+                                <th class="sum" name="td_GroupBy" style="display: none;">
+                                    分组
+                                </th>
+                            </tr>
+                            <tr class="drop" name="Footer">
+                                <td colspan="7" class="footer">
+                                    拖动字段新增
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div title="查询条件">
+                <table id="tab_Query" class="searchTable" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td class="searchTd" align="left">
+                            <select id="ddl_Columns" class="easyui-combobox" height="30" style="height: 30px;
+                                width: 152px;" editable="false" required="true">
+                            </select>
+                        </td>
+                        <td class="searchTd">
+                            <select id="ddl_Logic" class="easyui-combobox" height="30" style="height: 30px; width: 80px;"
+                                editable="false" required="true">
+                            </select>
+                        </td>
+                        <td class="searchTd">
+                            <input id="txt_Value" type="text" class="easyui-validatebox" data-options="prompt:'请输入查询值'" />
+                        </td>
+                        <td class="searchTd">
+                            <a href="javascript:void(0)" onclick="addQuery();" class="dc-button">添加条件</a>
+                        </td>
+                    </tr>
+                </table>
+                <div style="padding: 20px;">
+                    <table id="tab_Queries" fitcolumns="true" style="width: 420px; height: auto;">
+                        <thead>
+                            <tr>
+                                <th field="aa" width="30" align="center" data-options="formatter:function(value,rec){return getDeleteButton(rec);}">
+                                </th>
+                                <th field="cColumnName" width="120">
+                                    字段
+                                </th>
+                                <th field="cLogicTypeDesc" width="50" align="center">
+                                    比较逻辑
+                                </th>
+                                <th field="cValue" width="150">
+                                    值
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div data-options="region:'south',border:false" style="height: 35px;">
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelData();">取消</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iReportID = 0;
+    var _arrDelete = new Array();
+    var _arrDeleteQueries = new Array();
+    var _iType = 0;
+    var _bIsGroupBy = false;
+    var _objReportData = null;
+    var _bIsBinding = [false, false, false];
+    var indicator = null;
+
+    initReady(function() {
+        indicator = $('<div class="indicator">>></div>').appendTo('body');
+        $('#tab_Columns').datagrid({
+            singleSelect: true
+        });
+
+        $('#tab_Queries').datagrid({
+            singleSelect: true
+        });
+
+        setColumnsStyle();
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function setColumnsStyle() {
+        $('.right div.name').draggable({
+            revert: true,
+            onStartDrag: function() {
+                $(this).draggable('options').cursor = 'not-allowed';
+                $(this).addClass('namemove');
+            },
+            onStopDrag: function() {
+                $(this).draggable('options').cursor = 'move';
+                $(this).removeClass('namemove');
+            }
+        });
+        $('.right tr.drop').droppable({
+            onDragOver: function(e, source) {
+                indicator.css({
+                    display: 'block',
+                    top: $(this).offset().top - 5,
+                    left: $(this).offset().left - 12
+                });
+            },
+            onDragEnter: function(e, source) {
+                $(source).draggable('options').cursor = 'move';
+                $(this).find("td").addClass('over');
+            },
+            onDragLeave: function(e, source) {
+                indicator.hide();
+                $(source).draggable('options').cursor = 'not-allowed';
+                $(this).find("td").removeClass('over');
+            },
+            onDrop: function(e, source) {
+                indicator.hide();
+                $(this).find("td").removeClass('over');
+                if ($(source).attr("class") == "item") {
+                    var m_iColumnID = $(this).attr("columnid");
+                    if (addNewColumn($(source).attr("columnid"), $(source).attr("columnname"), $(source).attr("datatype"), 0, 0, false, false, false, false, false)) {
+                        if (m_iColumnID != undefined) {
+                            setColumnOrder($(source).attr("columnid"), m_iColumnID);
+                        }
+                    }
+                }
+                else {
+                    var m_iTarColumnID = $(this).attr("columnid");
+                    if (m_iTarColumnID == undefined) {
+                        m_iTarColumnID = -1;
+                    }
+                    setColumnOrder($(source).attr("columnid"), m_iTarColumnID);
+                }
+                setColumnsStyle();
+            }
+        });
+    }
+
+    function addNewColumn(ci_iColumnID, ci_cColumnName, ci_iDataType, ci_iOrder, ci_iReportColumnID, ci_bIsSum, ci_bIsAvg, ci_bIsMax, ci_bIsMin, ci_bIsGroupBy) {
+        var m_objList = $(".right [columnid='" + ci_iColumnID + "']");
+        if (m_objList.length <= 0) {
+            var m_objData = {
+                iColumnID: ci_iColumnID,
+                cColumnName: ci_cColumnName,
+                iDataType: ci_iDataType,
+                iOrder: ci_iOrder,
+                iReportColumnID: ci_iReportColumnID
+            };
+            var m_strHtml = "<td class='del' onclick='deleteColumn(this);'><img title='删除' src='../JS/EsayUI/themes/icons/cancel.png'></img></td>";
+            m_strHtml += "<td class='name'><div title='拖动字段改变排序' class='name' columnid='" + m_objData.iColumnID + "'>" + m_objData.cColumnName + "</div></td>";
+            if (ci_iDataType == 2 || ci_iDataType == 3) {
+                m_strHtml += "<td class='sum'><input name='chk_Sum' type='checkbox' " + (ci_bIsSum ? "checked='checked'" : "") + "/></td>";
+                m_strHtml += "<td class='sum'><input name='chk_Avg' type='checkbox' " + (ci_bIsAvg ? "checked='checked'" : "") + "/></td>";
+                m_strHtml += "<td class='sum'><input name='chk_Min' type='checkbox' " + (ci_bIsMin ? "checked='checked'" : "") + "/></td>";
+                m_strHtml += "<td class='sum'><input name='chk_Max' type='checkbox' " + (ci_bIsMax ? "checked='checked'" : "") + "/></td>";
+            }
+            else {
+                m_strHtml += "<td colspan='4'></td>";
+            }
+            m_strHtml += "<td class='sum' name='td_GroupBy' " + (_iType != 2 ? "style='display:none;'" : "") + ">";
+            m_strHtml += "<input name='rad_GroupBy' type='radio' onclick='setGroupBy(this);' " + (ci_bIsGroupBy ? "checked='checked'" : "") + "/></td>";
+
+            var m_objTarget = $(".right tr[name='Footer']");
+            $(m_objTarget).attr("columnid", m_objData.iColumnID);
+            $(m_objTarget).attr("columnname", m_objData.cColumnName);
+            $(m_objTarget).attr("datatype", m_objData.iDataType);
+            $(m_objTarget).attr("order", m_objData.iOrder);
+            $(m_objTarget).attr("reportcolumnid", m_objData.iReportColumnID);
+            $(m_objTarget).attr("columnid", m_objData.iColumnID);
+            $(m_objTarget).attr("name", "Column");
+            $(m_objTarget).empty().append(m_strHtml);
+
+            m_strHtml = '<tr class="drop" name="Footer"><td colspan="7" class="footer">拖动字段新增</td></tr>';
+            $("#tab_Test").append(m_strHtml);
+            return true;
+        }
+        return false;
+    }
+
+    function setColumnOrder(ci_iSourceColumnID, ci_iTargetColumnID) {
+        if (ci_iSourceColumnID != ci_iTargetColumnID) {
+            var m_objList = $(".right tr").clone();
+            if (m_objList.length > 1) {
+                var m_objSource = $(".right tr[columnid='" + ci_iSourceColumnID + "']");
+                var m_objTarget = $(".right tr[columnid='" + ci_iTargetColumnID + "']");
+                var m_objTable = $(".right table").empty();
+                m_objTable.append(m_objList[0]);
+                for (var i = 1; i < m_objList.length - 1; i++) {
+                    var m_objColumn = $(m_objList[i]);
+                    m_objColumn.attr("order", m_objTable.length);
+                    if (m_objColumn.attr("columnid") == ci_iTargetColumnID) {
+                        m_objSource.attr("order", m_objTable.length);
+                        m_objTarget.attr("order", m_objTable.length);
+                        m_objTable.append(m_objSource);
+                        m_objTable.append(m_objTarget);
+                    }
+                    else if (m_objColumn.attr("columnid") == ci_iSourceColumnID) {
+                        ;
+                    }
+                    else {
+                        m_objTable.append(m_objColumn);
+                    }
+                }
+                if (ci_iTargetColumnID == -1) {
+                    m_objSource.attr("order", m_objTable.length);
+                    m_objTable.append(m_objSource);
+                }
+                m_objTable.append(m_objList[m_objList.length - 1]);
+            }
+        }
+    }
+
+    function deleteColumn(ci_obj) {
+        var m_obj = $(ci_obj.parentNode);
+        if (m_obj != undefined) {
+            addDeleteList(m_obj.attr("reportcolumnid"));
+            if (m_obj.find("input[name='rad_GroupBy']").attr("checked") == "checked") {
+                _bIsGroupBy = false;
+            }
+            m_obj.remove();
+        }
+    }
+
+    function reportTypeSelect(ci_iType) {
+        _iType = ci_iType;
+        $("input[name='rad_ReportType']").removeAttr("checked");
+        $("input[name='rad_ReportType'][value='" + ci_iType + "']").attr("checked", "checked");
+        var m_strDisplay = "";
+        if (ci_iType != 2) {
+            m_strDisplay = "none";
+            _bIsGroupBy = false;
+            setGroupBy(null);
+        }
+        $(".right [name='td_GroupBy']").css("display", m_strDisplay);
+    }
+
+    function initPage() {
+        _iReportID = getHashValue("ReportID"); ;
+        bindMainTable();
+        bindReportFolder();
+        getReportData(_iReportID);
+        bindLogic();
+    }
+
+    function bindMainTable() {
+        _bIsBinding[1] = false;
+        postData({
+            url: "DcCdDataTableManage",
+            params: { Action: "GetMaintable" },
+            isSys: true,
+            success: function(ci_result) {
+                _bIsBinding[1] = true;
+                $("#ddl_MainTable").combobox({
+                    data: ci_result.rows,
+                    valueField: "iTableID",
+                    textField: "cTableName"
+                });
+                bindReportData()
+            }
+        });
+    }
+
+    function bindReportFolder() {
+        _bIsBinding[0] = false;
+        postData({
+            url: "DcCdReportManage",
+            params: { Action: "GetFolderList" },
+            isSys: true,
+            success: function(ci_result) {
+                _bIsBinding[0] = true;
+                $("#ddl_Folder").combobox({
+                    data: ci_result.rows,
+                    valueField: "iFolderID",
+                    textField: "cName"
+                });
+                bindReportData()
+            }
+        });
+    }
+
+    function bindLogic() {
+        bindCodeMasterData({
+            controlID: "ddl_Logic",
+            cat: "orequ",
+            subCat: "LogicType",
+            valueField: "cCodeItem",
+            textField: "cDesc"
+        });
+    }
+
+    function resetDetail() {
+        reportTypeSelect(0);
+        $(".left").html("");
+        $(".right tr[name='Column']").remove();
+        try {
+            while (true) {
+                $("#tab_Queries").datagrid('deleteRow', 0);
+            }
+        }
+        catch (err) { }
+        $("#tab_Query").form("clear");
+        $("#ddl_Columns").combobox("clear");
+    }
+
+    function getReportData(ci_iReportID) {
+        _bIsBinding[2] = false;
+        postData({
+            url: "DcCdReportManage",
+            params: { "action": "GetReportDetail", iReportID: ci_iReportID },
+            isSys: true,
+            success: function(ci_result) {
+                _bIsBinding[2] = true;
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                    _objReportData = ci_result.rows[0];
+                }
+                else {
+                    _objReportData = null;
+                    $.messager.alert('提示', '该报表不存在或已删除', 'info');
+                }
+                bindReportData();
+            }
+        });
+    }
+
+    function getDataTableData(ci_iTableID) {
+        resetDetail();
+        if (ci_iTableID > 0) {
+            postData({
+                url: "DcCdDataTableManage",
+                params: { "action": "getallcolumns", iTableID: ci_iTableID },
+                isSys: true,
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        bindDataTabaleData(ci_result.rows[0]);
+                    }
+                }
+            });
+        }
+    }
+
+    function bindReportData() {
+        for (var i = 0; i < _bIsBinding.length; i++) {
+            if (!_bIsBinding[i]) {
+                return;
+            }
+        }
+        if (_objReportData != null) {
+            $("#txt_ReportName").val(_objReportData.cName);
+            if (_objReportData.iTableID > 0) {
+                $("#ddl_MainTable").combobox('setValue', _objReportData.iTableID);
+            }
+            if (_objReportData.iFolderID > 0) {
+                $("#ddl_Folder").combobox('setValue', _objReportData.iFolderID);
+            }
+            reportTypeSelect(_objReportData.iType);
+        }
+        bindDataTabaleData(_objReportData);
+    }
+
+    function bindDataTabaleData(ci_objData) {
+        var m_objSelectColumns = [];
+        var m_objColumns = [];
+        var m_objQueries = { total: 0, rows: [] };
+        var m_strHtml = "";
+        if (ci_objData != undefined) {
+            if (ci_objData.TableList != undefined && ci_objData.TableList.length > 0) {
+                ci_objData.TableList.sort(function(a, b) { return b.bIsMain - a.bIsMain; });
+                for (var i = 0; i < ci_objData.TableList.length; i++) {
+                    if (ci_objData.TableList[i].Columns.length > 0) {
+                        if (m_strHtml.length > 0) {
+                            m_strHtml += "<br />";
+                        }
+                        m_strHtml += ci_objData.TableList[i].cTableName;
+                        m_strHtml += "<table>"
+                        for (var j = 0; j < ci_objData.TableList[i].Columns.length; j++) {
+                            var m_objData = ci_objData.TableList[i].Columns[j];
+                            m_strHtml += "<tr><td><div class='item' ";
+                            m_strHtml += "columnid='" + m_objData.iColumnID + "' ";
+                            m_strHtml += "datatype='" + m_objData.iDataType + "' ";
+                            m_strHtml += "columnname='" + m_objData.cColumnName + "' ";
+                            m_strHtml += ">";
+                            m_strHtml += m_objData.cColumnName;
+                            m_strHtml += "</div></td></tr>";
+                            if (m_objData.bIsSelected) {
+                                m_objSelectColumns.push(m_objData);
+                                if (m_objData.bIsGroupBy) {
+                                    _bIsGroupBy = true;
+                                }
+                            }
+                            m_objColumns.push(m_objData);
+                        }
+                        m_strHtml += "</table>"
+                    }
+                }
+                if (ci_objData.QueryList != undefined && ci_objData.QueryList.length > 0) {
+                    m_objQueries.rows = ci_objData.QueryList;
+                    m_objQueries.total = ci_objData.QueryList.length;
+                }
+            }
+        }
+        $(".left").html(m_strHtml);
+        $('.item').draggable({
+            revert: true,
+            proxy: 'clone',
+            onStartDrag: function() {
+                $(this).draggable('options').cursor = 'not-allowed';
+                $(this).draggable('proxy').css('z-index', 10);
+            },
+            onStopDrag: function() {
+                $(this).draggable('options').cursor = 'move';
+            }
+        });
+
+        m_objQueries.rows.sort(function(a, b) { return a.iOrder - b.iOrder; });
+        $("#tab_Queries").datagrid('loadData', m_objQueries);
+
+        $("#ddl_Columns").combobox({
+            data: m_objColumns,
+            valueField: "iColumnID",
+            textField: "cColumnName"
+        });
+        if (m_objSelectColumns.length > 0) {
+            m_objSelectColumns.sort(function(a, b) { return a.iOrder - b.iOrder; });
+            for (var i = 0; i < m_objSelectColumns.length; i++) {
+                var m_objData = m_objSelectColumns[i];
+                addNewColumn(m_objData.iColumnID, m_objData.cColumnName, m_objData.iDataType, m_objData.iOrder, m_objData.iReportColumnID, m_objData.bIsSum, m_objData.bIsAvg,
+                    m_objData.bIsMax, m_objData.bIsMin, m_objData.bIsGroupBy);
+            }
+            setColumnsStyle();
+        }
+        hiddMask();
+    }
+
+    function changeTable(ci_iTableID) {
+        loadingMask(document.body.id);
+        $(".right tr[name='Column']").each(function() {
+            addDeleteList($(this).attr("reportcolumnid"));
+        });
+        getDataTableData(ci_iTableID);
+    }
+
+    function setGroupBy(ci_obj) {
+        var m_objList = $("input[name='rad_GroupBy']");
+        $.each(m_objList, function(i) {
+            if (m_objList[i] != ci_obj) {
+                $(m_objList[i]).removeAttr("checked");
+            }
+            else {
+                _bIsGroupBy = true;
+            }
+        });
+    }
+
+    function getDeleteButton(ci_objData) {
+        var m_strReturn = '<img src="../JS/EsayUI/themes/icons/cancel.png" onclick="deleteQuery(' + ci_objData.iOrder + ',' + ci_objData.iQueryID + ')" style="cursor: pointer;" alt="删除" title="删除" />';
+        return m_strReturn;
+    }
+
+    function deleteQuery(ci_iIndex, ci_iQueryID) {
+        var m_objGrid = $("#tab_Queries");
+        var m_objData = m_objGrid.datagrid('getData');
+        m_objData.rows.splice(ci_iIndex, 1);
+        m_objData.total = m_objData.rows.length;
+        for (var i = 0; i < m_objData.total; i++) {
+            m_objData.rows[i].iOrder = i;
+        }
+        m_objGrid.datagrid('loadData', m_objData);
+        addDeleteQueriesList(ci_iQueryID);
+    }
+
+    function addQuery() {
+        if ($("#tab_Query").form('validate')) {
+            var m_objGrid = $("#tab_Queries");
+            var m_objData = m_objGrid.datagrid('getData');
+            var m_objRow = {
+                iQueryID: 0,
+                iColumnID: $("#ddl_Columns").combobox("getValue"),
+                cColumnName: $("#ddl_Columns").combobox("getText"),
+                iLogicType: $("#ddl_Logic").combobox("getValue"),
+                cLogicTypeDesc: $("#ddl_Logic").combobox("getText"),
+                cValue: $("#txt_Value").val(),
+                iOrder: m_objData.rows.length
+            };
+            m_objData.rows.push(m_objRow);
+            m_objData.total++;
+            m_objGrid.datagrid('loadData', m_objData);
+            $("#tab_Query").form("clear");
+        }
+    }
+
+    function addDeleteList(ci_iReportColumnID) {
+        if (ci_iReportColumnID > 0) {
+            _arrDelete[_arrDelete.length] = ci_iReportColumnID;
+        }
+    }
+
+    function addDeleteQueriesList(ci_iQueryID) {
+        if (ci_iQueryID > 0) {
+            _arrDeleteQueries[_arrDeleteQueries.length] = ci_iQueryID;
+        }
+    }
+
+    function cancelData() {
+        loadingMask(document.body.id);
+        _arrDelete = new Array();
+        $("#txt_ReportName").val("");
+        $("#ddl_MainTable").combobox('setValue', "");
+        resetDetail();
+        getReportData(_iReportID);
+    }
+
+    function saveData() {
+        if ($("#tab_Report").form('validate')) {
+            if (_iType <= 0) {
+                $.messager.alert('提示', '请选择报表类型', 'info', function() { $("#div_Detail").tabs("select", 0); });
+                return;
+            }
+            var m_objList = $(".right tr[name='Column']").clone();
+            if (m_objList.length == 0) {
+                $.messager.alert('提示', '请选择字段', 'info', function() { $("#div_Detail").tabs("select", 1); });
+                return;
+            }
+            if (_iType == 2 && !_bIsGroupBy) {
+                $.messager.alert('提示', '请选择分组字段', 'info', function() { $("#div_Detail").tabs("select", 1); });
+                return;
+            }
+            var m_strDetailData = "";
+            var m_strQueryData = "";
+            if (_arrDelete.length > 0) {
+                for (var i = 0; i < _arrDelete.length; i++) {
+                    var m_obj = $(m_objList[0]);
+                    m_obj.attr("reportcolumnid", _arrDelete[i] * -1);
+                    m_objList.append(m_obj);
+                }
+            }
+            var m_strSign = getSeparativeSign();
+            for (var i = 0; i < m_objList.length; i++) {
+                if (m_strDetailData.length > 0) {
+                    m_strDetailData += (m_strSign + ',' + m_strSign);
+                }
+                var m_obj = $(m_objList[i]);
+                m_strDetailData += m_obj.attr("reportcolumnid");
+                m_strDetailData += m_strSign;
+                m_strDetailData += m_obj.attr("columnid");
+                m_strDetailData += m_strSign;
+                m_strDetailData += i;
+                m_strDetailData += m_strSign;
+                m_strDetailData += (m_obj.find("input[name='chk_Sum']").attr("checked") == "checked" ? 1 : 0);
+                m_strDetailData += m_strSign;
+                m_strDetailData += (m_obj.find("input[name='chk_Avg']").attr("checked") == "checked" ? 1 : 0);
+                m_strDetailData += m_strSign;
+                m_strDetailData += (m_obj.find("input[name='chk_Min']").attr("checked") == "checked" ? 1 : 0);
+                m_strDetailData += m_strSign;
+                m_strDetailData += (m_obj.find("input[name='chk_Max']").attr("checked") == "checked" ? 1 : 0);
+                m_strDetailData += m_strSign;
+                m_strDetailData += (m_obj.find("input[name='rad_GroupBy']").attr("checked") == "checked" ? 1 : 0);
+                m_strDetailData += m_strSign;
+                m_strDetailData += 0;
+            }
+            m_objData = $("#tab_Queries").datagrid('getData').rows;
+            if (_arrDeleteQueries.length > 0) {
+                for (var i = 0; i < _arrDeleteQueries.length; i++) {
+                    m_objData.push({ iQueryID: _arrDeleteQueries[i] * -1 });
+                }
+            }
+            for (var i = 0; i < m_objData.length; i++) {
+                if (m_strQueryData.length > 0) {
+                    m_strQueryData += (m_strSign + ',' + m_strSign);
+                }
+                m_strQueryData += m_objData[i].iQueryID;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].iColumnID;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].iLogicType;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].cValue;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].iOrder;
+            }
+            loadingMask(document.body.id, "正在保存数据...");
+            postData({
+                url: "DcCdReportManage",
+                params: {
+                    Action: "UpdateData",
+                    iReportID: _iReportID,
+                    cName: $("#txt_ReportName").val(),
+                    iTableID: $("#ddl_MainTable").combobox("getValue"),
+                    iFolderID: $("#ddl_Folder").combobox("getValue"),
+                    iType: _iType,
+                    DetailData: m_strDetailData,
+                    QueryData: m_strQueryData
+                },
+                isSys: true,
+                success: function(ci_result) {
+                    _iReportID = ci_result.DcMessage;
+                    $("#ddl_Logic").combobox("setText", "");
+                    $("#txt_Value").val("");
+                    cancelData();
+                },
+                failure: function(ci_result) {
+                    hiddMask();
+                    $.messager.alert('提示', '保存失败', 'info');
+                }
+            });
+        }
+    }
+</script>
+

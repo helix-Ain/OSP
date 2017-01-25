@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html ng-app='app'>
+
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<link rel='stylesheet' href='CSS/Ionic/ionic.min.css' />
+		<link rel='stylesheet' href='CSS/Common.css' />
+		<script src="JS/Ionic/ionic.bundle.min.js"></script>
+		<script src="JS/Constants.js"></script>
+		<script src="JS/Common.js?v=1.0"></script>
+	</head>
+
+	<body ng-controller='app' ng-init='init()' ng-cloak>
+		<ion-header-bar align-title='center' style='background-color: #A4684B;'>
+			<button style='color:#FFFFFF;' class='button button-icon icon ion-ios-arrow-left' onclick="back()">返回</button>
+			<h1 style='color:#FFFFFF;' class='title'>留言({{messageNumber}})</h1>
+		</ion-header-bar>
+		<ion-content style='background-color:#F3F4F6;padding-bottom: 15px;'>
+			<div class='list list-inset' style='background-color: #F3F4F6;'>
+				<li class='item' ng-repeat='item in userMessage' style='padding:0;font-size: 14px;margin-bottom: 10px;'>
+					<div style='padding:7px;border:1px solid #A4684B;background-color:#A4684B;color:#FFFFFF;'>
+						<span>标题：{{item.cTitle}}</span>
+					</div>
+					<div style='padding:7px;border-bottom: 1px solid #ECECED;font-size: 13px;'>
+						<span style='color:#FFA53F;'>{{item.cUsername}}</span>
+						<span style='float:right;color:#CECECE;'>{{item.dCreationDt.split(' ')[0]}}</span>
+					</div>
+					<div style='padding:7px;'>
+						<span>{{item.cContent}}</span>
+					</div>
+				</li>
+			</div>
+		</ion-content>
+		<ion-footer-bar align-title='center' class='bar-light footer-menu' style='cursor:pointer;' ng-click='showModal()'>
+			<h1 class='title'><i style='color:#FFA53F;' class='icon ion-edit'></i>&nbsp;写留言</h1>
+		</ion-footer-bar>
+		<script>
+			var _iGroupID = getQueryStringValue('iGroupID');
+			var _iSceneID = getQueryStringValue('iSceneID');
+			app.controller('app', function($scope, $window, commonService) {
+				$scope.data = {
+					cTitle: '',
+					cUsername: '',
+					cQQ: '',
+					cEmail: '',
+					cMobile: '',
+					cContent: ''
+				};
+				$scope.init = function() {
+					initPage();
+				}
+
+				$scope.showModal = function() {
+					commonService.fromTemplateUrl('WriteMessage.html', $scope);
+				}
+
+				$scope.hideModal = function() {
+					commonService.closeModal($scope);
+				}
+
+				$scope.writeMessage = function() {
+					if($scope.data.cTitle != '' && $scope.data.cUsername != '' && $scope.data.cContent) {
+						commonService.postData({
+							url: 'DcCdAppInterface',
+							params: {
+								Action: 'SceneUserMessageAdd',
+								iGroupID: _iGroupID,
+								iSceneID: _iSceneID,
+								cTitle: $scope.data.cTitle,
+								cUsername: $scope.data.cUsername,
+								cQQ: $scope.data.cQQ,
+								cEmail: $scope.data.cEmail,
+								cMobile: $scope.data.cMobile,
+								cContent: $scope.data.cContent
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									refresh();
+									$scope.hideModal();
+									$scope.data.cTitle = '';
+									$scope.data.cUsername = '';
+									$scope.data.cQQ = '';
+									$scope.data.cEmail = '';
+									$scope.data.cMobile = '';
+									$scope.data.cContent = '';
+								} else {
+									commonService.showAlert('提交失败');
+								}
+							}
+						});
+					} else if($scope.data.cTitle != '' && $scope.data.cUsername) {
+						commonService.showAlert('请填写留言内容！');
+					} else {
+						commonService.showAlert('请完善必填信息！');
+					}
+				}
+
+				function initPage() {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'SceneUserMessageList',
+							iSceneID: _iSceneID,
+							page: 1,
+							rows: 9999,
+							sort: 'dCreationDt',
+							order: 'desc'
+						},
+						success: function(ci_reuslt) {
+							if(existData(ci_reuslt)) {
+								var m_objData = ci_reuslt.rows;
+								$scope.messageNumber = ci_reuslt.total + '条';
+								$scope.userMessage = m_objData;
+							} else {
+								$scope.messageNumber = '0条';
+							}
+						}
+					});
+				}
+
+				function refresh() {
+					initPage();
+				}
+			});
+
+			function back() {
+				history.back();
+			}
+		</script>
+	</body>
+
+</html>

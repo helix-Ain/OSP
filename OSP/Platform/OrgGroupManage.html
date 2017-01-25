@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+        style="height: 80px;">
+        <ul class="searchForm1">
+            <li class="searchText1">
+                <input type="text" name="cGroupCode" class="dc-search dc-input" dc-tip="请输入角色编号" />
+            </li>
+            <li class="searchText1">
+                <input type="text" name="cGroupChiName" class="dc-search dc-input" dc-tip="请输入角色名" />
+            </li>
+            <li><a href="javascript:void(0)" onclick="searchData()" class="dc-button">查询</a></li>
+        </ul>
+    </div>
+    <div data-options="region:'center',border:false,onResize:function(){try{$('#div_newDialog').panel('resize');}catch(ex){}}">
+        <table id="tab_List" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true">
+                    </th>
+                    <th data-options="field:'cGroupCode',width:100,sortable:true">
+                        角色编号
+                    </th>
+                    <th data-options="field:'cGroupChiName',width:80,sortable:true">
+                        角色名
+                    </th>
+                    <th data-options="field:'cGroupEngName',width:100,sortable:true">
+                        角色英文名
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="div_Toolbar" class="GridButtonBar" style="display: none;">
+            <span class="GridButtonBarIco"></span><a id="A1" href="javascript:void(0)" class="easyui-linkbutton"
+                iconcls="dc-icon-editadd" plain="true" onclick="newData()">添加</a> <a href="javascript:void(0)"
+                    class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="editDetail()">
+                    修改</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-cancel"
+                        plain="true" onclick="deleteData()">删除</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                            iconcls="dc-icon-pencil" plain="true" onclick="updateAllData()">更新组织权限</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        $('#div_Edit').dialog({
+            onBeforeClose: function() {
+                $(".tooltip").remove();
+            }
+        });
+
+        setMyDataGrid(true);
+    }
+
+    function getSearchParameter(ci_bIsBase) {
+        var m_objParams = { Action: "GetList" };
+        if (!ci_bIsBase) {
+            return getSearchParameters($(".searchForm1"), m_objParams);
+        }
+        return m_objParams;
+    }
+
+    function setMyDataGrid(ci_bIsBase) {
+        setDataGrid('tab_List', 'div_Toolbar', 'DcCdOrgGroupManage', getSearchParameter(ci_bIsBase), 'iOrgGroupID', 'cGroupCode', '', {
+            onDblClickRow: function(rowIndex, rowData) { $("#tab_List").datagrid("selectRow", rowIndex); editDetail(); }
+        });
+    }
+
+    function searchData() {
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function newData() {
+        popupDialog('OrgGroupDetail.html#Action=new', '', "添加角色", false, 400, 200, 'dc-icon-dialog-title');
+    }
+
+    function opendDetail(ci_iOrgGroupID) {
+        popupDialog('OrgGroupDetail.html#OrgGroupID=' + ci_iOrgGroupID, '', '角色详细资料', true, 0, 0, 'dc-icon-dialog-title');
+    }
+
+    function closeDetail() {
+        closedPopupDialog();
+    }
+
+    function editDetail() {
+        var m_objData = $("#tab_List").datagrid("getSelected");
+        if (m_objData != null) {
+            opendDetail(m_objData.iOrgGroupID);
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function deleteData() {
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            $.messager.confirm('提示', '确定要删除所选' + m_row.length + '条记录吗？', function(r) {
+                if (r) {
+                    var m_arrID = [];
+                    $.each(m_row, function(index, value) { m_arrID[index] = value.iOrgGroupID; });
+                    postData({
+                        url: "DcCdOrgGroupManage",
+                        params: { iOrgGroupID: m_arrID.join(","), Action: "Delete" },
+                        success: function(ci_result) {
+                            $('#tab_List').datagrid('reload');
+                            $.messager.alert('提示', '删除成功', 'info');
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function updateAllData() {
+        postData({
+            url: "DcCdUserPowerUpdateManage",
+            params: { action: "UpdateAll" },
+            success: function(ci_Result) {
+                _objData = null;
+                $.messager.alert('提示', '更新成功', 'info');
+            },
+            failure: function(ci_Result) {
+                $.messager.alert('更新失败', ci_Result.DcMessage, 'error');
+            }
+        });
+    }
+</script>
+

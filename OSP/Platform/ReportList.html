@@ -1,0 +1,170 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=../JS/EsayUI/datagrid-groupview.min.js"></script>
+
+</head>
+<body style="display:none;">
+    <div id="div_List" class="easyui-layout" data-options="fit:true,border:false" style="width: 100%;
+        height: 100%;">
+        <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+            style="height: 80px;">
+            <ul class="searchForm1">
+                <li class="searchText1">
+                    <input id="txt_ReportName" type="text" class="dc-input" dc-tip="请输入报表名" />
+                </li>
+                <li class="searchText1"><a href="javascript:void(0)" onclick="searchReport();" class="dc-button">
+                    查询</a></li>
+            </ul>
+            <label class="">
+            </label>
+        </div>
+        <div data-options="region:'center',border:false">
+            <div id="div_Toolbar" style="display: none;" class="GridButtonBar">
+                <span class="GridButtonBarIco"></span><a href="javascript:void(0)" class="easyui-linkbutton"
+                    iconcls="dc-icon-pencil" plain="true" onclick="openView(1);">查看</a><a id="btn_Add"
+                        class="easyui-linkbutton" iconcls="dc-icon-editadd" plain="true" onclick="openNew()"
+                        style="display: none;">添加</a><a id="btn_Edit" style="display: none;" href="javascript:void(0)"
+                            class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="openView(2);">
+                            修改</a><a id="btn_Delete" style="display: none;" href="javascript:void(0)" class="easyui-linkbutton"
+                                iconcls="dc-icon-cancel" plain="true" onclick="deleteReport()">删除</a>
+            </div>
+            <table id="tab_List" style="display: none;">
+                <thead>
+                    <tr>
+                        <th data-options="field:'ck',checkbox:true">
+                        </th>
+                        <th data-options="field:'cName',width:100,sortable:true">
+                            报表名
+                        </th>
+                        <th data-options="field:'cTableName',width:100,sortable:true">
+                            报表主模块
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        setDataGrid("tab_List", "div_Toolbar", "DcCdReportManage", { Action: "GetReport", Type: "Report" }, "iReportID", "cName", "", {
+            onDblClickRow: function(rowIndex, rowData) {
+                $("#tab_List").datagrid("selectRow", rowIndex);
+                openView(1);
+            },
+            singleSelect: true,
+            checkOnSelect: false,
+            selectOnCheck: false,
+            groupField: 'cFolderName',
+            view: groupview,
+            groupFormatter: function(value, rows) {
+                return value + ' (' + rows.length + '条记录)';
+            }
+        });
+    }
+
+    function openDetail(ci_iReportID, ci_iReportName, ci_iType) {
+        var m_strHtml = '<div data-options="region:\'north\',border:false" style="height: 25px; overflow: hidden;">';
+        m_strHtml += '<div class="easyui-panel" ';
+        m_strHtml += 'data-options="fit:true,border:false,iconCls:\'dc-icon-dialog-title\',headerCls:\'window\',closable:true,onBeforeClose:function(){return closeDetail(' + ci_iType + ');}"';
+        m_strHtml += 'title="<div style=\'color:White; float:left;\'> ' + ci_iReportName + '</div>" style="width: 100%;">';
+        m_strHtml += '</div>';
+        m_strHtml += '</div>';
+        m_strHtml += '<div id="div_iframe" data-options="region:\'center\',border:false">';
+        m_strHtml += '</div>';
+
+        var m_div_View = document.createElement("div");
+        m_div_View.setAttribute('id', "div_View");
+        m_div_View.setAttribute('data-options', 'fit:true,border:false');
+        m_div_View.setAttribute('style', 'width: 100%; height: 100%;');
+        m_div_View.className = "easyui-layout";
+        m_div_View.innerHTML = m_strHtml;
+
+        var m_div_List = document.body;
+        m_div_List.insertBefore(m_div_View, m_div_List.childNodes[0]);
+
+        $("#div_List").css("display", "none");
+        $.parser.parse();
+
+        var m_strSrc = "";
+        switch (ci_iType) {
+            case 1:
+                m_strSrc = "ReportViewer.html";
+                break;
+            case 2:
+                m_strSrc = "ReportManage.html";
+                break;
+        }
+        $("#div_iframe").html('<iframe id="ifr_View" scrolling="yes" frameborder="0" src="' + m_strSrc + '#ReportID=' + ci_iReportID + '" style="width: 100%; height: 100%;"></iframe>');
+    }
+
+    function closeDetail(ci_iType) {
+        var m_div = document.getElementById("div_View");
+        if (m_div) {
+            m_div.parentNode.removeChild(m_div);
+        }
+        $("#div_List").css("display", "");
+        $.parser.parse();
+        if (ci_iType == 2) {
+            $('#tab_List').datagrid('reload');
+        }
+        return false;
+    }
+
+    function openView(ci_iType) {
+        var m_objData = $("#tab_List").datagrid("getSelected");
+        if (m_objData != null) {
+            openDetail(m_objData.iReportID, m_objData.cName, ci_iType);
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function openNew() {
+        openDetail(0, "添加报表", 2);
+    }
+
+    function searchReport() {
+        var m_objQuery = { Action: "GetReport", Type: "Report" };
+        if ($("#txt_ReportName").val() != "") {
+            m_objQuery.cName = $("#txt_ReportName").val();
+        }
+        $('#tab_List').datagrid('reload', m_objQuery);
+    }
+
+    function deleteReport() {
+        var m_objData = $("#tab_List").datagrid("getChecked");
+        if (m_objData.length > 0) {
+            var m_strIDList = "";
+            for (var i = 0; i < m_objData.length; i++) {
+                if (m_strIDList.length > 0) {
+                    m_strIDList += ",";
+                }
+                m_strIDList += m_objData[i].iReportID;
+            }
+            if (m_strIDList != "") {
+                postData({
+                    url: "DcCdReportManage",
+                    params: { Action: "Delete", iReportID: m_strIDList },
+                    success: function(ci_result) {
+                        $.messager.alert('提示', '删除成功', 'info', function() { $('#tab_List').datagrid('reload'); });
+                    }
+                });
+            }
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+</script>
+

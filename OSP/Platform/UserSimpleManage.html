@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>用户主档</title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+        style="height: 80px;">
+        <ul class="searchForm1">
+            <li>
+                <input name="cUserChiName" type="text" class="dc-search dc-input" dc-tip="请输入姓名" />
+            </li>
+            <li>
+                <input name="cEmail" type="text" class="dc-search dc-input" dc-tip="请输入用户邮箱" style="width: 300px;" />
+            </li>
+            <li>
+                <input name="cMobileNO" type="text" class="dc-search dc-input" dc-tip="请输入手机号码" />
+            </li>
+            <li><a href="javascript:void(0)" onclick="searchData()" class="dc-button">查询</a></li>
+        </ul>
+    </div>
+    <div data-options="region:'center',border:false,onResize:function(){try{$('#div_newDialog').panel('resize');}catch(ex){}}">
+        <div id="div_Toolbar" class="GridButtonBar" style="display: none;">
+            <span class="GridButtonBarIco"></span><a class="easyui-linkbutton" iconcls="dc-icon-pencil"
+                plain="true" onclick="opendDetail()">详情</a><a href="javascript:void(0)" class="easyui-linkbutton"
+                    iconcls="dc-icon-cancel" plain="true" onclick="detachData()">禁用</a>
+        </div>
+        <table id="tab_List" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true">
+                    </th>
+                    <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iUserID);}">
+                        <div style="width: 50px; height: 5px; display: block;">
+                        </div>
+                    </th>
+                    <th data-options="field:'cUserChiName',width:80,sortable:true">
+                        姓名
+                    </th>
+                    <th data-options="field:'cEmail',width:140,sortable:true">
+                        邮箱
+                    </th>
+                    <th data-options="field:'cMobileNO',width:140,sortable:true">
+                        手机
+                    </th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        setMyDataGrid(true);
+    }
+
+    function getSearchParameter(ci_bIsBase) {
+        var m_objParams = { Action: "QueryForUser", iOrgID: top._objUserData.iOrgID };
+        if (!ci_bIsBase) {
+            return getSearchParameters($(".searchForm1"), m_objParams);
+        }
+        return m_objParams;
+    }
+
+    function setMyDataGrid(ci_bIsBase) {
+        setDataGrid('tab_List', 'div_Toolbar', 'DcCdOrganizationManage', getSearchParameter(ci_bIsBase), 'iUserID', 'iOrgID', '', {
+            checkOnSelect: true,
+            selectOnCheck: true,
+            singleSelect: false,
+            onClickRow: function(rowIndex, rowData) { $("#tab_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+            onDblClickRow: function(rowIndex, rowData) { $("#tab_List").datagrid("selectRow", rowIndex); editData(rowData.iUserID); }
+        });
+    }
+
+    function searchData(ci_iID) {
+        if (ci_iID != undefined && parseInt(ci_iID) > 0) {
+            editData(ci_iID);
+        }
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function cancel() {
+        closedPopupDialog();
+    }
+
+    function editData(ci_iID) {
+        cancel();
+        if (ci_iID > 0) {
+            popupDialog('UserSimpleDetail.html#UserID=' + ci_iID, 'parent.searchData', '用户详细资料', true, 0, 0, 'dc-icon-dialog-title');
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function detachData() {
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            $.messager.confirm('提示', '确定要禁用所选' + m_row.length + '名用户吗？', function(r) {
+                if (r) {
+                    var m_arrID = [];
+                    $.each(m_row, function(index, value) { m_arrID.push(value.iID); });
+                    postData({
+                        url: "DcCdOrganizationManage",
+                        params: { iID: m_arrID.join(","), Action: "DeleteForUser" },
+                        success: function(ci_result) {
+                            $('#tab_List').datagrid('reload');
+                            $.messager.alert('提示', '禁用成功', 'info');
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function showSelect() {
+        showDataGridSetting($("#tab_List").attr("SettingCode"), "setMyDataGrid");
+    }
+</script>
+

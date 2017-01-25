@@ -1,0 +1,40 @@
+﻿.header_bar { position: fixed; top: 0; left: 0; width: 100%; min-width: 960px; z-index: 4; background: #FFF; zoom: 1; cursor: default; }
+.file_name { display: inline-block; white-space: nowrap; padding: 0; vertical-align: middle; text-overflow: ellipsis; overflow: hidden; height: 35px; line-height: 35px; vertical-align: top; margin-left: 5px; }
+.file_type { background-image: url(../Image/file-small.png); background-position: -74px -488px; background-repeat: no-repeat; cursor: pointer; width: 34px; height: 34px; display: inline-block; margin-left: 5px; }
+.file_thumbnail { vertical-align: middle; display: table-cell; height: 35px; }
+.file_checkbox { display: none; width: 20px; height: 34px; cursor: default; }
+.file_updatedate { margin-left: 5px; width: 130px; display: inline-block; }
+.file_size { width: 100px; display: inline-block; }
+.file_edit { margin: 6px; }
+.file_empty { border-bottom: solid 1px #E0E0E0; display: block; text-align: center; color: #A5A5A5; cursor: default; height: 35px; line-height: 35px; }
+.file_item { border-bottom: solid 1px #E0E0E0; display: block; cursor: pointer; height: 35px; line-height: 35px; }
+.file_item_select { background-color: #FBEC88; }
+.file_item_over { background-color: #efefef; }
+.file_message { top: 0; position: fixed; font-weight: bold; background: #6fb30f; color: White; z-index: 100; width: 120px; border-radius: 5px; height: 28px; text-align: center; line-height: 28px; vertical-align: middle; left: 45%; display: none; }
+.file_menu { width: 104px; }
+.file_menu * { float: left; cursor: pointer; width: 28px; height: 35px; display: inline-block; background: url(../Image/view-icons.png) -999px -999px no-repeat; }
+.menu_down { background-position: -20px 10px; }
+.menu_share { background-position: -54px 10px; }
+.menu_more { background-position: -221px 10px; }
+.menu_rename { background-position: -88px 10px; }
+.menu_move { background-position: -250px 10px; }
+.menu_delete { background-position: -155px 10px; }
+.menu_undo { background-position: -188px 10px; }
+.menu_down_over { background-position: -20px -20px; }
+.menu_share_over { background-position: -54px -20px; }
+.menu_more_over { background-position: -221px -20px; }
+.menu_rename_over { background-position: -88px -20px; }
+.menu_move_over { background-position: -255px -20px; }
+.menu_delete_over { background-position: -155px -20px; }
+.menu_undo_over { background-position: -188px -20px; }
+.menu_more_click { background-position: -221px -51px; }
+.icon_folder { background-position: -185px 1px; }
+.icon_rar { background-position: 0px -348px; }
+.icon_zip { background-position: -37px -348px; }
+.icon_apk { background-position: 0px -244px; }
+.icon_spx { background-position: 0px -489px; }
+.icon_ogg { background-position: 0px -489px; }
+.icon_mp3 { background-position: -37px -209px; }
+.icon_wav { background-position: -74px -209px; }
+.icon_none { background-position: -999px -999px; }
+.icon_menuselect { background: url(../js/esayui/themes/icons/dc_icon_ok.png) no-repeat 2px 2px; }

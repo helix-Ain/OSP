@@ -1,0 +1,638 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../JS/lightbox2/css/lightbox.min.css,../JS/lightbox2/js/lightbox.min.js,../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js"></script>
+		<style type="text/css">
+			#datalist {
+				border: 1px solid #E0E0E0;
+				border-bottom: none;
+				border-radius: 0 0 3px 3px;
+				margin: 0 10px auto 10px;
+			}
+			
+			#datalist .easyui-linkbutton {
+				position: relative;
+				top: -12.5px;
+			}
+			
+			#routeContainer {
+				height: 35px;
+				line-height: 35px;
+				border: 1px solid #E0E0E0;
+				border-bottom: none;
+				margin: 10px 10px 0 10px;
+				padding-left: 8.5px;
+				border-radius: 3px 3px 0 0;
+			}
+			
+			div.row {
+				height: 35px;
+				line-height: 35px;
+				border-bottom: 1px solid #E0E0E0;
+			}
+			
+			div.folder:hover {
+				background-color: #EFEFEF;
+				cursor: pointer;
+			}
+			
+			div.col {
+				height: 35px;
+				line-height: 35px;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				float: left;
+			}
+			
+			div.row div.col:nth-child(1) {
+				width: 40px;
+			}
+			
+			div.row div.col:nth-child(2) {
+				width: 25%;
+				margin-left: 5px;
+			}
+			
+			div.row div.col:nth-child(3) {
+				width: auto;
+			}
+			
+			div.row div.col:nth-child(4) {
+				float: right;
+				margin-right: 7%;
+			}
+			
+			a:hover {
+				text-decoration: underline;
+			}
+			
+			a.btn {
+				display: inline-block;
+				cursor: pointer;
+				width: 28px;
+				height: 35px;
+				background: url(../Image/view-icons.png) -999px -999px no-repeat;
+				margin-right: 2.5px;
+			}
+			
+			a.btn-upload {
+				background-position: -117px -44px;
+			}
+			
+			a.btn-upload:hover {
+				background-position: -145px -44px;
+			}
+			
+			a.btn-delete {
+				background-position: -280px -44px;
+			}
+			
+			a.btn-more {
+				background-position: -31px -44px;
+			}
+			
+			a.btn-more:hover {
+				background-position: -60px -44px;
+			}
+			
+			a.btn-more-over {
+				background-position: -60px -44px;
+			}
+			
+			a.btn-more-click {
+				background-position: -88px -44px;
+			}
+			
+			#okTempRow,
+			#cancelTempRow {
+				margin-top: 17px;
+				margin-right: 10px;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id="div_Msg" class="file_message easyui-panel" data-options="noheader:true,fit:false,width:120,collapsed:true">
+			</div>
+			<div id='top-menu'>
+				<div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+				</div>
+				<div style='display: inline-block;margin-top:5.5px;'>
+					<a href="javascript:void(0)" style='margin-left:15px;' class="easyui-linkbutton" iconcls="dc-icon-editadd" plain="true" onclick="addFolder()">新建分组</a>
+				</div>
+				<div style='display: inline-block;margin-top:5.5px;'>
+					<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="AdjustGroupOrder()">调整分组顺序</a>
+				</div>
+				<div style='display:inline-block;margin-top:5.5px'>
+					<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="dc-icon-editadd" plain="true" onclick="addLink()">添加外链</a>
+				</div>
+				<div style='display: inline-block;float:right;margin:5px 9px 0 0;'>
+					<input type='text' id='filterSearch' style='height:20px;width:350px;' placeholder="输入关键字回车过滤文件夹或文件" />
+					<a href="javascript:void(0)" style='margin-right:1px;' class="easyui-linkbutton" iconcls="dc-icon-setting" plain="true" onclick="checkStructure()">查看分组结构</a>
+				</div>
+			</div>
+			<div>
+				<div id='routeContainer'>
+					<div id='route' style='width:75%;display: inline-block;'></div>
+					<a id='backBtn' class='easyui-linkbutton' style='float:right;display: none;margin-top:6px;margin-right:25px'>返回</a>
+				</div>
+				<div id='datalist'></div>
+			</div>
+			<div id='mm' class="easyui-menu" style="width:100px;" data-options="onClick:menuHandler,onHide:menuHide">
+				<div style='width:100px;' data-options="name:'move',iconCls:'dc-icon-move'">移动</div>
+				<div style='width:100px;' data-options="name:'delete',iconCls:'dc-icon-delete'">删除</div>
+			</div>
+		</div>
+		<div id='footer' data-options="region:'south',border:false" style="display: none;height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _iParentID = 0;
+			var _iStorey = [];
+			var _iMsgTimeoutID = null;
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _iObjectID = getQueryStringValue('iObjectID');
+			var _select = getQueryStringValue('select');
+			var _strFun = getHashValue('Fun');
+			var _tempRowActivation = false;
+			var _folderCheck = [];
+			var _fileCheck = [];
+			var _iCurrOperateID = 0;
+			var _iCurrOperateServerID = 0;
+			var _cCurrOPerateFilename = '';
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+				$('a.btn-more').live('mouseover', function() {
+					$(this).addClass('btn-more-over');
+				});
+				$('a.btn-more').live('mouseleave', function() {
+					$(this).removeClass('btn-more-over');
+				});
+				$('#backBtn').click(function() {
+					_tempRowActivation = false;
+					$('#route a').eq($('#route a').length - 2).trigger('click');
+				});
+				$('#filterSearch').on('keydown', function() {
+					if(event.keyCode == 13) {
+						getDataGroupList(_iParentID, $(this).val());
+					}
+				});
+			});
+
+			function initPage() {
+				getDataGroupList();
+				lightbox.option({
+					'fadeDuration': 100,
+					'resizeDuration': 100
+				});
+				if(_select == 1) {
+					$('#top-menu').hide();
+					$('#footer').show();
+				}
+			}
+
+			function addLink() {
+				popupDialog(_strSysUrl + 'OSP/DataLinkDetail.html#Action=Add&iObjectID=' + _iObjectID + '&iParentID=' + _iParentID, 'parent.refresh', '添加外链', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function getDataGroupList(iGroupID, filter) {
+				if(iGroupID != undefined) {
+					_iParentID = iGroupID;
+				}
+				changeRoute();
+				postData({
+					url: 'DcCdDataGroupManage',
+					params: {
+						Action: 'GetList',
+						iObjectID: _iObjectID,
+						iParentID: _iParentID
+					},
+					success: function(ci_result) {
+						$('#datalist').empty();
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								if(filter == undefined || item.cName.indexOf(filter) != -1) {
+									$('#datalist').append('<div id=' + item.iGroupID + ' class="row folder" onclick="getDataGroupList(' + item.iGroupID + ')"><div class="col file_type icon_folder"></div><div class="col">' + item.cName + '</div><div class="col">' + item.cDescription + '</div><div class="col"><a href="#" class="btn btn-upload" title="修改" onclick="updateFolder(' + item.iGroupID + ',event)"></a><a href="#" class="btn btn-delete" title="删除" onclick="delFolder(' + item.iGroupID + ',event)"></a></div></div>');
+								}
+							});
+						}
+						postData({
+							url: 'DcCdDataManage',
+							params: {
+								Action: 'GetLinkList',
+								iGroupID: _iParentID
+							},
+							success: function(ci_result) {
+								if(existData(ci_result)) {
+									var m_objData = ci_result.rows;
+									if(_select != 1) {
+										$.each(m_objData, function(i, item) {
+											if(filter == undefined || item.cName.indexOf(filter) != -1) {
+												if(item.cFilePath != '') {
+													var fileCover = '<img style="width:27px;height:27px;margin:4.5px 10px 4.5px 6px;" src="/' + item.cFilePath + '/' + item.cFilename + '"/>';
+												} else {
+													var fileCover = '<img style="width:27px;height:27px;margin:4.5px 10px 4.5px 6px;" src="/' + item.cFilename + '"/>';
+												}
+												$('#datalist').append('<div id=' + item.iLinkID + ' class="row"><div class="col">' + fileCover + '</div><div class="col">' + item.cName + '</div><div class="col"><a href="' + item.cUrl + '" target="_blank">' + urlFilter(item.cUrl) + '</a></div><div class="col"><a href="#" class="btn btn-upload" title="修改" onclick="updateFile(' + item.iLinkID + ')"></a><a href="#" class="btn btn-more" title="更多" onclick="moreOperate(this,' + item.iLinkID + ',' + item.iServerID + ',\'' + item.cFilename + '\')"></a></div></div>');
+											}
+										});
+									} else {
+										$.each(m_objData, function(i, item) {
+											if(item.cFilePath != '') {
+												var fileCover = '<img style="width:27px;height:27px;margin:4.5px 10px 4.5px 6px;" src="/' + item.cFilePath + '/' + item.cFilename + '"/>';
+											} else {
+												var fileCover = '<img style="width:27px;height:27px;margin:4.5px 10px 4.5px 6px;" src="/' + item.cFilename + '"/>';
+											}
+											$('#datalist').append('<div id=' + item.iLinkID + ' class="row"><div class="col">' + fileCover + '</div><div class="col">' + item.cName + '</div><div class="col"><a href="' + item.cUrl + '">' + urlFilter(item.cUrl) + '</a></div><div class="col"><a href="javascript:void(0)" class="easyui-linkbutton file-button" onclick="selectLink(' + item.iLinkID + ')" style="margin-top:17px;">选择</a></div></div>');
+										});
+									}
+								}
+								$.parser.parse('#datalist');
+							}
+						});
+					}
+				});
+			}
+
+			function addFolder() {
+				if(_tempRowActivation == false) {
+					_tempRowActivation = true;
+				} else {
+					$('#tempcName').focus();
+					return;
+				}
+				$('#datalist').prepend('<div id="tempRow" class="row" style="background-color:#EFEFEF;"><div class="col file_type icon_folder"></div><div class="col"><input style="border:none;width:90%;height:25px;margin-top:4px;padding-left:10px;" id="tempcName" type="text" placeholder="分组名称"/></div><div class="col"><input id="tempcDescription" type="text" style="border:0;width:90%;height:25px;margin-top:4px;padding-left;padding-left:10px;" placeholder="分组描述"/></div><div class="col"><a id="okTempRow" class="easyui-linkbutton">保存</a><a id="cancelTempRow" class="easyui-linkbutton">取消</a></div></div>');
+				$('#tempcName').focus();
+				$('#tempRow').on('keydown', function() {
+					if(event.keyCode == 13) {
+						if($('#tempcName').val() != '') {
+							var cName = $('#tempcName').val();
+							var cDescription = $('#tempcDescription').val();
+							postData({
+								url: 'DcCdDataGroupManage',
+								params: {
+									Action: 'Add',
+									cName: cName,
+									cDescription: cDescription,
+									iParentID: _iParentID,
+									iObjectID: _iObjectID
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										$('#tempRow').remove();
+										refresh();
+									}
+								}
+							});
+							_tempRowActivation = false;
+						}
+					} else if(event.keyCode == 27) {
+						$('#tempRow').remove();
+						_tempRowActivation = false;
+					}
+				});
+				$('#okTempRow').on('click', function() {
+					if($('#tempcName').val() != '') {
+						var cName = $('#tempcName').val();
+						var cDescription = $('#tempcDescription').val();
+						postData({
+							url: 'DcCdDataGroupManage',
+							params: {
+								Action: 'Add',
+								cName: cName,
+								cDescription: cDescription,
+								iParentID: _iParentID,
+								iObjectID: _iObjectID
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$('#tempRow').remove();
+									refresh();
+								}
+							}
+						});
+						_tempRowActivation = false;
+					}
+				});
+				$('#cancelTempRow').one('click', function() {
+					$('#tempRow').remove();
+					_tempRowActivation = false;
+				});
+				$.parser.parse('#datalist');
+			}
+
+			function updateFolder(iGroupID, e) {
+				if(_tempRowActivation == false) {
+					_tempRowActivation = true;
+				} else {
+					stopBubble();
+					$('#tempcName').focus();
+					return;
+				}
+				var target = '#' + iGroupID;
+				var cName = $(target).find('div.col:eq(1)').html();
+				var cDescription = $(target).find('div.col:eq(2)').html();
+				$(target).replaceWith('<div id="tempRow" class="row" style="background-color:#EFEFEF;"><div class="col file_type icon_folder"></div><div class="col"><input type="text" id="tempcName" style="border:none;width:90%;height:25px;margin-top:4px;padding-left:10px;"/></div><div class="col"><input type="text" id="tempcDescription" style="border:none;width:90%;height:25px;margin-top:4px;padding-left:10px;"></div><div class="col"><a id="okTempRow" class="easyui-linkbutton">保存</a><a id="cancelTempRow" class="easyui-linkbutton">取消</a></div></div>');
+				$('#tempcName').val(cName).focus();
+				$('#tempcDescription').val(cDescription);
+				$('#tempRow').on('keydown', function() {
+					if(event.keyCode == 13) {
+						if($('#tempcName').val() != '') {
+							cName = $('#tempcName').val();
+							cDescription = $('#tempcDescription').val();
+							postData({
+								url: 'DcCdDataGroupManage',
+								params: {
+									Action: 'Update',
+									iGroupID: iGroupID,
+									cName: cName,
+									cDescription: cDescription,
+									iParentID: _iParentID,
+									iObjectID: _iObjectID
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										$('#tempRow').replaceWith('<div id=' + iGroupID + ' class="row"><div class="col file_type icon_folder"></div><div class="col">' + cName + '</div><div class="col">' + cDescription + '</div><div class="col"><a href="#" class="btn btn-upload" title="修改" onclick="updateFolder(' + iGroupID + ',event)"></a><a href="#" class="btn btn-delete" title="删除" onclick="delFolder(' + iGroupID + ',event)"></a><a id="folder-' + iGroupID + '" href="javascript:void(0)" class="easyui-linkbutton folder-button" onclick="stopBubble();">选择</a></div></div>');
+									}
+								}
+							});
+							_tempRowActivation = false;
+							$.parser.parse('#datalist');
+						}
+					} else if(event.keyCode == 27) {
+						$('#tempRow').replaceWith('<div id=' + iGroupID + ' class="row"><div class="col file_type icon_folder"></div><div class="col">' + cName + '</div><div class="col">' + cDescription + '</div><div class="col"><a href="#" class="btn btn-upload" title="修改" onclick="updateFolder(' + iGroupID + ',event)"></a><a href="#" class="btn btn-delete" title="删除" onclick="delFolder(' + iGroupID + ',event)"></a><a id="folder-' + iGroupID + '" href="javascript:void(0)" class="easyui-linkbutton folder-button" onclick="stopBubble();">选择</a></div></div>');
+						_tempRowActivation = false;
+						$.parser.parse('#datalist');
+					}
+				});
+				$('#okTempRow').on('click', function() {
+					if($('#tempcName').val() != '') {
+						cName = $('#tempcName').val();
+						cDescription = $('#tempcDescription').val();
+						postData({
+							url: 'DcCdDataGroupManage',
+							params: {
+								Action: 'Update',
+								iGroupID: iGroupID,
+								cName: cName,
+								cDescription: cDescription,
+								iParentID: _iParentID,
+								iObjectID: _iObjectID
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$('#tempRow').replaceWith('<div id=' + iGroupID + ' class="row"><div class="col file_type icon_folder"></div><div class="col">' + cName + '</div><div class="col">' + cDescription + '</div><div class="col"><a href="#" class="btn btn-upload" title="修改" onclick="updateFolder(' + iGroupID + ',event)"></a><a href="#" class="btn btn-delete" title="删除" onclick="delFolder(' + iGroupID + ',event)"></a></div></div>');
+								}
+							}
+						});
+						_tempRowActivation = false;
+						$.parser.parse('#datalist');
+					}
+				});
+				$('#cancelTempRow').one('click', function() {
+					$('#tempRow').replaceWith('<div id=' + iGroupID + ' class="row"><div class="col file_type icon_folder"></div><div class="col">' + cName + '</div><div class="col">' + cDescription + '</div><div class="col"><a href="#" class="btn btn-upload" title="修改" onclick="updateFolder(' + iGroupID + ',event)"></a><a href="#" class="btn btn-delete" title="删除" onclick="delFolder(' + iGroupID + ',event)"></a></div></div>');
+					_tempRowActivation = false;
+					$.parser.parse('#datalist');
+				});
+				$.parser.parse('#datalist');
+				stopBubble(e);
+			}
+
+			function delFolder(iGroupID, e) {
+				$.messager.confirm('提示', '您确定要删除吗?', function(r) {
+					if(r) {
+						postData({
+							url: 'DcCdDataGroupManage',
+							params: {
+								Action: 'Delete',
+								iGroupID: iGroupID
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									refresh();
+								}
+							}
+						});
+					}
+				});
+				stopBubble(e);
+			}
+
+			function updateFile(iLinkID) {
+				popupDialog(_strSysUrl + 'OSP/DataLinkDetail.html#Action=Update&iObjectID=' + _iObjectID + '&iParentID=' + _iParentID + '&iLinkID=' + iLinkID, 'parent.refresh', '修改外链', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function delFile(iLinkID) {
+				$.messager.confirm('提示', '您确定要删除吗?', function(r) {
+					if(r) {
+						postData({
+							url: 'DcCdDataManage',
+							params: {
+								Action: 'DeleteLink',
+								cIDList: iLinkID
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									refresh();
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function selectLink(iLinkID) {
+				if(_strFun != '') {
+					_strFun += '(' + iLinkID + ')';
+					eval(_strFun);
+				}
+			}
+
+			function moveFile(iAttachemntID) {
+				popupDialog(_strSysUrl + 'OSP/DataGroupStructure.html#Action=moveFile&iObjectID=' + _iObjectID + '&iParentID=' + _iParentID + '&iAttachmentID=' + iAttachemntID, 'parent.moveFile2', '选择要移动到的分组', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function moveFile2(iAttachmentID, iGroupID) {
+				postData({
+					url: 'DcCdDataManage',
+					params: {
+						Action: 'GetAttachmentList',
+						iAttachmentID: iAttachmentID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							postData({
+								url: 'DcCdDataManage',
+								params: {
+									Action: 'UpdateAttachment',
+									iAttachmentID: iAttachmentID,
+									iServerID: m_objData.iServerID,
+									cFilename: m_objData.cFilename,
+									cName: m_objData.cName,
+									iObjectID: m_objData.iObjectID,
+									iGroupID: iGroupID
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										cancel();
+										refresh();
+									}
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function moreOperate(obj, iAttachmentID, iServerID, cFilename) {
+				$(obj).addClass('btn-more-click');
+				_iCurrOperateID = iAttachmentID;
+				_iCurrOperateServerID = iServerID;
+				_cCurrOPerateFilename = cFilename;
+				$('#mm').menu('show', {
+					left: $(obj).offset().left,
+					top: $(obj).offset().top + $(obj).height() - 5
+				});
+			}
+
+			function menuHandler(item) {
+				if(item.name == 'move') {
+					moveFile(_iCurrOperateID);
+				} else if(item.name == 'update') {
+					updateFile(_iCurrOperateID, _iCurrOperateServerID, _cCurrOPerateFilename);
+				} else {
+					delFile(_iCurrOperateID);
+				}
+			}
+
+			function menuHide() {
+				$('a.btn-more-click').removeClass('btn-more-click');
+			}
+
+			function checkStructure() {
+				popupDialog(_strSysUrl + 'OSP/DataGroupStructure.html#onlyview=1&entrust=DataLinkManage&Action=checkStructure&iObjectID=' + _iObjectID + '&iParentID=' + _iParentID, 'parent.refresh', '查看分组结构', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function AdjustGroupOrder() {
+				popupDialog(_strSysUrl + 'OSP/DataGroupAdjust.html#entrust=DataLinkManage&iObjectID=' + _iObjectID + '&iParentID=' + _iParentID, 'parent.refresh', '调整分组顺序', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+
+			function downFile(iAttachment) {
+				window.open('Ajax/DcCdDataManage.ashx?Action=DownloadAttachment&iAttachmentID=' + iAttachment);
+			}
+
+			function getCoverFromFileItem(fileitem) {
+				var fileCover = '';
+				var fileExts = fileitem.cName.split('.')[1].toLowerCase();
+				switch(fileExts) {
+					case 'jpg':
+					case 'png':
+						fileCover = '<a href="' + fileitem.cFilePath + '/' + fileitem.cFilename + '" data-lightbox="roadtrip"><img style="width:27px;height:27px;margin:4.5px 10px 4.5px 6px;" src="' + fileitem.cFilePath + '/72/' + fileitem.cFilename + '"/></a>';
+						break;
+					default:
+						fileCover = '<div class="file_type icon_' + fileExts + '"></div>'
+				}
+				return fileCover;
+			}
+
+			function changeRoute(iGroupID) {
+				if(iGroupID != undefined) {
+					_iParentID = iGroupID;
+				}
+				$('#route').empty();
+				_iStorey = [];
+				_tempRowActivation = false;
+				calculateStorey(_iParentID);
+			}
+
+			function calculateStorey(iGroupID) {
+				postData({
+					url: 'DcCdDataGroupManage',
+					params: {
+						Action: 'GetList',
+						iGroupID: iGroupID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							_iStorey.unshift(m_objData);
+							calculateStorey(m_objData.iParentID);
+						} else {
+							$('#route').append('<a href="#" onclick="getDataGroupList(0)">全部分组</a>');
+							$.each(_iStorey, function(i, item) {
+								$('#route').append('&nbsp;&gt;&nbsp;<a href="#" onclick="getDataGroupList(' + item.iGroupID + ')">' + item.cName + '</a>');
+							});
+							if($('#route a').length > 1) {
+								$('#backBtn').show();
+							} else {
+								$('#backBtn').hide();
+							}
+						}
+					}
+				});
+			}
+
+			function refresh(iGroupID) {
+				if(iGroupID == undefined) {
+					getDataGroupList(_iParentID);
+				} else {
+					getDataGroupList(iGroupID);
+				}
+			}
+
+			function showMessage(ci_strMsg) {
+				if(_iMsgTimeoutID != null) {
+					clearTimeout(_iMsgTimeoutID);
+					_iMsgTimeoutID = null;
+					$('#div_Msg').panel('collapse');
+				}
+				$('#div_Msg').html(ci_strMsg).panel('expand', true);
+				_iMsgTimeoutID = setTimeout("$('#div_Msg').panel('collapse', true);", 2000);
+			}
+
+			function urlFilter(tempurl) {
+				if(tempurl.length > 25) {
+					tempurl = tempurl.substr(0, 25) + '...';
+				}
+				return tempurl;
+			}
+
+			function iObjectIDToiType(iObjectID) {
+				var iType = 0;
+				if(iObjectID > 0 && iObjectID < 9) {
+					iType = 60 + iObjectID;
+				}
+				return iType;
+			}
+
+			function stopBubble(e) {
+				if(e && e.stopPropagation) {
+					e.stopPropagation();
+				} else {
+					window.event.cancelBubble = true;
+				}
+			}
+		</script>
+	</body>
+
+</html>

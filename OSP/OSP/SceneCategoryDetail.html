@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../JS/lightbox2/css/lightbox.min.css,../JS/lightbox2/js/lightbox.min.js,../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js"></script>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+			</div>
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr id='tr-parentID' style='display: none;'>
+						<td class='tabletext'>
+							<span class="require_sign">*</span>父类别名称：
+						</td>
+						<td>
+							<input id='iParentCategoryID' name='iParentCategoryID' type='hidden' />
+							<input id='cParentCategoryName' name='cParentCategoryName' maxlength="100" class='easyui-validatebox' data-options='required:true' readonly="readonly" style='width:550px;cursor: pointer;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>类别名称：
+						</td>
+						<td>
+							<input id='cCategoryName' name='cCategoryName' maxlength="50" class='easyui-validatebox' data-options='required:true' style='width:550px;' />
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf()">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = getHashValue('Action');
+			var _iCategoryID = getHashValue('iCategoryID');
+			var _strFun = getHashValue('Fun');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+				if(_Action == 'Update') {
+					$('#tr-parentID').show();
+				} else {
+					$('#tr-parentID').remove();
+				}
+				$('#cParentCategoryName').on('click', function() {
+					popupDialog(_strSysUrl + 'OSP/SceneCategoryManage.html#entrust=SceneCategoryDetail', 'parent.filliParentCategoryID', '选择父级类型', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				if(_Action == 'Update') {
+					postData({
+						url: 'DcCdSceneCategoryManage',
+						params: {
+							Action: 'GetList',
+							iCategoryID: _iCategoryID
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								$('#cCategoryName').val(m_objData.cCategoryName);
+								if(m_objData.iParentID != 0) {
+									postData({
+										url: 'DcCdSceneCategoryManage',
+										params: {
+											Action: 'GetList',
+											iCategoryID: m_objData.iParentID
+										},
+										success: function(ci_result) {
+											if(existData(ci_result)) {
+												var m_objData = ci_result.rows[0];
+												$('#iParentCategoryID').val(m_objData.iCategoryID);
+												$('#cParentCategoryName').val(m_objData.cCategoryName);
+											}
+										}
+									});
+								} else {
+									$('#iParentCategoryID').val(0);
+									$('#cParentCategoryName').val('全部类别');
+								}
+							}
+						}
+					});
+				}
+			}
+
+			function filliParentCategoryID(iCategoryID) {
+				if(iCategoryID != 0) {
+					postData({
+						url: 'DcCdSceneCategoryManage',
+						params: {
+							Action: 'GetList',
+							iCategoryID: iCategoryID
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								$('#iParentCategoryID').val(m_objData.iCategoryID);
+								$('#cParentCategoryName').val(m_objData.cCategoryName);
+								cancel();
+							}
+						}
+					});
+				} else {
+					$('#iParentCategoryID').val(0);
+					$('#cParentCategoryName').val('全部类别');
+					cancel();
+				}
+			}
+
+			function saveData() {
+				if(_Action == 'Add') {
+					postData({
+						url: 'DcCdSceneCategoryManage',
+						params: {
+							Action: 'Add',
+							iParentID: _iCategoryID
+						},
+						form: 'form_Edit',
+						validate: true,
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								if(_strFun != '') {
+									eval(_strFun);
+								}
+								cancelSelf();
+							} else {
+								$.messager.alert('提示', '保存失败', 'info');
+							}
+						}
+					});
+				} else {
+					postData({
+						url: 'DcCdSceneCategoryManage',
+						params: {
+							Action: 'Update',
+							iCategoryID: _iCategoryID,
+							iParentID: $('#iParentCategoryID').val()
+						},
+						form: 'form_Edit',
+						validate: true,
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								$.messager.alert('提示', '保存成功', 'info');
+								if(_strFun != '') {
+									eval(_strFun);
+								}
+							} else {
+								$.messager.alert('提示', '保存失败', 'info');
+							}
+						}
+					});
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+
+			function iObjectIDToiType(iObjectID) {
+				var iType = 0;
+				if(iObjectID > 0 && iObjectID < 9) {
+					iType = 60 + iObjectID;
+				}
+				return iType;
+			}
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,235 @@
+﻿html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td { margin: 0; padding: 0; border: 0; outline: 0; font-weight: inherit; font-style: inherit; font-family: "Arial" , "Tahoma" , "微软雅黑" , "雅黑"; }
+
+em { font-style: normal; }
+
+ul { list-style: none; }
+html, body { width: 100%; margin: 0; padding: 0; font-size: 13px; }
+
+.clear { clear: both; }
+
+a:link, a:visited { color: #000; text-decoration: none; }
+
+.mainBody { width: 100%; margin: 0; padding: 0; background: #1797C0 url(../Image/bg.png) repeat-x; }
+
+.page { width: 99%; margin: 0 auto; padding: 0; }
+
+.top { width: 100%; min-width: 1024px; height: 69px; overflow: hidden; margin-bottom: 10px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; background: url(../image/top_bg.jpg) repeat-x; }
+
+.topInfo { width: 450px; height: 70px; float: left; }
+
+.topOpt { width: auto; height: 70px; color: Black; margin-top: 5px; }
+
+.logo { width: 103px; height: 45px; margin: 15px 20px auto 20px; }
+
+.topMsg { height: 55px; margin: 5px 0; border-left: solid 1px #ccc; }
+.topMsg li { float: left; margin: 0 10px; }
+
+.menuicon { vertical-align: middle; margin-right: 10px; }
+.main { width: 100%; min-width: 1024px; height: 350px; border-radius: 5px; background-color: #fff; padding-bottom: 10px; padding-top: 5px; }
+
+.sidebar { width: 15%; height: 300px; min-width: 150px; float: left; background-color: #ccc; }
+
+.content { width: 85%; height: 300px; min-width: 860px; float: right; background-color: #ccc; }
+
+
+.bottom { width: 100%; height: 30px; margin-bottom: 20px; color: #fff; }
+.treeText { color: Black; vertical-align: middle; height: 15px; font-style: normal; }
+.treeChild { height: 100%; overflow: auto; }
+.treeChildText { font-size: 12px; line-height: 30px; height: 30px; vertical-align: middle; text-indent: 20px; background-position: right center; }
+
+.treeParentText { font-size: 13px; height: 32px; line-height: 32px; vertical-align: middle; text-indent: 40px; }
+
+.MaskDiv { background-color: #ccc; position: absolute; z-index: 10000; top: 0px; left: 0px; filter: alpha(Opacity=100); -moz-opacity: 1; cursor: progress; width: 100%; height: 100%; }
+.ProgressTips { float: left; position: absolute; top: 50%; left: 45%; width: auto; height: 16px; padding: 12px 5px 10px 30px; background: #fff url('../image/loading.gif') no-repeat scroll 5px 10px; border: 2px solid #ccc; color: #222; }
+.LoadingMask { background-color: #ccc; position: fixed; display: block; z-index: 10000; top: 0px; left: 0px; filter: alpha(opacity = 30); opacity: .3; -moz-opacity: 0.3; cursor: progress; width: 100%; height: 100%; }
+.LoadingMaskMsg { position: fixed; top: 50%; margin-top: -20px; width: auto; height: 16px; padding: 12px 5px 10px 30px; background: #fff url('../image/loading.gif') no-repeat scroll 5px 10px; border: 2px solid #ccc; color: #222; display: block; z-index: 100010; }
+/*不能修改的控件*/
+.TextReadOnly { background: #ffffda; border: solid 1px #ccc; border-radius: 5px; resize: none; }
+/*可以修改的控件*/
+.TextEdit { border: solid 1px #ccc; border-radius: 5px !important; resize: none; }
+.text-radius { border: solid 1px #ccc; border-radius: 5px; }
+.text-radius input { border: 0px; border-radius: 5px; }
+.IconImage { background-repeat: no-repeat; background-position: left center; }
+.ButtonBar { text-align: center; vertical-align: middle; width: 100%; padding-bottom: 5px; padding-top: 5px; background-color: #FAFAFA; border-top: solid 1px #EEEEEE; position: absolute; bottom: 0px; }
+.PanelButtonBar { text-align: right; vertical-align: middle; width: 58%; display: inline-block; }
+
+.GridButtonBar { text-align: right; height: 26px; vertical-align: middle; line-height: 25px; padding-right: 20px; }
+
+.DetailButtonBar { text-align: right; vertical-align: middle; }
+.DetailButtonBar2 { padding: 0; border: 0; text-align: left; height: 25px; line-height: 25px; cursor: pointer; vertical-align: middle; }
+.GridButtonBarIco { background: url(../JS/EsayUI/themes/icons/dc_panel_title.png) no-repeat; width: 16px; height: 16px; float: left; vertical-align: middle; display: block; margin: 3px; }
+
+/*搜索框样式*/
+.quick_search_position1 { position: relative; width: 150px; height: 25px; vertical-align: middle; margin: 10px auto auto 20px; }
+
+.quick_search_position2 { height: 20px; position: relative; }
+
+.quick_search { text-align: left; padding: 0px 33px 1px 10px; -webkit-border-radius: 20px; -moz-border-radius: 20px; border-radius: 20px; border: 1px solid #bbb; color: #ccc; /*-webkit-box-shadow: inset 0 2px 2px #ccc, 0 1px 0 #fff; 	-moz-box-shadow: inset 0 2px 2px #ccc, 0 1px 0 #fff; 	box-shadow: inset 0 2px 2px #ccc, 0 1px 0 #fff;*/ background-color: #fff; }
+
+.quick_search div .dc-label { line-height: 26px; }
+
+.quick_search :focus { outline: none; color: #666666; }
+
+.quick_search input[type=text] { border: 0; height: 18px; width: 90%; z-index: -1; }
+
+.search_button { width: 33px; height: 20px; background: url(../image/search.png) no-repeat 5px 0; border: 0px currentColor; cursor: pointer; position: absolute; top: 4px; right: 2px; }
+
+.search_button2 { width: 33px; height: 20px; background: url(../image/searchButton.png) no-repeat 0px 0; border: 0px currentColor; cursor: pointer; position: absolute; border-left: solid 1px #ccc; }
+
+.search_button3 { width: 41px; height: 28px; background: url(../image/searchButton3.jpg) no-repeat 0px 0; border: 0px currentColor; cursor: pointer; position: absolute; border-left: solid 1px #ccc; top: -1px; right: -3px; }
+.iFrameCss { overflow: hidden; height: 100%; width: 100%; border: 0px; }
+
+.menuTree { margin: 20px 0 0 20px; }
+.TableCenter { margin: 10px auto; }
+.TableLeft { margin: 0 auto 0 20px; }
+/*#form_Edit table tr, #form_Add table tr, #form_ItemEdit table tr { height: 30px; }*/
+form table tr { height: 30px; }
+
+.tabletext { width: 90px; text-align: right; }
+
+.tableinput { width: 150px; }
+
+.tableinput_t1 { height: 40px; }
+
+
+
+.treeAddButton { display: inline-block; background: url(../image/dc_add.png) no-repeat 0 0px; width: 24px; height: 20px; margin-left: 10px; vertical-align: middle; }
+.treeDelButton { display: inline-block; background: url(../image/dc_remove.png) no-repeat 0 0px; width: 24px; height: 20px; vertical-align: middle; }
+
+.searchForm1 { padding-top: 15px; padding-left: 20px; }
+.searchForm1 li { padding-left: 10px; padding-right: 10px; height: 36px; display: inline-block; overflow: hidden; white-space: nowrap; overflow: hidden; }
+.searchText1 { padding-left: 10px; padding-right: 10px; height: 36px; display: inline-block; overflow: hidden; white-space: nowrap; overflow: hidden; }
+
+.searchTable { padding-top: 10px; padding-left: 10px; margin: 0; }
+.searchTd { padding-left: 10px; padding-right: 10px; height: 36px; white-space: nowrap; }
+.nodata { font-size: 15px; text-align: center; color: #CCCCCC; height: 20px; padding: 10px; }
+.loaderror { color: Red; }
+/*==========以下部分是带提示的input===========*/
+
+.dc-input-box { position: relative; }
+
+.dc-label { position: absolute; top: 0; left: 0; width: 150px; height: 24px; white-space: nowrap; overflow: hidden; font-size: inherit; text-indent: 5px; line-height: 20px; color: #777; cursor: text; }
+
+.dc-input { border-radius: 5px; width: 145px; padding-top: 2px; padding-bottom: 2px; padding-left: 5px; border: solid 1px #ccc; }
+
+.dc-button { background: url(../image/dc_button.png) no-repeat; display: inline-block; width: 81px; height: 26px; vertical-align: middle; text-align: center; line-height: 22px; color: #666; font-size: 14px; cursor: pointer; }
+.dc-button a { text-decoration: none; }
+/*==========带提示的input结束===========*/
+
+/*==========以下部分是Validform必须的===========*/
+.Validform_checktip { margin-left: 8px; line-height: 20px; height: 20px; overflow: hidden; color: #999; font-size: 12px; }
+.Validform_right { color: #71b83d; padding-left: 20px; background: url(../image/right.png) no-repeat left center; }
+.Validform_wrong { color: red; padding-left: 20px; white-space: nowrap; background: url(../image/error.png) no-repeat left center; }
+.Validform_loading { padding-left: 20px; background: url(../image/onLoad.gif) no-repeat left center; }
+.Validform_error { background-color: #ffe7e7; }
+.Validform_focustip { padding-left: 20px; color: #999; white-space: nowrap; background: url(../image/focustip.png) no-repeat left center; }
+
+#Validform_msg { color: #7d8289; font: 12px/1.5 tahoma, arial, \5b8b\4f53, sans-serif; width: 280px; -webkit-box-shadow: 2px 2px 3px #aaa; -moz-box-shadow: 2px 2px 3px #aaa; background: #fff; position: absolute; top: 0px; right: 50px; z-index: 99999; display: none; filter: progid:DXImageTransform.Microsoft.Shadow(Strength=3, Direction=135, Color='#999999'); }
+#Validform_msg .iframe { position: absolute; left: 0px; top: -1px; z-index: -1; }
+#Validform_msg .Validform_title { line-height: 25px; height: 25px; text-align: left; font-weight: bold; padding: 0 8px; color: #fff; position: relative; background-color: #000; }
+#Validform_msg a.Validform_close:link, #Validform_msg a.Validform_close:visited { line-height: 22px; position: absolute; right: 8px; top: 0px; color: #fff; text-decoration: none; }
+#Validform_msg a.Validform_close:hover { color: #cc0; }
+#Validform_msg .Validform_info { padding: 8px; border: 1px solid #000; border-top: none; text-align: left; }
+
+/*==========Validform的css结束===========*/
+
+/*==========tipsy的css开始===========*/
+.tipsy { font-size: 12px; position: absolute; padding: 5px; z-index: 100000; }
+.tipsy-inner { background-color: #A3EBF2; color: #FFF; max-width: 200px; padding: 5px 8px 4px 8px; text-align: center; }
+
+/* Rounded corners */
+.tipsy-inner { border-radius: 3px; -moz-border-radius: 3px; -webkit-border-radius: 3px; }
+
+/* Uncomment for shadow */
+/*.tipsy-inner { box-shadow: 0 0 5px #000000; -webkit-box-shadow: 0 0 5px #000000; -moz-box-shadow: 0 0 5px #000000; }*/
+
+.tipsy-arrow { position: absolute; width: 0; height: 0; line-height: 0; border: 5px dashed #000; }
+
+/* Rules to colour arrows */
+.tipsy-arrow-n { border-bottom-color: #A3EBF2; }
+.tipsy-arrow-s { border-top-color: #A3EBF2; }
+.tipsy-arrow-e { border-left-color: #A3EBF2; }
+.tipsy-arrow-w { border-right-color: #A3EBF2; }
+
+.tipsy-n .tipsy-arrow { top: 0px; left: 50%; margin-left: -5px; border-bottom-style: solid; border-top: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-nw .tipsy-arrow { top: 0; left: 10px; border-bottom-style: solid; border-top: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-ne .tipsy-arrow { top: 0; right: 10px; border-bottom-style: solid; border-top: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-s .tipsy-arrow { bottom: 0; left: 50%; margin-left: -5px; border-top-style: solid; border-bottom: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-sw .tipsy-arrow { bottom: 0; left: 10px; border-top-style: solid; border-bottom: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-se .tipsy-arrow { bottom: 0; right: 10px; border-top-style: solid; border-bottom: none; border-left-color: transparent; border-right-color: transparent; }
+.tipsy-e .tipsy-arrow { right: 0; top: 50%; margin-top: -5px; border-left-style: solid; border-right: none; border-top-color: transparent; border-bottom-color: transparent; }
+.tipsy-w .tipsy-arrow { left: 0; top: 50%; margin-top: -5px; border-right-style: solid; border-left: none; border-top-color: transparent; border-bottom-color: transparent; }
+
+/*==========tipsy的css结束===========*/
+
+/*************prototype开始************/
+.dc-panel-header { padding: 5px; color: #3F3F3F; font-weight: bold; font-size: 12px; background: url('../js/esayui/themes/gray/images/panel_title.gif') repeat-x; border: 1px solid #D3D3D3; width: 99%; }
+
+.dc-panel-header-title { display: inline-block; width: 40%; }
+
+.dc-panel-header-icon { width: 16px; height: 16px; display: inline-block; background: url('../js/esayui/themes/icons/dc_panel_title.png'); margin-left: 2px; margin-right: 4px; }
+
+.dc-panel-header-text { vertical-align: top; display: inline-block; height: 23px; line-height: 18px; }
+
+/*************prototype结束************/
+.closeBtn { position: relative; top: -2px; right: -21px; line-height: 18px; float: right; font-size: 20px; font-weight: bold; color: #000000; text-shadow: 0 1px 0 #ffffff; opacity: 0.2; filter: alpha(opacity=20); padding: 0; cursor: pointer; background: transparent; border: 0; -webkit-appearance: none; }
+
+.icon-info-sign { background-position: -120px -96px; opacity: 0.8; display: inline-block; width: 14px; height: 14px; line-height: 14px; vertical-align: text-top; background-image: url("images/glyphicons-halflings.png"); background-repeat: no-repeat; }
+/****************提示信息**********************/
+
+
+.dc-panel { position: relative; margin-top: 5px; }
+
+.dc-panel:hover { background: #F0F0F0; }
+
+.dc-panel-tool { position: absolute; right: 5px; height: 16px; width: 16px; display: inline-block; margin-top: 5px; }
+
+.dc-panel-open { background: url('../js/esayui/themes/gray/images/accordion_collapse.png') no-repeat 0 0; }
+
+.dc-panel-close { background: url('../js/esayui/themes/gray/images/accordion_expand.png') no-repeat 0 0; }
+
+
+.menu1 { width: 223px; float: left; margin-right: 3px; }
+
+.menu1-sub { overflow-y: scroll; overflow-x: hidden; padding: 6px 0px; height: 268px; background-color: #ffffff; border-right-width: 1px; border-right-style: solid; border-right-color: #bfcfe6; }
+
+.industry-info { width: 678px; height: 281px; overflow: hidden; margin: 5px; font-size: 12px; font-family: 宋体B8B\4F53; border: 1px solid #bfcfe6; }
+
+.industry-info .menu-basic li { width: 190px; margin: 0 6px; height: 23px; line-height: 23px; cursor: pointer; border: 1px solid #ffffff; }
+
+.industry-info .menu-basic li:hover { background-color: #d6edf3; border-color: #a6b6c3; }
+
+.check-box { vertical-align: middle; margin: 0 0 0 6px; _margin-left: 1px; }
+.suggest-key { vertical-align: middle; text-align: left; padding-left: 5px; display: inline-block; }
+
+.has-sub { background-image: url("../image/industry-icon.png"); background-position: 180px -108px; background-repeat: no-repeat; background-attachment: scroll; }
+
+.industry-li-click { background-color: #d6edf3; border: 1px solid #a6b6c3; }
+
+.choosed-show { width: 670px; min-height: 50px; margin: 5px; padding: 5px; border: solid 1px #E4CCB2; background-color: #FFF7EC; }
+
+.choosed-show li { float: left; margin-right: 6px; white-space: nowrap; display: list-item; }
+a.del-item { display: inline-block; padding: 0px 4px; border-radius: 3px; font-size: 18px; font-weight: bold; vertical-align: middle; height: 18px; line-height: 18px; }
+a.del-item:hover { background: #e6e6e6; color: #fff; }
+
+.item-list li { display: inline-block; }
+
+
+.gover_search { z-index: 99; }
+.gover_search_form { height: 36px; }
+.gover_search .search_t { float: left; width: 112px; line-height: 26px; color: #666666; }
+.gover_search .input_search_key { float: left; width: 462px; height: 18px; padding: 3px; margin-right: 5px; border: 1px solid #cccccc; line-height: 18px; background: #FFFFFF; }
+.search_suggest { position: absolute; z-index: 999999; top: 24px; width: 468px; border: 1px solid #999999; display: none; }
+.search_suggest li { height: 24px; overflow: hidden; padding-left: 3px; line-height: 24px; background: #FFFFFF; cursor: default; display: block; }
+.search_suggest li.hover { background: #DDDDDD; }
+.require_sign { color: Red; padding: 0 5px 0 5px; }
+.conspicuous_a A:link, A:visited { color: Black; text-decoration: underline; }
+.conspicuous_a A:hover, A:active { color: Blue; text-decoration: underline; }
+
+.dc-help-icon { width: 16px; height: 16px; display: inline-block; margin-left: 5px; background: url('../js/EsayUI/themes/icons/help.png') no-repeat; }
+.dc-icon-filter { background: url('../image/06_7.png') no-repeat; }
+.dc-icon-setting { background: url('../image/06_15.png') no-repeat; }
+
+.validatebox-text, .combo { border-radius: 5px; }
+
+.l-btn-selected, .l-btn-selected:hover { background: #FBEC88 !important; filter: none; border-radius: 3px; }

@@ -1,0 +1,355 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>无标题页</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='JS/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?../plugins/DCN/jquery.dcnplugins.js"></script>
+
+    <script src="../plugins/kindeditor/kindeditor.js" type="text/javascript"></script>
+
+    <style type="text/css">
+        html body {
+            font-size: 12px;
+            height: 100%;
+            font-family: Arial, Tahoma, 微软雅黑, 雅黑, serif;
+        }
+    </style>
+    <style type="text/css">
+        tbody th {
+            text-align: right;
+            width: 88px;
+        }
+    </style>
+</head>
+<body style="display: none" class="easyui-layout" data-options="fit:true,border:false">
+<div data-options="region:'center',border:false">
+    <form id="form" method='post' action="#">
+        <table style="margin: 50px auto;">
+            <tbody>
+            <tr>
+                <th>
+                    <span class='require_sign'>*</span>导航名称：
+                </th>
+                <td>
+                    <input name='cName' class="easyui-validatebox" type="text" style="width: 670px"
+                           data-options="required:true"/>
+                </td>
+            </tr>
+
+
+            <tr>
+                <th>
+                    <span class='require_sign'>*</span>导航类型：
+                </th>
+                <td>
+                    <select name="iType" style="display: inline">
+                        <option value=1 selected>留言</option>
+                        <option value=2>单页信息</option>
+                        <option value=3>链接单元</option>
+                        <option value=4>新闻列表</option>
+                    </select>
+                    <label id="alertOfArticle" style="width:auto; font-size: 80%;display:none">
+                        更改保存为其它类型后，新闻会丢失
+                    </label>
+                </td>
+            </tr>
+            <tr class="onlineDetail">
+                <th>
+                    <span class='require_sign'>*</span>URL ：
+                </th>
+                <td>
+                    <label>
+                        <input style="width:100%;" style="fit:true" class="easyui-validatebox"
+                               name="cUrl" value="http://" type="text"
+                               data-options="required:true , validType:'url'"/>
+                    </label>
+                </td>
+            </tr>
+            <tr style="display: table-row;" class="onlineDetail">
+                <th>
+                    <span class='require_sign'>*</span>是否跳转：
+                </th>
+                <td colspan="2" align="left">
+                    <label>
+                        <select name="bIsJump">
+                            <option value=false>否</option>
+                            <option value=true selected>是</option>
+                        </select>
+                    </label>
+                </td>
+            </tr>
+            <tr style="display: table-row;" class="onlineDetail">
+                <th>
+                    <span class='require_sign'>*</span>同步到手机：
+                </th>
+                <td colspan="2" align="left">
+                    <label>
+                        <select name="bIsSync">
+                            <option value=false>否</option>
+                            <option value=true selected>是</option>
+                        </select>
+                    </label>
+                </td>
+            </tr>
+            <tr class='articleGridTr'>
+                <td></td>
+                <td>
+                    <div id="articleGrid">
+
+                    </div>
+
+                </td>
+            </tr>
+
+            <tr id="editShow" valign="top">
+                <th><span class='require_sign'>*</span>内容：</th>
+                <td colspan="3">
+                    <textarea name='cSinglePage' rows="10" title="123"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    <span class='require_sign'>*</span>排列顺序：
+                </th>
+                <td>
+                    <input name='iOrderNo' class="easyui-validatebox" type="number" value="0"
+                           data-options='required:true'
+                           value="排列顺序"/>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </form>
+    <div id="tb" style="display:none;text-align: right" >
+        <a class="easyui-linkbutton" style="padding-right: 10px;" iconCls='dc-icon-editadd' plain='true'
+           href="javascript:void(0)" onclick="addArticle()">
+            添加
+        </a>
+        <a class="easyui-linkbutton" style="padding-right: 10px" iconCls='dc-icon-cancel' plain='true'
+           href="javascript:void(0)" onclick="deleteArticle()">
+            删除
+        </a>
+    </div>
+</div>
+<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+    <div class="ButtonBar" style="position: inherit; min-width: 150px;">
+        <a href="javascript:void(0)" class="easyui-linkbutton" id='postButton'>保存</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="window.parent.closedPopupDialog();">关闭</a>
+    </div>
+</div>
+</body>
+<script type="text/javascript">
+    //table界面
+    var isCreate = true;
+    var iNavigationID;
+    $(function () {
+                $("[name=iType]").change(function () {
+                    var selectType = Number($('[name=iType]').val());
+                    $("#editShow").css('display', selectType == 2 ? '' : 'none');
+                    $(".onlineDetail").css('display', selectType == 3 ? '' : 'none');
+                    $('.articleGridTr').css('display', !isCreate && selectType == 4 ? '' : 'none');
+                    $('#alertOfArticle').css('display', !isCreate && selectType == 4 ? '' : 'none');
+                    if (selectType == 4)$('#articleGrid').datagrid('resize');
+                });
+                $("[name=iType]").change();
+                checkPagePower({
+                    onload: function () {
+                        initPage();
+                    }
+                });
+            }
+    );
+    function initPage() {
+        //获取iNavigationID
+        var regX = /iNavigationID=(\d+)/i;
+        if (regX.test(location.hash)) {
+            iNavigationID = regX.exec(location.hash)[1];
+            isCreate = false;
+        }
+//        Action	string	Upload
+//        iType	byte	类型（60：场景；61：图片；62：视频；63：手册；64：注释；65：音乐；66：解说；67：场景说明；68：外链；70：产品）
+//cObjectCode	string	OSP
+
+        //KindEditor
+        KindEditor.create('[name=cSinglePage]', {
+            width: 670,
+            minWidth: 670,
+            height:"400px",
+            resizeMode: 1,
+            urlType: 'relative',
+            uploadJson: './Ajax/upload_json.ashx', 
+            syncType: 'auto',
+        });
+
+
+        //显示原来数据
+        if (!isCreate) {
+            postData({
+                        url: 'DcCdSceneNavigationManage',
+                        params: {
+                            Action: 'getList',
+                            iNavigationID: iNavigationID
+                        },
+                        success: function (dataJson) {
+                            var oldData = dataJson.rows[0];
+                            if (oldData.iType != 3) {
+                                $('[name=cUrl]').attr("disabled", true);
+                            }
+                            oldData['bIsJump'] = String(oldData['bIsJump']);
+                            oldData['bIsSync'] = String(oldData['bIsSync']);
+                            $('#form').form('load', oldData);
+                            $('[name=cUrl]').attr("disabled", false);
+                            KindEditor.html('[name=cSinglePage]', oldData.cSinglePage.replace(/&lt;/g, '<'));
+                            articleGridShow();
+                            $('[name=iType]').change();
+                        }
+                    }
+            );
+
+        }
+
+
+        //确定
+        // ajaxSubmit
+        $("#postButton").click(function () {
+            KindEditor.sync('[name=cSinglePage]');
+            if (!isCreate) {
+                var allRows = $('#articleGrid').datagrid("getData").rows;
+                if ($('[name=iType]').val() != 4 && allRows.length > 0) {
+                    var idStr = '';
+                    for (var i = 0; i < allRows.length; i++) {
+                        idStr += allRows[i]['iArticleID'] + ",";
+                    }
+                    postData({
+                        url: 'DcCdSceneNavigationManage',
+                        params: {
+                            Action: 'DeleteArticle',
+                            cIDList: idStr
+                        }
+
+                    });
+                }
+            }
+            var action = isCreate ? 'Add' : ('Update&iNavigationID=' + iNavigationID);
+            $("#form").form('submit', {
+                url: 'Ajax/DcCdSceneNavigationManage.ashx?action=' + action,
+                success: function (data) {
+                    var dataJson = JSON.parse(data);
+                    if (dataJson['DcCode'] == 0) {
+                        window.parent.$('#tab_List').datagrid("reload");
+                        window.parent.closedPopupDialog();
+                    }
+                    else {
+                        $.messager.alert('失败', dataJson["DcMessage"]);
+                    }
+                },
+                onSubmit: function () {
+                    $('[name][name!="iType"][name!="cSinglePage"]:hidden').attr('disabled', true);
+                    if ($('[name=iType]').val() != 2) {
+                        $('[name="cSinglePage"]').attr('disabled', true);
+                    }
+                    var isValidPass = $(this).form("validate");
+
+                    return isValidPass;
+                }
+            });
+            return false;
+        });
+
+
+    }
+    function ShowObjProperty(Obj) {
+        var PropertyList = '';
+        for (var i in Obj) {
+            PropertyList = PropertyList + i + '属性：' + Obj[i] + '\r\n';
+        }
+        alert(PropertyList);
+    }
+    //新闻列表
+    function articleGridShow() {
+        $('#articleGrid').datagrid({
+            toolbar: '#tb',
+            width:"100%",
+            minHeight:100,
+            url: 'Ajax/DcCdSceneNavigationManage.ashx',
+            method: 'POST',
+            queryParams: {Action: 'GetArticleList', iNavigationID: iNavigationID},
+            striped: true,
+            fitColumns: true,
+            rowNumbers: true,
+            pagination: true,
+            nowrap: false,
+            pageSize: 5,
+            pageList: [5, 10, 20, 50, 100, 150],
+            columns: [[
+                {field: 'bSelect', checkbox: true},
+                {
+                    field: 'iArticleID',
+                    title: '查看详情',
+                    width: 10,
+                    align: 'left',
+                    formatter: function (value, row, index) {
+                        return "<a href='#' onclick='addArticle(" + value + ")'><img src='../image/06_8.png' style='vertical-align:middle;'>查看</a>"
+                    }
+                },
+                {field: 'cTitle', title: '文章标题', width: 40, align: 'left'},
+                {field: 'dCreationDt', title: '创建时间', width: 40, align: 'left'}
+
+            ]],
+            onBeforeLoad: function (param) {
+            },
+            onLoadSuccess: function (data) {
+
+            },
+            onLoadError: function (Error) {
+                alert(Error);
+            },
+            onClickCell: function (rowIndex, field, value) {
+
+            }
+        });
+    }
+    //添加新闻
+    function addArticle(id) {
+        if (id != undefined) {
+            popupDialog('../OSP/ArticleDetail.html?iNavigationID=' + iNavigationID + '&&iArticleID=' + id, 'fix', '编辑查看新闻', true);
+        }
+        else  popupDialog('../OSP/ArticleDetail.html?iNavigationID=' + iNavigationID, 'add', '添加新闻', true);
+        return false;
+    }
+    //删除新闻
+    function deleteArticle() {
+        var rows = $("#articleGrid").datagrid("getSelections");
+        if (rows.length <= 0)return;
+        $.messager.confirm('删除', '是否删除选中项', function (isOk) {
+            if (isOk) {
+                var ids = '';
+                for (var i = 0; i < rows.length; i++) {
+                    ids += (rows[i].iArticleID) + ",";
+                }
+
+                postData({
+                    url: 'DcCdSceneNavigationManage',
+                    params: {
+                        Action: 'DeleteArticle',
+                        cIDList: ids
+                    },
+                    success: function () {
+                        $('#articleGrid').datagrid('clearSelections');
+                        $('#articleGrid').datagrid('reload');
+                    }
+
+                });
+            }
+        });
+
+    }
+</script>
+
+</html>

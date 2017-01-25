@@ -1,0 +1,13 @@
+﻿.combolist { border-radius: 5px; display: inline-block; vertical-align: middle; }
+.combolist li { float: left; }
+.combolist-required { background-color: #FFF3F3; }
+.combolist-disabled { background-color: #EBEBE4; color: #545454; }
+.combolist-disabled-hide { display: none!important; }
+.combolist-item { display: block; text-align: center; border: solid 1px #d3d3d3; border-left: 0px; padding: 3px 8px; cursor: pointer; min-height: 15px; }
+.combolist-item-hover { background-color: #fafafa; }
+.combolist-item-active { background-color: #FBEC88; }
+.combolist-item-first { border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-left: solid 1px #d3d3d3; }
+.combolist-item-last { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
+.combolist-vertical { border: solid 1px #d3d3d3; border-radius: 0px; }
+.combolist-vertical li { float: none; }
+.combolist-item-vertical { border: none; }

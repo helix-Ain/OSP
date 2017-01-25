@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js"></script>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div style='padding:10px;'>
+				<ul id='datatree' data-options='iconCls:"icon-add"'>
+					<li id='0'>
+						<span>全部分组</span>
+						<ul id='node-0'></ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a id='btn-save' href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _entrust = getHashValue('entrust');
+			var _Action = getHashValue('Action');
+			var _iObjectID = getHashValue('iObjectID');
+			var _iAttachmentID = getHashValue('iAttachmentID');
+			var _iRichID = getHashValue('iRichID');
+			var _iSceneID = getHashValue('iSceneID');
+			var _strFun = getHashValue('Fun');
+			var _onlyView = getHashValue('onlyview');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+				if(_onlyView==1){
+					$('#btn-save').hide();
+				}
+			});
+
+			function initPage() {
+				if(_entrust == 'SceneGroupManage') {
+					postData({
+						url: 'DcCdSceneGroupManage',
+						params: {
+							Action: 'GetTree',
+							ParentID: 0
+						},
+						success: function(ci_result) {
+							window.console.log(ci_result);
+							if(ci_result.DcCode == 0) {
+								var m_objData = ci_result.rows;
+								for(var j = 0; j < m_objData.length - 1; j++) {
+									for(var i = 0; i < m_objData.length - 1 - j; i++) {
+										if(m_objData[i].iParentID > m_objData[i + 1].iParentID) {
+											var t = m_objData[i];
+											m_objData[i] = m_objData[i + 1];
+											m_objData[i + 1] = t;
+										}
+									}
+								}
+								$.each(m_objData, function(i, item) {
+									$('#node-' + item.iParentID).append('<li id=' + item.iGroupID + '><span>' + item.cGroupName + '</span><ul id="node-' + item.iGroupID + '"></ul></li>');
+								});
+								if(_Action == 'checkStructure') {
+									var options = {
+										'animate': true,
+										'lines': true,
+										'onClick': function(node) {
+											if(_strFun != '') {
+												eval(_strFun + '("' + node.id + '")');
+											}
+										}
+									};
+								} else if(_Action == 'moveFile') {
+									var options = {
+										'animate': true,
+										'lines': true
+									};
+								}
+								$('#datatree').tree(options);
+							}
+						}
+					});
+				} else {
+					postData({
+						url: 'DcCdDataGroupManage',
+						params: {
+							Action: 'GetTree',
+							iObjectID: _iObjectID,
+							ParentID: 0
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								var m_objData = ci_result.rows;
+								for(var j = 0; j < m_objData.length - 1; j++) {
+									for(var i = 0; i < m_objData.length - 1 - j; i++) {
+										if(m_objData[i].iParentID > m_objData[i + 1].iParentID) {
+											var t = m_objData[i];
+											m_objData[i] = m_objData[i + 1];
+											m_objData[i + 1] = t;
+										}
+									}
+								}
+								$.each(m_objData, function(i, item) {
+									$('#node-' + item.iParentID).append('<li id=' + item.iGroupID + '><span>' + item.cName + '</span><ul id="node-' + item.iGroupID + '"></ul></li>');
+								});
+								if(_Action == 'checkStructure') {
+									var options = {
+										'animate': true,
+										'lines': true,
+										'onClick': function(node) {
+											if(_strFun != '') {
+												eval(_strFun + '("' + node.id + '")');
+											}
+										}
+									};
+								} else if(_Action == 'moveFile') {
+									var options = {
+										'animate': true,
+										'lines': true
+									};
+								}
+								$('#datatree').tree(options);
+							}
+						}
+					});
+				}
+			}
+
+			function saveData() {
+				if(_Action == 'checkStructure') {
+					parent.cancel();
+				} else if(_Action == 'moveFile') {
+					if(_strFun != '') {
+						if(_iObjectID == 4 || _iObjectID == 7) {
+							var iGroupID = $('#datatree').tree('getSelected').id;
+							_strFun += '(' + _iRichID + ',' + iGroupID + ')';
+							eval(_strFun);
+						} else if(_iObjectID == 1 || _iObjectID == 2 || _iObjectID == 5 || _iObjectID == 6) {
+							var iGroupID = $('#datatree').tree('getSelected').id;
+							_strFun += '(' + _iAttachmentID + ',' + iGroupID + ')';
+							eval(_strFun);
+						} else if(_iSceneID != '') {
+							var iGroupID = $('#datatree').tree('getSelected').id;
+							_strFun += '(' + _iSceneID + ',' + iGroupID + ')';
+							eval(_strFun);
+						}
+					}
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog();
+			}
+		</script>
+	</body>
+
+</html>

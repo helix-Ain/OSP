@@ -1,0 +1,194 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../js/CommonScript.js?script=JS/GetHelpCategory.js,../plugins/kindeditor/kindeditor.js,../plugins/kindeditor/lang/zh_CN.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'center',border:false">
+        <form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 800px;" class="TableCenter">
+            <tr>
+                <td class="tabletext">
+                    编号：
+                </td>
+                <td class="tableinput" >
+                    <input type="text" name="cCode" class="TextEdit" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    分类名称：
+                </td>
+                <td class="tableinput">
+                    <input id="ddl_Category" name="iCategoryID" class="easyui-combobox" data-options="editable:false,width:150" />
+                </td>
+                <td class="tabletext">
+                    排列序号：
+                </td>
+                <td class="tableinput">
+                    <input type="text" name="iOrder" class="TextEdit " />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    常见：
+                </td>
+                <td class="tableinput">
+                    <input name="bIsCommon" type="checkbox" style="padding: 0;" />
+                </td>
+                <td class="tabletext" group="commonorder">
+                    常见排列序号：
+                </td>
+                <td class="tableinput" group="commonorder">
+                    <input type="text" name="iCommonOrder" class="TextEdit " />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>标题：
+                </td>
+                <td class="tableinput" colspan="3">
+                    <input type="text" name="cTitle" class="easyui-validatebox" data-options="required:true"
+                        style="width: 680px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>内容：
+                </td>
+                <td colspan="3">
+                    <textarea id="txt_Content" name="cContent" cols="100" rows="8" style="width: 680px;
+                        height: 350px;"></textarea>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancel();">关闭</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _strAction = "";
+    var _iID = 0;
+    var _objEditor;
+
+    initReady(function() {
+        bindHelpCatData({ controlID: 'ddl_Category' });
+        $('[name*=Order]').numberbox({ min: 0 });
+        $('input:checkbox').bind('click', function() {
+            displayCommonOrder(this.checked);
+        });
+
+        displayCommonOrder(false);
+
+        _objEditor = KindEditor.create('#txt_Content', {
+            uploadJson: _strSysUrl + 'ajax/DcCdAttachmentManage.ashx?Action=upload&iFolderID=-1&iType=2&cObjectCode=PubInfo&IsKE=true&iRefRecordID=',
+            fileManagerJson: '../News/file_manager_json.ashx',
+            basePath: '../plugins/kindeditor/',
+            allowFileManager: false,
+            resizeType: 0
+        });
+
+        _strAction = getHashValue("Action");
+
+        if (_strAction == "new") {
+            newData();
+        }
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        if (_strAction != "add") {
+            _iID = getHashValue("ID");
+            if (_iID > 0) {
+                editData();
+            }
+        }
+        $($('input:text')[0]).focus();
+    }
+
+    function cancel() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function newData() {
+        _strAction = 'add';
+        _iID = 0;
+    }
+
+    function editData() {
+        if (_iID > 0) {
+            postData({
+                url: "DcCdHelpManage",
+                params: { Action: "GetList", iHelpID: _iID },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        var m_objData = ci_result.rows[0];
+                        _strAction = 'update';
+                        _iID = m_objData.iHelpID;
+
+                        $('#form_Edit').form('load', m_objData);
+                        _objEditor.html(m_objData.cContent.replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
+                        $('input:checkbox')[0].checked = m_objData.bIsCommon;
+                        displayCommonOrder(m_objData.bIsCommon);
+                    }
+                    else {
+                        $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancel(); });
+                    }
+                }
+            });
+        }
+    }
+
+    function saveData() {
+        postData({
+            url: 'DcCdHelpManage',
+            params: { Action: _strAction, iHelpID: _iID },
+            validate: true,
+            form: 'form_Edit',
+            onPost: function() {
+                if (_objEditor.html() == '') {
+                    $.messager.alert('提示', '请输入帮助内容', 'info');
+                    return false;
+                }
+                this.params.cContent = _objEditor.html();
+                this.params.bIsCommon = $('input:checkbox')[0].checked;
+                if (!this.params.bIsCommon) {
+                    this.params.iCommonOrder = 0;
+                }
+                return true;
+            },
+            success: function(ci_result) {
+                parent.searchData();
+                if (_strAction == 'add') {
+                    setTimeout('cancel();', 100);
+                }
+                else {
+                    $.messager.alert('提示', '保存成功', 'info');
+                }
+            }
+        });
+    }
+
+    function displayCommonOrder(ci_bIsShow) {
+        $('[group=commonorder]').css('display', (ci_bIsShow ? '' : 'none'));
+    }
+</script>
+

@@ -1,0 +1,305 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <div id="div_Mapping_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a class="easyui-linkbutton" iconcls="dc-icon-editadd"
+            plain="true" onclick="mapping_openSearch(1)">导入</a> <a class="easyui-linkbutton"
+                iconcls="dc-icon-editadd" plain="true" onclick="mapping_newData(null)">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-cancel" plain="true"
+            onclick="mapping_deleteData()">删除</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                plain="true" iconcls="dc-icon-cancel" onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_Mapping_List" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true">
+                </th>
+                <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iMappingID, 'mapping_editData');}">
+                    <div style="width: 50px; height: 5px; display: block;">
+                    </div>
+                </th>
+                <th data-options="field:'cTableDBName',width:50,sortable:true">
+                    表数据库名
+                </th>
+                <th data-options="field:'cTableAlias',width:50,sortable:true">
+                    表别名
+                </th>
+                <th data-options="field:'cTableName',width:50,sortable:true">
+                    表描述
+                </th>
+                <th data-options="field:'cJoinTypeDesc',width:50,sortable:true">
+                    关联类型
+                </th>
+                <th data-options="field:'cTableTypeDesc',width:50,sortable:true">
+                    表类型
+                </th>
+                <th data-options="field:'cExpression',width:300,sortable:true">
+                    关联语句
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_Mapping_Detail" class="easyui-dialog" title="关联详细资料" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form action="" id="form_Mapping_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 500px;" class="TableCenter">
+            <tr>
+                <td class="tabletext" style="width: 130px;">
+                    <span class="require_sign">*</span>关联表：
+                </td>
+                <td>
+                    <input id="txt_Mapping_TableDBName" type="text" name="cTableDBName" class="easyui-validatebox"
+                        data-options="required:true" style="width: 300px;" />
+                    <input id="hidd_TableID2" name="iTableID2" type="hidden" />
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-search" plain="true"
+                        title="查询" onclick="mapping_openSearch()"></a>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>表别名：
+                </td>
+                <td>
+                    <input name="cTableAlias" class="easyui-validatebox" data-options="required:true"
+                        style="width: 300px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>关联类型：
+                </td>
+                <td>
+                    <select id="ddl_Mapping_JoinType" class="easyui-combobox" style="width: 152px;" name="iJoinType"
+                        editable="false" required="true">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>表类型：
+                </td>
+                <td>
+                    <select id="ddl_Mapping_TableType" class="easyui-combobox" style="width: 152px;"
+                        name="iTableType" editable="false" required="true">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>关联语句：
+                </td>
+                <td>
+                    <textarea rows="6" name="cExpression" class="TextEdit" style="width: 400px;"></textarea>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="mapping_saveData()">
+                保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" onclick="mapping_cancel()">
+                    关闭</a>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var _mapping_iID = 0;
+        var _column_iDDLCount = 0;
+        var _mapping_strAction = '';
+
+        checkPagePower({ onload: function() { mapping_initPage(); }, showMask: false, parse: false, check: false });
+
+        function mapping_initPage() {
+            setControlEnable("txt_Mapping_TableDBName", false);
+            $.parser.parse('#div_Mapping_Detail');
+            $('#div_Mapping_Detail').dialog({ onClose: function() { $(".tooltip").remove(); } });
+
+            bindCodeMasterData({
+                controlID: "ddl_Mapping_TableType",
+                cat: "dtbl",
+                subCat: "TableType",
+                valueField: "cCodeItem",
+                textField: "cDesc",
+                success: function() {
+                    _column_iDDLCount++;
+                    _init();
+                }
+            });
+
+            bindCodeMasterData({
+                controlID: "ddl_Mapping_JoinType",
+                cat: "dtmap",
+                subCat: "JoinType",
+                valueField: "cCodeItem",
+                textField: "cDesc",
+                success: function() {
+                    _column_iDDLCount++;
+                    _init();
+                }
+            });
+
+            postData({
+                url: "DcCdDataTableManage",
+                params: { Action: "GetTable", NonTableID: _iID },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        $("#ddl_Mapping_Table").combobox({
+                            data: ci_result.rows,
+                            valueField: "iTableID",
+                            textField: "cTableName"
+                        });
+                        _column_iDDLCount++;
+                        _init();
+                    }
+                }
+            });
+
+            function _init() {
+                if (_column_iDDLCount == 3) {
+                    _column_iDDLCount = 0;
+                    mapping_getColumnList();
+                }
+            }
+        }
+
+        function mapping_getColumnList() {
+            setDataGrid("tab_Mapping_List", "div_Mapping_Toolbar", "DcCdDataTableManage", { Action: "GetMapping", iTableID1: _iID }, "iMappingID", "cColumnAlias", "", {
+                onDblClickRow: function(rowIndex, rowData) { $("#tab_Mapping_List").datagrid("selectRow", rowIndex); mapping_editData(rowData.iMappingID); },
+                onClickRow: function(rowIndex, rowData) { $("#tab_Mapping_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                pagination: false
+            });
+        }
+
+        function mapping_openDialog(ci_strTitle) {
+            $('#div_Mapping_Detail').dialog({ width: 520, height: 400, title: ci_strTitle }).dialog('open');
+        }
+
+        function mapping_cancel() {
+            $('#div_Mapping_Detail').dialog('close')
+        }
+
+        function mapping_newData() {
+            _mapping_iID = 0;
+            _mapping_strAction = 'AddMapping';
+            $('#div_Mapping_Detail').form('clear');
+            $('#ddl_Mapping_JoinType').combobox('selectFirst');
+            $('#ddl_Mapping_TableType').combobox('selectFirst');
+            mapping_openDialog("添加关联");
+        }
+
+        function mapping_editData(ci_iID) {
+            _mapping_iID = ci_iID;
+            if (_mapping_iID > 0) {
+                setTimeout(function() {
+                    var m_objData = $("#tab_Mapping_List").datagrid("getSelected");
+                    if (m_objData != null) {
+                        $('#div_Mapping_Detail').form('load', m_objData);
+                        $('#chk_IsAuto').attr('checked', m_objData.bIsAuto ? 'checked' : '');
+                        _mapping_iID = m_objData.iMappingID;
+                        _mapping_strAction = "UpdateMapping";
+                        mapping_openDialog("关联详细资料");
+                    }
+                    else {
+                        $.messager.alert('提示', '请选择记录', 'info');
+                    }
+                }, 100);
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function mapping_saveData() {
+            postData({
+                url: 'DcCdDataTableManage',
+                params: { Action: _mapping_strAction, iMappingID: _mapping_iID, iTableID1: _iID },
+                validate: true,
+                form: 'form_Mapping_Edit',
+                success: function(ci_result) {
+                    $('#tab_Mapping_List').datagrid('reload');
+                    mapping_cancel();
+                }
+            });
+        }
+
+        function mapping_deleteData() {
+            var m_objData = $("#tab_Mapping_List").datagrid("getChecked");
+            if (m_objData.length > 0) {
+                $.messager.confirm('提示', '确定要删除所选' + m_objData.length + '条记录吗？', function(r) {
+                    if (r) {
+                        var m_strIDList = "";
+                        for (var i = 0; i < m_objData.length; i++) {
+                            if (m_strIDList.length > 0) {
+                                m_strIDList += ",";
+                            }
+                            m_strIDList += m_objData[i].iMappingID;
+                        }
+                        if (m_strIDList != "") {
+                            postData({
+                                url: "DcCdDataTableManage",
+                                params: { Action: "DeleteMapping", iMappingID: m_strIDList },
+                                success: function(ci_result) {
+                                    $('#tab_Mapping_List').datagrid('reload');
+                                    $.messager.alert('提示', '删除成功', 'info');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function mapping_openSearch(ci_iType) {
+            var m_strFun = 'mapping_readDBColumn';
+            if (ci_iType == undefined) {
+                ci_iType = 0;
+            }
+            if (ci_iType == 1) {
+                m_strFun = 'mapping_inputData';
+            }
+            popupDialog('SearchTable.html#Type=' + ci_iType + '&NonTableID1=' + _iID, 'parent.' + m_strFun, '数据表查询');
+        }
+
+        function mapping_readDBColumn(ci_objData) {
+            if (ci_objData != undefined) {
+                $('#txt_Mapping_TableDBName').val(ci_objData.cTableDBName);
+                $('[name="cTableAlias"]').val(ci_objData.cTableAlias);
+                $('#hidd_TableID2').val(ci_objData.iTableID);
+            }
+        }
+
+        function mapping_inputData(ci_objData) {
+            if (ci_objData != undefined && ci_objData.length > 0) {
+                postData({
+                    url: 'DcCdDataTableManage',
+                    params: { Action: 'AddMapping', iTableID1: _iID, iJoinType: 1, iTableType: 1 },
+                    onPost: function() {
+                        var m_objID = [];
+                        $.each(ci_objData, function() {
+                            m_objID.push(this.iTableID + ',' + this.cTableAlias);
+                        });
+                        this.params.IDList = m_objID.join(';');
+                        return true;
+                    },
+                    success: function(ci_result) {
+                        $('#tab_Mapping_List').datagrid('reload');
+                        mapping_cancel();
+                    }
+                });
+
+                $('#txt_Mapping_TableDBName').val(ci_objData.cTableDBName);
+                $('[name="cTableAlias"]').val(ci_objData.cTableAlias);
+                $('#hidd_TableID2').val(ci_objData.iTableID);
+            }
+        }
+    </script>
+
+</body>
+</html>

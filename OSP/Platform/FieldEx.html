@@ -1,0 +1,389 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+    <style type="text/css">
+        .datagrid-row-over { background: inherit; cursor: default; }
+        .datagrid-row-selected { background: #fff; }
+        .datagrid-body { overflow: hidden; }
+        .indicator { position: absolute; font-size: 9px; width: 20px; height: 10px; display: none; color: red; }
+        .objectlist div { width: 200px; display: block; height: 30px; line-height: 30px; vertical-align: middle; cursor: pointer; padding-left: 10px; }
+        .objectlist :hover { background-color: #fafafa; }
+        .objectlist .selected { background-color: #FBEC88; }
+        .MainTip { padding: 4px 35px 4px 14px; margin: 5px 5px; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); border-radius: 4px; border: 1px solid #e0d9cb; background-color: #edebe1; color: #817b58; }
+        .MainTip .Text { display: inline-block; vertical-align: middle; margin-left: 5px; }
+    </style>
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false" style="height: 40px;">
+        <div id="tips_1" class="MainTip">
+            <a href="javascript:void(0)" onclick="$('#tips_1').css('display','none');" class="closeBtn">
+                ×</a> <span class="icon-info-sign"></span><span class="Text dc-help" hcode="Case_Tip"
+                    htype="2">可以为各个常用的表单添加自定义字段，支持多种数据类型，并且支持字段的排序</span>
+        </div>
+    </div>
+    <div data-options="region:'west',border:false" style="width: 250px; padding: 20px;">
+        <div style="border: 1px solid #ccc; width: 210px;">
+            <div style="width: 200px; padding: 5px; border-bottom: 1px solid #ccc; background-color: #efefef;
+                font-weight: bold;">
+                业务字段定制
+            </div>
+            <div id="div_Table" class="objectlist">
+            </div>
+        </div>
+    </div>
+    <div id="div_Data" data-options="region:'center',border:false" style="padding: 20px;">
+        <table id="tab_List" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'1',width:10,sortable:false,styler:cellStyler">
+                    </th>
+                    <th data-options="field:'cName',width:200,sortable:false,styler:cellStyler">
+                        字段名
+                    </th>
+                    <th data-options="field:'cTypeDesc',width:150,sortable:false,styler:cellStyler">
+                        数据类型
+                    </th>
+                    <th data-options="field:'btn',width:140,sortable:false,styler:cellStyler,formatter: function(value,row,index){return getButton(row);}">
+                        数据类型
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="div_Toolbar" class="GridButtonBar" style="display: none;">
+            <span style="float: left; margin-left: 5px;">拖动字段名可以排序</span> <a id="btn_Add" class="easyui-linkbutton"
+                iconcls="dc-icon-editadd" plain="true" onclick="newData()">添加</a>
+        </div>
+    </div>
+    <div id="div_Edit" class="easyui-dialog" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form id="form_Edit" method="post" novalidate="novalidate" action="">
+        <table style="width: 100%;" class="TableCenter">
+            <tr group="User_Edit">
+                <td class="tabletext">
+                    <span class="require_sign">*</span>字段名：
+                </td>
+                <td class="tableinput">
+                    <input type="text" name="cName" class="easyui-validatebox" data-options="required:true" />
+                </td>
+            </tr>
+            <tr group="User_Edit">
+                <td class="tabletext">
+                    <span class="require_sign">*</span>数据类型：
+                </td>
+                <td class="tableinput">
+                    <input id="ddl_Type" name="iType" class="easyui-combobox" data-options="editable:false,width:150,required:true" />
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData();">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancel();">关闭</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript" language="javascript">
+    var _iDDLCount = 0;
+    var _iID = 0;
+    var _iTableID = 0;
+    var _strAction = '';
+    var _objIn = null;
+    var _strTableAlias = '';
+
+    initReady(function() {
+        _objIn = $('<div class="indicator">>>></div>').appendTo('body');
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        $('#div_Edit').dialog({ onBeforeClose: function() { $(".tooltip").remove(); } });
+
+        bindCodeMasterData({
+            controlID: "ddl_Type",
+            cat: "field",
+            subCat: "DataType",
+            valueField: "cCodeItem",
+            fValue1: 1,
+            success: function() {
+                _iDDLCount++;
+                _init();
+            }
+        });
+
+        function _init() {
+            if (_iDDLCount == 1) {
+                _iDDLCount = 0;
+
+                postData({
+                    url: "DcCdDataTableManage",
+                    params: { Action: 'GetTable', bIsDisplay: 1 },
+                    isSys: true,
+                    success: function(ci_result) {
+                        if (existData(ci_result)) {
+                            ci_result.rows.sort(function(a, b) { return (a.cTableName < b.cTableName ? 1 : -1); });
+                            var m_objHtml = [];
+                            for (var i = 0; i < ci_result.rows.length; i++) {
+                                m_objHtml.push('<div class="objectlist" onclick="getFieldExData(' + ci_result.rows[i].iTableID + ',\'' + ci_result.rows[i].cTableAlias + '\');selectRow(this);">');
+                                if (ci_result.rows[i].cTableName == '') {
+                                    m_objHtml.push(ci_result.rows[i].cTableAlias);
+                                }
+                                else {
+                                    m_objHtml.push(ci_result.rows[i].cTableName);
+                                }
+                                m_objHtml.push('</div>');
+                            }
+                            $(m_objHtml.join('')).appendTo('#div_Table');
+                            $($('#div_Table').find('div')[0]).click();
+                        }
+                    }
+                });
+
+                //getFieldExData();
+            }
+        }
+    }
+
+    function getSearchParameter() {
+        return { action: "GetList2", cObjectCode: _strTableAlias }
+    }
+
+    function selectRow(ci_obj) {
+        $('#div_Table').find('div').removeClass('selected');
+        $(ci_obj).addClass('selected');
+    }
+
+    function getFieldExData(ci_iTableID, ci_strTableAlias) {
+        _strTableAlias = ci_strTableAlias;
+        _iTableID = ci_iTableID;
+        setDataGrid('tab_List', 'div_Toolbar', 'DcCdFieldEx', getSearchParameter(), 'iFieldID', 'iIndex', '', {
+            checkOnSelect: false,
+            selectOnCheck: false,
+            singleSelect: true,
+            pagination: false,
+            rownumbers: false,
+            showHeader: false,
+            fit: false,
+            fitColumns: false,
+            width: 510,
+            onLoadSuccess: function() {
+                try {
+                    setDnd();
+                } catch (ex) { }
+                setTimeout(function() {
+                    $.parser.parse('#div_Data');
+                }, 10);
+            },
+            rowStyler: function(index, row) {
+                if (index % 2 == 1) {
+                    return 'background:#fafafa;';
+                }
+            }
+        }, true);
+    }
+
+    function cellStyler(value, row, index) {
+        return 'border-right:0px;height:30px;';
+    }
+
+    function getButton(ci_objData) {
+        var m_objRow = [];
+        m_objRow.push('<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="editData()">修改</a>');
+        m_objRow.push(' ');
+        m_objRow.push('<a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-cancel" plain="true" onclick="deleteData()">删除</a>');
+        return m_objRow.join('');
+    }
+
+    function searchData() {
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function showDetail(ci_strTitle) {
+        $('#div_Edit').dialog({ title: ci_strTitle, width: 300, height: 200 }).dialog('open');
+    }
+
+    function cancel() {
+        $('#div_Edit').dialog('close');
+    }
+
+    function newData() {
+        if (_iTableID > 0) {
+            _strAction = 'add';
+            _iID = 0;
+            $('#form_Edit').form('clear');
+            $('#ddl_Type').combobox('enable');
+            showDetail('添加自定义字段');
+        }
+        else {
+            $.messager.alert('提示', '请选择数据表', 'info');
+        }
+    }
+
+    function editData() {
+        setTimeout(function() {
+            var m_objData = $('#tab_List').datagrid('getSelected');
+            if (m_objData != null) {
+                _strAction = 'update';
+                _iID = m_objData.iFieldID;
+                $('#form_Edit').form('load', m_objData);
+                $('#ddl_Type').combobox('disable');
+                showDetail('自定义字段详细资料');
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }, 10);
+    }
+
+    function saveData() {
+        postData({
+            url: 'DcCdFieldEx',
+            params: { Action: _strAction, iFieldID: _iID, iTableID: _iTableID },
+            validate: true,
+            form: 'form_Edit',
+            onPost: function() {
+                if (_strAction == 'update') {
+                    var m_objData = $('#tab_List').datagrid('getSelected');
+                    if (m_objData != null) {
+                        this.params.iOrgID = m_objData.iOrgID;
+                        this.params.iObjectID = m_objData.iObjectID;
+                    }
+                }
+                else {
+                    this.params.iIndex = $('#tab_List').datagrid('getData').rows.length;
+                }
+                return true;
+            },
+            success: function(ci_result) {
+                searchData();
+                $.messager.show({ title: '提示', msg: '保存成功', showType: 'fade', style: { right: '', bottom: '' }, timeout: 2000 });
+                cancel();
+            }
+        });
+    }
+
+    function deleteData() {
+        setTimeout(function() {
+            var m_objData = $('#tab_List').datagrid('getSelected');
+            if (m_objData != null) {
+                postData({
+                    url: 'DcCdFieldEx',
+                    params: { Action: 'Delete', iFieldID: m_objData.iFieldID },
+                    success: function(ci_result) {
+                        searchData();
+                        $.messager.show({ title: '提示', msg: '删除成功', showType: 'fade', style: { right: '', bottom: '' }, timeout: 2000 });
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }, 10);
+    }
+
+    function setDnd() {
+        $('.datagrid-row').draggable({
+            revert: true,
+            cursor: 'move',
+            edge: 5,
+            proxy: function(source) {
+                var p = $('<div class="tree-node-proxy tree-dnd-no" style="position:absolute;border:1px solid #ccc;"/>').appendTo('body');
+                p.html($(source).html());
+                p.hide();
+                return p;
+            },
+            onBeforeDrag: function(e) {
+                e.data.startLeft = $(this).offset().left;
+                e.data.startTop = $(this).offset().top;
+            },
+            onStartDrag: function() {
+                $(this).draggable('proxy').css({
+                    left: -10000,
+                    top: -10000
+                });
+            },
+            onDrag: function(e) {
+                $(this).draggable('proxy').show().css({
+                    left: e.pageX + 15,
+                    top: e.pageY + 15
+                });
+                this.pageY = e.pageY;
+                return false;
+            }
+        }).droppable({
+            accept: '.datagrid-row',
+            onDragOver: function(e, source) {
+                $(source).draggable('proxy').removeClass('tree-dnd-no').addClass('tree-dnd-yes');
+
+                var pageY = source.pageY;
+                var top = $(e.target).offset().top;
+                var bottom = top + $(e.target).outerHeight();
+
+                if (pageY > top + (bottom - top) / 2) {
+                    _objIn.css({
+                        display: 'block',
+                        top: bottom - 5,
+                        left: $(e.target).offset().left - 18
+                    });
+                    source.position = 'bottom';
+                } else {
+                    _objIn.css({
+                        display: 'block',
+                        top: top - 5,
+                        left: $(e.target).offset().left - 18
+                    });
+                    source.position = 'top';
+                }
+            },
+            onDragLeave: function(e, source) {
+                $(source).draggable('proxy').removeClass('tree-dnd-yes').addClass('tree-dnd-no');
+                _objIn.hide();
+            },
+            onDrop: function(e, source) {
+                _objIn.hide();
+                $.messager.confirm('提示', '您确定要改变排序吗？', function(r) {
+                    if (r) {
+                        var m_objData = $('#tab_List').datagrid('getData');
+                        var m_iSource = parseInt($(source).attr('datagrid-row-index'));
+                        var m_iTarget = parseInt($(e.target).attr('datagrid-row-index'));
+                        var m_iStart = 0;
+                        var m_objDataDetail = [];
+                        if (source.position == 'bottom') {
+                            m_iTarget++;
+                        }
+                        m_objData.rows.splice(m_iTarget, 0, m_objData.rows[m_iSource]);
+                        if (m_iSource > m_iTarget) {
+                            m_iStart = m_iTarget;
+                            m_objData.rows.splice(m_iSource + 1, 1);
+                        }
+                        else {
+                            m_iStart = m_iSource;
+                            m_objData.rows.splice(m_iSource, 1);
+                        }
+                        for (var i = m_iStart; i < m_objData.rows.length; i++) {
+                            m_objDataDetail.push(m_objData.rows[i].iFieldID + ',' + i);
+                        }
+                        postData({
+                            url: 'DcCdFieldEx',
+                            params: { Action: 'updateIndex', DataDetail: m_objDataDetail.join(';') },
+                            success: function(ci_result) {
+                                searchData();
+                                $.messager.show({ title: '提示', msg: '修改成功', showType: 'fade', style: { right: '', bottom: '' }, timeout: 2000 });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    } 
+</script>
+

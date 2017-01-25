@@ -1,0 +1,5 @@
+﻿.more { float: right; cursor: pointer; margin-left: 5px; }
+.panel-tool-collapse { background: url('../../JS/EsayUI/themes/default/images/layout_arrows.png') no-repeat -16px -16px; }
+.panel-tool-expand { background: url('../../JS/EsayUI/themes/default/images/layout_arrows.png') no-repeat -16px 0; }
+.panel-tool-open { background: url('../../JS/EsayUI/themes/default/images/tree_folder_open.gif') no-repeat; }
+.layout-body { overflow: auto; background: none; }

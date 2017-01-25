@@ -1,0 +1,13 @@
+﻿
+	<scene name="scene_[BASENAME]" title="[NAME]" onstart="set(plugin[snow].visible,false);js(initData([BASENAME]));"[SCENEPARAMETERS][THUMB][GPS][DEVICE]>
+
+		[VIEW]
+
+		[PREVIEW]
+
+		[IMAGE]
+		<include url="%BASEDIR%/plugins/snow.xml"/>
+		<include url="%BASEDIR%/plugins/auto_thumbs.xml" />
+		[HOTSPOTS]
+
+	</scene>

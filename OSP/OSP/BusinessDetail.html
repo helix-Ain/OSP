@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script src='http://api.map.baidu.com/api?v=2.0&ak=D85e9f5f1c47381984bbce6eaffcff42'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../JS/lightbox2/css/lightbox.min.css,../JS/lightbox2/js/lightbox.min.js,../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<style>
+			div.scene {
+				background-color: #F6F6F6;
+				width: 145px;
+				height: 175px;
+				margin: 0 25px 25px 0;
+				border: 1px solid #E1E1E1;
+				text-align: center;
+			}
+			
+			div.scene div:first-child {
+				height: 140px;
+				line-height: 140px;
+				font-size: 45px;
+				color: #DADADA;
+				border-bottom: 1px dashed #E1E1E1;
+			}
+			
+			.anchorBL {
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+			</div>
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>商业名称：
+						</td>
+						<td>
+							<input id='cSceneName' name='cSceneName' maxlength="50" class='easyui-validatebox' data-options='required:true' style='width:500px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>商业类别：
+						</td>
+						<td>
+							<input id='iCategoryID' name='iCategoryID' type='hidden' />
+							<input id='cCategoryName' name='cCategoryName' maxlength="100" class='easyui-validatebox' data-options='required:true' readonly="readonly" style='width:500px;cursor: pointer;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'></span>所属场景组：
+						</td>
+						<td>
+							<input id='iGroupID' name='iGroupID' type='hidden' />
+							<input id='cGroupName' name='cGroupName' class='easyui-validatebox' readonly='readonly' style='width:500px;cursor: pointer;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>省份：
+						</td>
+						<td>
+							<input id='iProvinceID' name='iProvinceID' class='easyui-combobox' data-options="required:true,width:150,valueField:'id',textField:'text',editable:false" />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>城市：
+						</td>
+						<td>
+							<input id='iCityID' name='iCityID' class='easyui-combobox' data-options="required:true,width:150,valueField:'id',textField:'text',editable:false" />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>区域：
+						</td>
+						<td>
+							<input id='iDistrictID' name='iDistrictID' class='easyui-combobox' data-options="required:true,width:150,valueField:'id',textField:'text',editable:false" />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'></span>电话：
+						</td>
+						<td>
+							<input id='cTel' name='cTel' maxlength="20" class='easyui-validatebox' style='width:500px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>地址：
+						</td>
+						<td>
+							<input id='cAddress' placeholder="请输入正确的地址并按回车进行定位" name='cAddress' maxlength="100" class='easyui-validatebox' data-options='required:true' style='width:500px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>地址解析：
+						</td>
+						<td>
+							<span style='color:#666666;'>
+								提示：输入地址后请把地图标注点移动到到具体的地址
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'></td>
+						<td>
+							<div id='allmap' style='width:500px;height: 200px;border-radius: 3px;'></div>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>描述：
+						</td>
+						<td>
+							<span style='color:#666666;'>
+								提示：请输入场景描述或商家介绍
+							</span>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'></td>
+						<td>
+							<textarea id="cDescription" name="cDescription" rows="10" style="width: 500px;height: 250px;"></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>是否启用：
+						</td>
+						<td>
+							<input name='bEnabled' id='bEnabled' type='checkbox' class='easyui-validatebox' checked="checked" />
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = getHashValue('Action');
+			var _iParentID = getHashValue('iParentID');
+			var _iSceneID = getHashValue('iSceneID');
+			var _strFun = getHashValue('Fun');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _iDDLCount = 0;
+			var _Map = '';
+			var _Geo = '';
+			var _Marker = '';
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+				$('#cAddress').on('blur keydown', function() {
+					if(event.type == 'keydown' && event.keyCode == 13) {
+						var province = $('#iProvinceID').combobox('getText');
+						var city = $('#iCityID').combobox('getText');
+						var district = $('#iDistrictID').combobox('getText');
+						addressResolution(province + city + district + $(this).val());
+					}
+				});
+			});
+
+			function initPage() {
+				_Action == 'new' ? _Action = 'Add' : _Action = 'Update';
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				dcnloader.load(['ComboList', 'Clearbutton', 'DCNDiv', 'Kindeditor', 'Uploadify'], function() {
+					$('#cDescription').kindeditor({
+						width: 500,
+						minWidth: 200
+					});
+					_iDDLCount++;
+					initData();
+				});
+				postData({
+					url: '../../Ajax/DcCdCpcdManage',
+					params: {
+						Action: 'GetProvinceList',
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								data.push({
+									'id': item.iProvinceID,
+									'text': item.cProvinceName
+								});
+							});
+							_iDDLCount++;
+							initData();
+							$('#iProvinceID').combobox({
+								onChange: function(newValue, oldValue) {
+									postData({
+										url: '../../Ajax/DcCdCpcdManage',
+										params: {
+											Action: 'GetCityList',
+											iProvinceID: newValue
+										},
+										success: function(ci_result) {
+											if(existData(ci_result)) {
+												var m_objData = ci_result.rows;
+												var data = [];
+												$('#iCityID,#iDistrictID').combobox('clear').combobox('loadData', []);
+												$.each(m_objData, function(i, item) {
+													data.push({
+														'id': item.iCityID,
+														'text': item.cCityName
+													});
+												});
+												$('#iCityID').combobox({
+													onChange: function(newValue, oldValue) {
+														postData({
+															url: '../../Ajax/DcCdCpcdManage',
+															params: {
+																Action: 'GetDistrictList',
+																iCityID: newValue
+															},
+															success: function(ci_result) {
+																if(existData(ci_result)) {
+																	var m_objData = ci_result.rows;
+																	var data = [];
+																	$('#iDistrictID').combobox('clear');
+																	$.each(m_objData, function(i, item) {
+																		data.push({
+																			'id': item.iDistrictID,
+																			'text': item.cDistrictName
+																		});
+																	});
+																	$('#iDistrictID').combobox('loadData', data);
+																}
+															}
+														});
+													}
+												}).combobox('loadData', data);
+											}
+										}
+									});
+								}
+							}).combobox('loadData', data);
+						}
+					}
+				});
+				$('#cCategoryName').on('click', function() {
+					popupDialog(_strSysUrl + 'OSP/SceneCategoryManage.html#entrust=BusinessDetail', 'parent.filliCategoryID', '选择商业类型', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+				$('#cGroupName').on('click', function() {
+					popupDialog(_strSysUrl + 'OSP/SceneGroupManage.html#entrust=BusinessDetail&select=1', 'parent.filliGroupID', '选择场景组', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+			}
+
+			function initData() {
+				if(_iDDLCount != 2) {
+					return;
+				}
+				if(_Action == 'Update') {
+					postData({
+						url: 'DcCdSceneManage',
+						params: {
+							Action: 'GetData',
+							iSceneID: _iSceneID
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								$('#cSceneName').val(m_objData.cSceneName);
+								$('#iProvinceID').combobox('select', m_objData.iProvinceID);
+								setTimeout(function() {
+									$('#iCityID').combobox('select', m_objData.iCityID);
+									setTimeout(function() {
+										$('#iDistrictID').combobox('select', m_objData.iDistrictID);
+									}, 500);
+								}, 500);
+								$('#cAddress').val(m_objData.cAddress);
+								$('#iCategoryID').val(m_objData.iCategoryID);
+								$('#cCategoryName').val(m_objData.cCategoryName);
+								$('#cTel').val(m_objData.cTel);
+								$('#bEnabled').prop('checked', m_objData.bEnabled);
+								$('#cDescription').kindeditor('editor').html(m_objData.cDescription.replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
+								postData({
+									url: 'DcCdSceneGroupManage',
+									params: {
+										Action: 'GetList',
+										iGroupID: m_objData.iGroupID
+									},
+									success: function(ci_result) {
+										if(existData(ci_result)) {
+											var m_objData = ci_result.rows[0];
+											$('#iGroupID').val(m_objData.iGroupID);
+											$('#cGroupName').val(m_objData.cGroupName);
+										}
+									}
+								});
+								if(m_objData.fLongitude != '' && m_objData.fLatitude != '') {
+									initMap(m_objData.fLongitude, m_objData.fLatitude);
+								} else {
+									initMap();
+								}
+							}
+						}
+					});
+				} else {
+					$('#iProvinceID').combobox('select', 440000);
+					setTimeout(function() {
+						$('#iCityID').combobox('select', 440700);
+					}, 500);
+					initMap();
+				}
+			}
+
+			function initMap(fLongitude, fLatitude) {
+				_Map = new BMap.Map('allmap');
+				_Geo = new BMap.Geocoder();
+				_Map.enableScrollWheelZoom(true);
+				if(fLongitude != undefined && fLatitude != undefined && fLongitude != '' && fLatitude != '') {
+					var point = new BMap.Point(fLongitude, fLatitude);
+					_Marker = new BMap.Marker(point);
+					_Marker.enableDragging();
+					_Map.centerAndZoom(point, 16);
+					_Map.addOverlay(_Marker);
+				} else {
+					_Geo.getPoint('江门市', function(point) {
+						if(point) {
+							_Marker = new BMap.Marker(point);
+							_Marker.enableDragging();
+							_Map.centerAndZoom(point, 16);
+							_Map.addOverlay(_Marker);
+						} else {
+							$.messager.alert('提示', '您填写的地址没有解析到结果', 'info');
+						}
+					})
+				}
+			}
+
+			function addressResolution(address) {
+				if(address == '') {
+					address = '江门市';
+				}
+				_Map.removeOverlay(_Marker);
+				_Geo.getPoint(address, function(point) {
+					if(point) {
+						_Marker = new BMap.Marker(point);
+						_Marker.enableDragging();
+						_Map.centerAndZoom(point, 16);
+						_Map.addOverlay(_Marker);
+					} else {
+						$.messager.alert('提示', '您填写的地址没有解析到结果', 'info');
+					}
+				});
+			}
+
+			function filliCategoryID(iCategoryID) {
+				postData({
+					url: 'DcCdSceneCategoryManage',
+					params: {
+						Action: 'GetList',
+						iCategoryID: iCategoryID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#iCategoryID').val(m_objData.iCategoryID);
+							$('#cCategoryName').val(m_objData.cCategoryName);
+							cancel();
+						}
+					}
+				});
+			}
+
+			function filliGroupID(iGroupID) {
+				postData({
+					url: 'DcCdSceneGroupManage',
+					params: {
+						Action: 'GetList',
+						iGroupID: iGroupID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#iGroupID').val(m_objData.iGroupID);
+							$('#cGroupName').val(m_objData.cGroupName);
+							cancel();
+						}
+					}
+				});
+			}
+
+			function saveData() {
+				var point = _Marker.getPosition();
+				var params = {
+					Action: _Action,
+					bIsVR: false,
+					bIsMain: false
+				};
+				postData({
+					url: 'DcCdSceneManage',
+					params: params,
+					form: 'form_Edit',
+					validate: true,
+					onPost: function() {
+						this.params.iProvinceID = $('#iProvinceID').combobox('getValue');
+						this.params.iCityID = $('#iCityID').combobox('getValue');
+						this.params.iDistrictID = $('#iDistrictID').combobox('getValue');
+						this.params.fLongitude = point.lng;
+						this.params.fLatitude = point.lat;
+						this.params.iGroupID = $('#iGroupID').val();
+						this.params.cDescription = $('#cDescription').kindeditor('editor').html();
+						if(_Action == 'Update') {
+							this.params.iSceneID = _iSceneID;
+						}
+						return true;
+					},
+					success: function(ci_result) {
+						if(ci_result.DcCode == 0) {
+							if(_strFun != '') {
+								eval(_strFun);
+							}
+							if(_Action == 'Update') {
+								$.messager.alert('提示', '保存成功', 'info');
+							} else {
+								cancelSelf();
+							}
+						}
+					}
+				});
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

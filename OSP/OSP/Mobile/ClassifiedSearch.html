@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html ng-app='app'>
+
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<link rel='stylesheet' href='CSS/Ionic/ionic.min.css' />
+		<script src="JS/Ionic/ionic.bundle.min.js"></script>
+		<script src="JS/Constants.js"></script>
+		<script src="JS/Common.js?v=1.0"></script>
+		<style>
+			.menu-item:hover {
+				background-color: #EEEEEE;
+			}
+		</style>
+	</head>
+
+	<body ng-controller='app' ng-init='init()' ng-cloak>
+		<ion-header-bar align-title='center' style='background-color:#A4684B;'>
+			<button class='button button-icon icon ion-ios-arrow-left' style='color:#FFFFFF;' onclick="back()">返回</button>
+			<h1 class='title' style='color: #FFFFFF;'>分类搜索</h1>
+		</ion-header-bar>
+		<ion-content style='background-color: #FFFFFF;padding-bottom: 15px;'>
+			<ion-list>
+				<ion-item class='menu-item' style='padding:12px;' ng-repeat='item in categoryList' ng-click="subclassified(item.iCategoryID)">
+					<span style='position: relative;top:4px;'>{{item.cCategoryName}}</span>
+					<a class="button button-small button-icon icon ion-ios-arrow-right" style='float:right;' ng-click="subclassified(item.iCategoryID)"></a>
+					<a class="button button-small button-icon icon ion-ios-search" style='float:right;' ng-click='viewClassified(item.iCategoryID)'></a>
+				</ion-item>
+				<ion-item class='menu-item item-icon-right' style='padding:12px;' ng-repeat='item in sceneList' ng-click='viewDetail(item.iSceneID,item.bIsVR)'>
+					<span style='font-size: 14px;'>
+						{{item.cSceneName}}
+						<img ng-if='item.bIsVR' src='Images/scene.png' style='width:14px;height:17px;position: relative;top:2px;left:5px;'/>
+					</span>
+					<i class="icon ion-ios-arrow-right"></i>
+				</ion-item>
+			</ion-list>
+		</ion-content>
+		<script>
+			var _iParentID = getQueryStringValue('iParentID');
+			app.controller('app', function($scope, $window, $ionicSlideBoxDelegate, commonService) {
+				$scope.categoryList = [];
+				$scope.sceneList = [];
+				$scope.init = function() {
+					initPage();
+				}
+
+				$scope.viewClassified = function(iCategoryID) {
+					$window.location = 'SearchResult.html?iParentID=' + iCategoryID;
+					stopBubble(event);
+				}
+
+				$scope.subclassified = function(iCategoryID) {
+					$window.location = 'ClassifiedSearch.html?iParentID=' + iCategoryID;
+				}
+
+				$scope.viewDetail = function(iSceneID, bIsVR) {
+					bIsVR==true?bIsVR=1:bIsVR=0;
+					$window.location = 'BusinessDetail.html?iSceneID=' + iSceneID + '&bIsVR=' + bIsVR;
+				}
+
+				function initPage() {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'SceneCategoryList',
+							iParentID: _iParentID
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows;
+								$scope.categoryList = m_objData;
+							} else {
+								commonService.postData({
+									url: 'DcCdAppInterface',
+									params: {
+										Action: 'SceneQuery',
+										CategoryID: _iParentID
+									},
+									success: function(ci_result) {
+										if(existData(ci_result)) {
+											var m_objData = ci_result.rows;
+											$scope.sceneList = m_objData;
+										}
+									}
+								});
+							}
+						}
+					});
+				}
+			});
+
+			function stopBubble(e) {
+				if(e && e.stopPropagation) {
+					e.stopPropagation();
+				} else {
+					window.event.cancelBubble = true;
+				}
+			}
+
+			function back() {
+				history.back();
+			}
+		</script>
+	</body>
+
+</html>

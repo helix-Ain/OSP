@@ -1,0 +1,199 @@
+.dcncalendar{
+	background:#fff;
+	border:1px solid #A4BED4;
+	padding:1px;
+	overflow:hidden;
+}
+.dcncalendar-noborder{
+	border:0px;
+}
+.dcncalendar-header{
+	position:relative;
+	font-size:12px;
+	height:22px;
+	width:120px;
+}
+.dcncalendar-title{
+	text-align:center;
+	height:22px;
+}
+.dcncalendar-title span{
+	position:relative;
+	top:2px;
+	line-height:12px;
+	display:inline-block;
+	padding:3px;
+	cursor:pointer;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+}
+.dcncalendar-prevday,.dcncalendar-nextday,.dcncalendar-prevmonth,.dcncalendar-nextmonth,.dcncalendar-prevyear,.dcncalendar-nextyear{
+	position:absolute;
+	top:4px;
+	width:14px;
+	height:14px;
+	line-height:12px;
+	cursor:pointer;
+	font-size:1px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+}
+.dcncalendar-prevday{
+	left:37px;
+	background:url('images/calendar_prevmonth.gif') no-repeat 3px 2px;
+}
+.dcncalendar-nextday{
+	right:37px;
+	background:url('images/calendar_nextmonth.gif') no-repeat 3px 2px;
+}
+.dcncalendar-prevmonth{
+	left:20px;
+	background:url('images/calendar_prevmonth.gif') no-repeat 3px 2px;
+}
+.dcncalendar-nextmonth{
+	right:20px;
+	background:url('images/calendar_nextmonth.gif') no-repeat 3px 2px;
+}
+.dcncalendar-prevyear{
+	left:3px;
+	background:url('images/calendar_prevyear.gif') no-repeat 1px 2px;
+}
+.dcncalendar-nextyear{
+	right:3px;
+	background:url('images/calendar_nextyear.gif') no-repeat 1px 2px;
+}
+.dcncalendar-body{
+	font-size:12px;
+	position:relative;
+	height:20px;
+	width:456px;
+}
+.dcncalendar-body table{
+	width:100%;
+	height:100%;
+	font-size:12px;
+}
+.dcncalendar-body th,.dcncalendar-body td{
+	text-align:center;
+}
+.dcncalendar-body th{
+	background:#fafafa;
+	color:#888;
+}
+.dcncalendar-day{
+	color:#222;
+	cursor:pointer;
+	border:1px solid #fff;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+}
+.dcncalendar-sunday{
+	color:#CC2222;
+}
+.dcncalendar-saturday{
+	color:#00ee00;
+}
+.dcncalendar-today{
+	color:#0000ff;
+}
+.dcncalendar-other-month{
+	opacity:0.3;
+	filter:alpha(opacity=30);
+}
+.dcncalendar-hover{
+	border:1px solid red;
+}
+.dcncalendar-selected{
+	background:#FBEC88;
+	border:1px solid red;
+}
+.dcncalendar-nav-hover{
+	background-color:#FBEC88;
+}
+
+
+.dcncalendar-menu{
+	position:absolute;
+	top:0px;
+	left:0px;
+	width:180px;
+	height:150px;
+	font-size:12px;
+	background:#fafafa;
+
+	display:none;
+	overflow:hidden;
+}
+
+.dcncalendar-weekmenu{
+	position:absolute;
+	top:0px;
+	left:0px;
+	width:400px;
+	height:20px;
+	font-size:12px;
+	background:#fafafa;
+
+	display:none;
+	overflow:hidden;
+}
+
+.dcncalendar-menu-week-inner table{
+	width:100%;
+	height:100%;
+}
+
+.dcncalendar-menu-week{
+	text-align:center;
+	cursor:pointer;
+	color:#666;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+}
+
+.dcncalendar-menu-year-inner{
+	text-align:center;
+	width:90px;
+}
+.dcncalendar-menu-year{
+	width:40px;
+	height:12px;
+	text-align:center;
+	border:1px solid #ccc;
+	font-weight:bold;
+}
+.dcncalendar-menu-prev,.dcncalendar-menu-next{
+	display:inline-block;
+	width:15px;
+	height:18px;
+	vertical-align:top;
+	cursor:pointer;
+}
+.dcncalendar-menu-prev{
+	margin-right:5px;
+	background:url('images/calendar_prevyear.gif') no-repeat 5px 3px;
+}	
+.dcncalendar-menu-next{
+	margin-left:5px;
+	background:url('images/calendar_nextyear.gif') no-repeat 5px 3px;
+}
+.dcncalendar-menu-hover{
+	background-color:#FBEC88;
+}
+.dcncalendar-menu-month-inner table{
+	width:100%;
+	height:100%;
+}
+.dcncalendar-menu-month{
+	text-align:center;
+	cursor:pointer;
+	font-weight:bold;
+	color:#666;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+}

@@ -1,0 +1,65 @@
+﻿.smallicon { background: url(../js/esayui/themes/icons/dc_icon_ok.png) no-repeat 2px 2px; }
+.itemtext { white-space: nowrap; text-overflow: ellipsis; width: 80px; height: 30px; vertical-align: middle; overflow: hidden; float: left; }
+.itemclose { width: 16px; height: 16px; vertical-align: middle; background: url(../image/item_close.png) no-repeat; display: block; float: left; }
+.itemimg { display: block; vertical-align: middle; float: left; width: 16px; height: 16px; margin-right: 2px; }
+.message { background-color: White; }
+.pipe { color: #FFF; }
+.layout-body { overflow: auto; background: none; }
+div.topmenu { float: right; margin: 5px; cursor: default; }
+div.topmenu a { cursor: pointer; color: White; }
+.topMsg { border-left-width: 0px; margin-top: 10px; }
+/*.userdata { margin: 10px 0 0 5px; }*/
+.userdata li { float: left; }
+
+
+.accordion-body { background: #f5f5f5 !important; border-style: none; }
+.accordion-header { height: auto; border-width: 0px; background-color: #e1e1e1; }
+.accordion-header-selected { background: #ff6f2e !important; }
+.accordion .accordion-header-selected .panel-title .treeText { color: #FFFFFF; }
+
+.treeParentText { font-size: 16px; height: 32px; line-height: 32px; vertical-align: middle; text-indent: 45px; color: #FFFFFF; }
+.tree-node { height: auto; }
+.tree-node-selected { background-color: #f6e3d8; }
+.tree-title { padding: 5px 2px; }
+.menutext { font-size: 16px; color: #999; }
+
+.menutext { text-indent: 25px; background: url(../image/03_6.png) no-repeat; background-position: left center; }
+.tree-node-selected .tree-title .menutext { color: #814d33; background: url(../image/03_5.png) no-repeat; background-position: left center; }
+
+.shadow { webkit-box-shadow: 0px 0px 8px -2px rgba(20%,20%,40%,0.5); box-shadow: 0px 0px 8px -2px rgba(20%,20%,40%,0.5); }
+
+.nav-select-arr { position: absolute; z-index: 10; top: 15px; border-color: #c2c2c2 transparent transparent; border-style: solid dashed dashed; border-width: 4px 4px 0; font-size: 0; height: 0; width: 0; line-height: 0; margin-left: 5px; }
+.nav-menu-item-split { background: url('../Image/BMM/08_4.jpg') no-repeat center center; width: 2px; height: 36px; display: block; }
+.nav-menu-item { position: relative; height: 36px; line-height: 36px; vertical-align: middle; padding: 0 20px 0 10px; cursor: pointer; }
+.nav-menu-item div { color: #A9A9A9; font-size: 14px; float: left; }
+.nav-menu-item span { color: #A9A9A9; font-size: 14px; }
+.nav-menu-item-hover { background-color: White; }
+.nav-menu-item-hover span { color: Black; }
+.nav-menu-item-hover div { color: Black; }
+.nav-menu-item-hover .nav-select-arr { -webkit-transform: rotate(180deg); -moz-transform: rotate(180deg); -o-transform: rotate(180deg); transform: rotate(180deg); -webkit-transition: all .25s ease 0s; -moz-transition: all .25s ease 0s; -o-transition: all .25s ease 0s; transition: all .25s ease 0s; border-color: Black transparent transparent; }
+.nav-menu-item-only { padding-right: 10px; cursor: default; }
+.nav-menu-item-only .nav-select-arr { display: none; }
+.nav-menu-user-default { background: url('../Image/BMM/08_3.png') no-repeat left center; padding-left: 33px; height: 36px; }
+.nav-menu-org-default { background: url('../Image/BMM/08_2.png') no-repeat left center; padding-left: 65px; height: 36px; }
+
+.quickbtn { display: block; width: 48px; min-height: 45px; overflow: hidden; }
+.quickbtn:hover { background-position: -43px 0px; }
+.quickbtn:active { background-position: -88px 0px; }
+.quickbtn span { text-align: center; color: white; width: auto; padding-top: 45px; display: block; }
+
+.quick_sms { display: block; width: 50px; height: 45px; background: url(../image/a1-1.png) no-repeat; cursor: pointer; }
+.quick_sms:hover { background: url(../image/a1-2.png) no-repeat; }
+.quick_sms:active { background: url(../image/a1-3.png) no-repeat; }
+
+.quick_schedule { background: url(../image/bmm/q2.png) no-repeat 2px 0px; }
+.quick_Info { background: url(../image/bmm/q3.png) no-repeat 2px 0px; }
+.quick_map { background: url(../image/bmm/q1.png) no-repeat 2px 0px; }
+.quick_desktop { background: url(../image/bmm/q6.png) no-repeat 2px 0px; }
+.quick_phone { background: url(../image/bmm/q4.png) no-repeat 2px 0px; }
+.quick_help { background: url(../image/bmm/q5.png) no-repeat 2px 0px; }
+.quick_Customer { background: url(../image/bmm/q7.png) no-repeat 2px 0px; }
+.quick_PosCustomer { background: url(../image/bmm/q8.png) no-repeat 2px 0px; }
+.quick_Contact { background: url(../image/bmm/q9.png) no-repeat 2px 0px; }
+.quick_Dealer { background: url(../image/bmm/q10.png) no-repeat 2px 0px; }
+.quick_SalesOrder { background: url(../image/bmm/q11.png) no-repeat 2px 0px; }
+.quick_Product { background: url(../image/bmm/q12.png) no-repeat 2px 0px; }

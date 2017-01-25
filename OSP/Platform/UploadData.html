@@ -1,0 +1,257 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../js/CommonScript.js?script=js/CurrCommonScript.js"></script>
+
+</head>
+<body style="display: none;">
+    <div class="easyui-layout" data-options="fit:true,border:false">
+        <div data-options="region:'north',border:false," style="height: 50px;">
+            <div style="height: 10px;">
+            </div>
+            <label id="lab_Title" style="margin: 20px; font-size: 18px;">
+            </label>
+        </div>
+        <div data-options="region:'center',border:false">
+            <div id="div_Step1">
+                <div style="margin-left: 20px; margin-top: 10px;">
+                    <input id="input_Upload" type="file" style="display: none;" />
+                </div>
+                <div id="div_FileQueue" style="margin-left: 20px;">
+                </div>
+            </div>
+            <div id="div_Step2" style="display: none;">
+                <form action="" id="form_Edit" method="post" novalidate="novalidate">
+                <table id="tab_Columns" style="min-width: 800px;" class="TableCenter">
+                </table>
+                </form>
+            </div>
+        </div>
+        <div data-options="region:'south',border:false," style="height: 35px;">
+            <div class="ButtonBar">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="nextStep()">下一步</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iID = 0;
+    var _strFun = '';
+    var _strCode = '';
+    var _strXML = '';
+    var _strTitle = '';
+    var _bIsSelect = false;
+    var _objList = null;
+    var _iStep = 1;
+
+    initReady(function() {
+        _strFun = getHashValue("Fun");
+    });
+
+    checkPagePower({ onload: function() { initPage(); }, showMask: false });
+
+    function initPage() {
+        _strCode = getHashValue("Code");
+        editData();
+    }
+
+    function cancelSelf() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function editData() {
+        if (_strCode != '') {
+            postData({
+                url: "DcCdUploadDataManage",
+                params: { Action: "GetList", cCode: _strCode },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        _iID = ci_result.rows[0].iUploadID;
+                        _strTitle = ci_result.rows[0].cName;
+                        _strXML = ci_result.rows[0].cXMLFile;
+                        _iStep = 1;
+
+                        $('#lab_Title').html(_strTitle);
+                        setUploadify();
+                    }
+                    else {
+                        $.messager.alert('提示', '页面初始化失败', 'info', function() { cancelSelf(); });
+                    }
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '页面初始化失败', 'info', function() { cancelSelf(); });
+        }
+    }
+
+    function nextStep() {
+        switch (_iStep) {
+            case 1:
+                uploadFile();
+                break;
+            case 2:
+                uploadData();
+                break;
+            case 3:
+                break;
+        }
+    }
+
+    function uploadFile() {
+        if (_bIsSelect) {
+            $('#input_Upload').uploadifyUpload();
+        }
+        else {
+            $.messager.alert('提示', '请添加文件', 'info');
+        }
+    }
+
+    function uploadData() {
+        if ($('#form_Edit').form('validate')) {
+            var m_objData = [];
+            $('#tab_Columns').find(':hidden').each(function() {
+                if ($(this).val() != '') {
+                    m_objData.push($(this).attr('name') + ',' + $(this).val());
+                }
+            });
+            if (m_objData.length > 0) {
+                postData({
+                    url: 'DcCdUploadDataManage',
+                    params: { Action: 'UploadData', Columns: m_objData.join(';'), iUploadListID: _objList[0].iUploadListID },
+                    success: function(ci_result) {
+                        if (_strFun != '') {
+                            _strFun += '()';
+                            eval(_strFun);
+                        }
+                        $.messager.alert('提示', ci_result.DcMessage, 'info', function() { cancelSelf(); });
+                    }
+                });
+            }
+        }
+    }
+
+    function setp2() {
+        postData({
+            url: "DcCdUploadDataManage",
+            params: { Action: "GetXML", XML: _strXML },
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    _iStep = 2;
+                    //$('#lab_Title').html(_strTitle + '数据对应设置');
+                    $('#div_Step1').css('display', 'none');
+                    $('#div_Step2').css('display', '');
+
+                    var m_objHtml = [];
+                    m_objHtml.push('<tr>');
+                    for (var i = 0; i < ci_result.rows.length; i++) {
+                        m_objHtml.push('<td class="tabletext" style="width:15%;">');
+                        if (ci_result.rows[i].bRequired) {
+                            m_objHtml.push('<span class="require_sign">*</span>');
+                        }
+                        m_objHtml.push(ci_result.rows[i].cText + '：');
+                        m_objHtml.push('</td>');
+                        m_objHtml.push('<td style="width:35%;"><input id="ddl_' + ci_result.rows[i].cName + '" group="ddl" name="' + ci_result.rows[i].cName + '" class="easyui-combobox" data-options="editable:false,width:150,valueField:\'iID\',textField:\'cText\'');
+                        if (ci_result.rows[i].bRequired) {
+                            m_objHtml.push(',required:true');
+                        }
+                        m_objHtml.push('" />');
+                        if (!ci_result.rows[i].bRequired) {
+                            m_objHtml.push('<a class="easyui-linkbutton" data-options="iconCls:\'icon-cancel\',plain:true" onclick="clearText(\'#ddl_' + ci_result.rows[i].cName + '\');" title="清空" group="update">');
+                        }
+                        m_objHtml.push('</td>');
+                        if (i % 2 == 1) {
+                            m_objHtml.push('</tr><tr>');
+                        }
+                    }
+                    m_objHtml.push('</tr>');
+                    $('#tab_Columns').html(m_objHtml.join(''));
+                    $.parser.parse('#tab_Columns');
+                    $('span.combo,span.spinner').addClass('text-radius');
+                    $('[group="ddl"]').combobox('loadData', convertToJson(_objList[0].cColumns).columns);
+                }
+                else {
+                    $.messager.alert('提示', '页面初始化失败', 'info', function() { cancelSelf(); });
+                }
+            }
+        });
+    }
+
+    function setUploadify() {
+        var m_objScriptList = [];
+        m_objScriptList.push(_strSysUrl + "plugins/uploadify/scripts/jquery.uploadify.min.js");
+        m_objScriptList.push(_strSysUrl + "plugins/uploadify/scripts/swfobject.js");
+        m_objScriptList.push(_strSysUrl + "plugins/uploadify/css/uploadify.css");
+
+        var m_objFileLoader = new fileLoader();
+        m_objFileLoader.isParse = false;
+        m_objFileLoader.addReadyFn(function() {
+            _init();
+            hiddMask();
+        });
+        loadingMask('', '正在加载数据...');
+        m_objFileLoader.load(m_objScriptList);
+
+        function _init() {
+            $("#input_Upload").uploadify({
+                uploader: _strSysUrl + 'plugins/uploadify/scripts/uploadify.swf',
+                cancelImg: _strSysUrl + 'plugins/uploadify/css/cancel.png',
+                script: getInterfaceName("DcCdUploadDataManage", true),
+                scriptData: { Action: 'lAdd', iUploadID: _iID },
+                queueID: 'div_FileQueue',
+                auto: false,
+                multi: false,
+                buttonText: '添加文件',
+                fileExt: '*.xls',
+                fileDesc: '请选择xls文件',
+                method: 'post',
+                onError: function(event, ID, fileObj, errorObj) {
+                    if (errorObj.type === "File Size") {
+                        $("#input_Upload").uploadifyCancel(ID);
+                        $.messager.alert('提示', '超过文件上传大小限制！', 'info'); ;
+                    }
+                    else {
+                        $.messager.alert('提示', '上传失败！', 'info');
+                    }
+                },
+                onSelect: function(event, ID, fileObj) {
+                    _bIsSelect = true;
+                },
+                onCancel: function(event, ID, fileObj, data) {
+                    _bIsSelect = false;
+                },
+                onComplete: function(event, queueId, fileObj, response, data) {
+                    var m_result = convertToJson(response);
+                    if (m_result.DcCode != undefined && m_result.DcCode == 0) {
+                        //$.messager.alert('提示', '上传成功', 'info');
+                        _objList = m_result.rows;
+                        setp2();
+                    }
+                    else {
+                        if (m_result.DcMessage != undefined && m_result.DcMessage != '') {
+                            $.messager.alert('提示', m_result.DcMessage, 'info');
+                        }
+                        else {
+                            $.messager.alert('提示', '上传失败！', 'info');
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
+

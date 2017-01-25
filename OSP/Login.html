@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<title>全景展示系统</title>
+
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+		<script src="JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+		<script type='text/javascript' src='js/Constants.js'></script>
+
+		<script type="text/javascript" src="js/CommonScript.js?script=js/EsayUI/jquery.validatebox.rules.js,js/jquery.cookie.js"></script>
+
+	</head>
+
+	<body style="display: none;">
+		<div id="formLogin" class="easyui-dialog" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title',title:'用户登录'">
+			<div class="easyui-layout" data-options="fit:true,border:false">
+				<div data-options="region:'center',border:false">
+					<table width="100%" style="line-height: 50px; border: red 1px;">
+						<tr>
+							<td style="height: 20px;">
+							</td>
+						</tr>
+						<tr>
+							<td style="width: 40px;">
+							</td>
+							<td class="tableinput">
+								<input id="ipt_username" type="text" class="dc-input easyui-validatebox" dc-tip="请输入邮箱 / 手机 / 登录ID" required="true" style="width: 200px;" />
+							</td>
+						</tr>
+						<tr>
+							<td style="height: 20px;">
+							</td>
+						</tr>
+						<tr>
+							<td style="width: 40px;">
+							</td>
+							<td class="tableinput">
+								<input id="ipt_userpwd" type="password" class="dc-input easyui-validatebox" dc-tip="请输入密码" onfocus="$(this).select();" required="true" style="width: 200px;" />
+							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
+							<td>
+								<label>
+                                <input id="chk_Save" type="checkbox" style="margin: 0 5px 0 0; padding: 0;" />两周内自动登录
+                            </label>
+							</td>
+						</tr>
+					</table>
+				</div>
+				<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+					<div class="ButtonBar" style="position: inherit; height: 25px;">
+						<a id="btn_Save" href="javascript:void(0)" class="easyui-linkbutton" onclick="userLogin()">
+							登录</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+
+</html>
+
+<script language="javascript" type="text/javascript">
+	var _bIsClick = false;
+
+	checkPagePower({
+		check: false,
+		onload: function() {
+			initPage()
+		}
+	});
+
+	function initPage() {
+		var m_strLoginName = getCookie('iloginname');
+		var m_formLogin = $('#formLogin');
+		m_formLogin.keydown(function(e) {
+			if(e.keyCode == 13) {
+				userLogin();
+			}
+		});
+
+		m_formLogin.dialog({
+			width: 300,
+			height: 220
+		}).dialog('open');
+
+		if($.trim(m_strLoginName) != '') {
+			$('#ipt_username').val(m_strLoginName);
+			$('#ipt_username').focus();
+			setTimeout("$('#ipt_userpwd').focus();", 100);
+		} else {
+			$('#ipt_username').focus();
+		}
+	}
+
+	function userLogin() {
+		if(!$('#formLogin').form("validate")) {
+			return;
+		}
+		if(!_bIsClick) {
+			_bIsClick = true;
+			postData({
+				url: "DcCdLogin",
+				params: {
+					"username": $("#ipt_username").val(),
+					"userpwd": $("#ipt_userpwd").val(),
+					"action": "login"
+				},
+				isSys: true,
+				onPost: function() {
+					if($('#chk_Save').attr('checked') == 'checked') {
+						this.params.Auto = 1;
+					}
+					return true;
+				},
+				success: function(ci_result) {
+					setCookie('iloginname', $("#ipt_username").val());
+					if($('#chk_Save').attr('checked') == 'checked') {
+						$.cookie('UserCertification', ci_result.DcMessage, {
+							expires: 14
+						});
+						$.cookie('IsSave', '1', {
+							expires: 14
+						});
+					} else {
+						$.cookie('UserCertification', ci_result.DcMessage);
+					}
+					var m_strKey = getQueryStringValue("T");
+					if(top == window && m_strKey == '') {
+						location.href = "main.html";
+					} else {
+						top.windowReload();
+						setTimeout('top.closedPopupDialog();', 100);
+					}
+				},
+				failure: function(ci_result) {
+					_bIsClick = false;
+					$.messager.alert('提示', ci_result.DcMessage, 'info', function() {
+						$("#ipt_username").focus().select();
+					});
+				}
+			});
+		}
+	}
+</script>

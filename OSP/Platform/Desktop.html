@@ -1,0 +1,185 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=../JS/EsayUI/portal.css,../JS/EsayUI/jquery.portal.js,css/desktop.css"></script>
+
+</head>
+<body class="easyui-layout" style="display: none;">
+    <div id="div_Top" data-options="region:'north',border:false">
+    </div>
+    <div region="center" border="false">
+        <div id="div_Portal" style="position: relative;">
+            <div id="div_Column1" style="width: 60%">
+            </div>
+            <div id="div_Column2" style="width: 40%;">
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iUserGroupID = 0;
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        _iUserGroupID = parseInt(getHashValue("roleid"));
+        if (!_iUserGroupID > 0) {
+            _iUserGroupID = top._objUserData.iUserGroupID;
+        }
+        $('#div_Portal').portal({
+            border: false,
+            fit: true
+        });
+
+        postData({
+            url: 'DcCdUserGroupDesktopExManage',
+            params: { Action: 'GetList', iUserGroupID: _iUserGroupID },
+            isSys: true,
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    var m_objData = ci_result.rows[0];
+                    $('#div_Top').css('height', m_objData.iInterspace + 'px');
+                    $('body').layout("panel", "north").panel("options").height = m_objData.iInterspace;
+                    $('body').layout('resize');
+
+                    var m_strBC = 'none';
+                    if ($.trim(m_objData.cFilePath) != '') {
+                        m_strBC = 'url("../' + m_objData.cFilePath + '")';
+                        switch (parseInt(m_objData.iBCRepeat)) {
+                            case 2:
+                                m_strBC += ' no-repeat';
+                                break;
+                            case 3:
+                                break;
+                            default:
+                                m_strBC += ' no-repeat center 0px';
+                                break;
+                        }
+                    }
+                    $('body').css('background', m_strBC);
+                }
+                postData({
+                    url: "DcCdPlugInUnitManage",
+                    params: { Action: "GetUserDesktop", iUserGroupID: _iUserGroupID },
+                    success: function(ci_result) {
+                        if (existData(ci_result)) {
+                            ci_result.rows.sort(function(a, b) { return a.iRowIndex - b.iRowIndex; });
+                            for (var i = 0; i < ci_result.rows.length; i++) {
+                                addPanel(ci_result.rows[i]);
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    function addPanel(ci_objData) {
+        if (ci_objData != undefined) {
+            var m_objPanelOptions = { closable: false, collapsible: true, attributes: { unitID: ci_objData.iUnitID} };
+            var m_objTools = [];
+            var m_strPanelID = 'div_' + ci_objData.cCode;
+            switch (ci_objData.iType) {
+                case 1:
+                    m_objPanelOptions.content = '<table id="tab_' + ci_objData.cCode + '" style="display: none;" settingcode="' + ci_objData.cSettingCode + '"></table>';
+                    break;
+                case 2:
+                    m_objPanelOptions.content = '<script type="text/javascript" src="' + ci_objData.cHandleName + '"><//script>';
+                    break;
+                case 3:
+                    var m_strUrl = ci_objData.cHandleName;
+                    if (m_strUrl.toString().lastIndexOf('#') >= 0) {
+                        m_strUrl = m_strUrl.replace(/.html#/, ".html?T=" + Math.random().toString().replace(/0./, '') + "#");
+                    }
+                    else {
+                        m_strUrl += "?T=" + Math.random().toString().replace(/0./, '');
+                    }
+                    m_objPanelOptions.content = '<script>$.ajax({ url: "' + m_strUrl + '", dataType: "html", success: function(ci_strHtml) { $("#' + m_strPanelID + '").html(ci_strHtml); } });<\/script>';
+                    break;
+            }
+            if (ci_objData.cTitle != '') {
+                m_objPanelOptions.title = ci_objData.cTitle.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+            }
+            else {
+                m_objPanelOptions.title = ci_objData.cName;
+            }
+            if (ci_objData.iRefreshBotton == 1) {
+                m_objTools.push({
+                    iconCls: 'icon-reload',
+                    handler: function() {
+                        switch (ci_objData.iType) {
+                            case 1:
+                                $('#tab_' + ci_objData.cCode).datagrid('reload');
+                                break;
+                            case 2:
+                            case 3:
+                                $('#' + m_strPanelID).panel({ content: m_objPanelOptions.content });
+                                break;
+                        }
+                    }
+                });
+            }
+            if (ci_objData.iMoreBotton == 1) {
+                m_objTools.push({ iconCls: 'panel-tool-open', text: '更多', handler: function() { openTab(ci_objData.cTreeID, ci_objData.cPageCode, ''); } });
+            }
+            if (m_objTools.length > 0) {
+                m_objPanelOptions.tools = m_objTools;
+            }
+            if (ci_objData.iHeight > 0) {
+                m_objPanelOptions.height = ci_objData.iHeight;
+            }
+
+            var m_div = $('<div id="' + m_strPanelID + '" code="' + ci_objData.cCode + '" style="background-color:White;" />').appendTo('body');
+            m_div.panel(m_objPanelOptions);
+
+            $('#div_Portal').portal('add', {
+                panel: m_div,
+                columnIndex: ci_objData.iColumnIndex
+            });
+
+            $("#div_" + ci_objData.cCode).panel('panel').draggable("disable");
+
+            $('#div_Portal').portal('resize');
+
+            if (ci_objData.iType == 1) {
+                var m_objOptions = { singleSelect: true, fixColumnSize: true, fixRowHeight: true, rownumbers: false, pagination: false, fit: false,
+                    onLoadSuccess: function(data) {
+                        var m_objOptions = $('#tab_' + ci_objData.cCode).datagrid("getPanel").panel("options");
+                        m_objOptions.fit = true;
+                        $('#tab_' + ci_objData.cCode).datagrid("getPanel").panel(m_objOptions);
+                        setTimeout('$("#div_Portal").portal("resize");', 50);
+                    }
+                };
+                var m_objParams = convertToJson(ci_objData.cParameter);
+                m_objParams.rows = ci_objData.iRows;
+                m_objParams.SettingCode = ci_objData.cSettingCode;
+                m_objParams.page = 1;
+                if (ci_objData.cRowParameter != '' && ci_objData.cKeyName != '') {
+                    m_objOptions.onDblClickRow = function(rowIndex, rowData) {
+                        openTab(ci_objData.cTreeID, ci_objData.cPageCode, ci_objData.cRowParameter + rowData[ci_objData.cKeyName]);
+                    };
+                    m_objOptions.rowStyler = function(index, row) { return 'cursor: pointer;' };
+                }
+                setDataGrid("tab_" + ci_objData.cCode, "", ci_objData.cHandleName, m_objParams, ci_objData.cKeyName, ci_objData.cSortName, "", m_objOptions);
+            }
+
+        }
+    }
+
+    function openTab(ci_strTreeID, ci_strMenuCode, ci_strParameter) {
+        window.parent.openTab2(ci_strTreeID, ci_strMenuCode, ci_strParameter, true);
+    }
+
+    function getDetailButton() {
+        return '<a href="javascript:void(0)"><img src="' + _strSysUrl + 'JS/EsayUI/themes/icons/dc_pencil.png" title="详情"></a>';
+    }
+</script>
+

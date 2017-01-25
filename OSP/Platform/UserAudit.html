@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+        style="height: 80px;">
+        <ul class="searchForm1">
+            <li>
+                <input name="cLoginName" type="text" class="dc-search dc-input" dc-tip="登录ID" />
+            </li>
+            <li>
+                <input name="cUserChiName" type="text" class="dc-search dc-input" dc-tip="姓名" />
+            </li>
+            <li>
+                <select id="ddl_Search_Status" class="dc-search dc-input easyui-combobox" data-options="width:153"
+                    dc-tip="状态" name="cStatus">
+                </select>
+            </li>
+            <li><a href="javascript:void(0)" onclick="searchData()" class="dc-button">查询</a></li>
+        </ul>
+    </div>
+    <div data-options="region:'center',border:false">
+        <table id="tab_List" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true">
+                    </th>
+                    <th data-options="field:'cLoginName',width:60,sortable:true">
+                        登录ID
+                    </th>
+                    <th data-options="field:'cUserChiName',width:80,sortable:true">
+                        姓名
+                    </th>
+                    <th data-options="field:'cStatusDesc',width:80,sortable:true">
+                        状态
+                    </th>
+                    <th data-options="field:'cAuditCode',width:80,sortable:true">
+                        验证码
+                    </th>
+                    <th data-options="field:'cEmail',width:160,sortable:true">
+                        注册邮箱
+                    </th>
+                    <th data-options="field:'dCreationDt',width:80,sortable:true">
+                        注册时间
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="div_Toolbar" class="GridButtonBar" style="display: none;">
+            <span class="GridButtonBarIco"></span><a id="btn_Add" class="easyui-linkbutton" iconcls="dc-icon-pencil"
+                plain="true" onclick="userUpdate(1)">审核通过</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                    iconcls="dc-icon-pencil" plain="true" onclick="userUpdate(2)">审核不通</a> <a href="javascript:void(0)"
+                        class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="userUpdate(3)">
+                        重新生成验证码</a>
+            <input type="checkbox" />发Email通知用户审核结果
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        setMyDataGrid(true);
+
+        $('#ddl_Search_Status').combobox({
+            valueField: 'id',
+            textField: 'text',
+            data: [{ id: 'N', text: '未激活' }, { id: 'R', text: '拒绝'}]
+        });
+    }
+
+    function getSearchParameter(ci_bIsBase) {
+        var m_objParams = { Action: "GetList" };
+        if (!ci_bIsBase) {
+            return getSearchParameters($(".searchForm1"), m_objParams);
+        }
+        return m_objParams;
+    }
+
+    function setMyDataGrid(ci_bIsBase) {
+        setDataGrid('tab_List', 'div_Toolbar', 'DcCdUserAudit', getSearchParameter(ci_bIsBase), 'iUserID', 'cLoginName', '', {
+            singleSelect: false,
+            checkOnSelect: true,
+            selectOnCheck: true
+        });
+    }
+
+    function searchData() {
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function userUpdate(ci_iType) {
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            var m_arrID = [];
+            $.each(m_row, function(index, value) { m_arrID[index] = value.iUserID; });
+            postData({
+                url: "DcCdUserAudit",
+                params: { Action: "UpdateUser", iUserID: m_arrID.join(","), Type: ci_iType },
+                success: function(ci_result) {
+                    $.messager.alert('提示', '修改成功', 'info', function() { $('#tab_List').datagrid('reload'); })
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+</script>
+

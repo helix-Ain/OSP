@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>菜单组管理</title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+    <meta http-equiv="Cache-Control" content="no-cache" />
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div id="div_Body" data-options="region:'center',border:false">
+        <form action="" id="form_Edit" method="post" novalidate="novalidate" class="menugroupmanageform">
+        <table style="width: 300px; height: 100%;" class="TableCenter">
+            <tr>
+                <td class="tabletext">
+                    菜单编号：
+                </td>
+                <td class="tableinput">
+                    <input name="cMenuItemCode" class="easyui-validatebox" data-options="prompt:'请输入菜单编号',required:true" />
+                </td>
+                <td>
+                    <div class="Validform_checktip">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    中文名称：
+                </td>
+                <td>
+                    <input name="cItemChiName" class="easyui-validatebox" data-options="prompt:'请输入菜单中文名称',required:true" />
+                </td>
+                <td>
+                    <div class="Validform_checktip">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    英文名称：
+                </td>
+                <td>
+                    <input name="cItemEngName" class="easyui-validatebox" data-options="prompt:'请输入菜单英文名称',required:true" />
+                </td>
+                <td>
+                    <div class="Validform_checktip">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    所属主菜单：
+                </td>
+                <td>
+                    <input id="txt_Parent" name="cParentChiName" class="TextEdit" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    图标相对地址：
+                </td>
+                <td>
+                    <input name="cIconUrl" class="easyui-validatebox" data-options="prompt:'请输入图片相对地址'" />
+                </td>
+                <td>
+                    <div class="Validform_checktip">
+                    </div>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveMenu()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancel();">取消</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _ID = "";
+    var _Action = "";
+    var _ParentID = "";
+    var _Order = "";
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        setControlEnable("txt_Parent", false);
+        _Action = getHashValue("action");
+        _ParentID = getHashValue("parentid");
+        _Order = getHashValue("order");
+        var m_strTitle = "";
+        switch (_Action) {
+            case "add":
+                m_strTitle = "新增菜单组";
+                $("#txt_Parent").val(getHashValue("parentchiname"));
+                $("#div_Body").panel({
+                    title: ''
+                });
+                break;
+            default:
+                setTimeout(function() {
+                    m_strTitle = "菜单组详细资料";
+                    getData(getHashValue("id"));
+                    $("#div_Body").panel({
+                        title: m_strTitle
+                    });
+                    $("#div_Body").panel('resize');
+                }, 10);
+                break;
+        }
+    }
+
+    function cancel() {
+        switch (_Action) {
+            case "add":
+                try {
+                    window.parent.closeDetail();
+                }
+                catch (Error) { }
+                break;
+            default:
+                initPage();
+                break;
+        }
+    }
+
+    function getData(ci_iMenuID) {
+        if (ci_iMenuID != "") {
+            postData({
+                url: "DcCdMenuGroupManage",
+                params: { action: "query", iMenuID: ci_iMenuID },
+                success: function(ci_Result) {
+                    if (ci_Result.rows != undefined && ci_Result.rows.length > 0) {
+                        $('#form_Edit').form('load', ci_Result.rows[0]);
+                        _ID = ci_Result.rows[0].iMenuID;
+                        $(".dc-input").dcreset();
+                    }
+                }
+            });
+        }
+    }
+
+    function saveMenu() {
+        var m_strUrl = getInterfaceName("DcCdMenuGroupManage") + "?action=" + _Action + "&id=" + _ID;
+        m_strUrl += "&iParentID=" + _ParentID + "&iOrder=" + _Order;
+        $('#form_Edit').form('submit', {
+            url: m_strUrl,
+            onSubmit: function() {
+                return $(this).form('validate');
+            },
+            success: function(result) {
+                result = convertToJson(result);
+                if (checkReturnJson(result)) {
+                    $.messager.alert('提示', '保存成功', 'info', function() { if (_Action == "add") { cancel(); } });
+                    try {
+                        window.parent.initPage();
+                    }
+                    catch (ex) { }
+                }
+                else {
+                    $.messager.alert('保存失败', result.DcMessage, 'error');
+                }
+            }
+        }).error(function(err) { alert(err.responseText); }); ;
+    }
+</script>
+

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../JS/lightbox2/css/lightbox.min.css,../JS/lightbox2/js/lightbox.min.js,../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<style>
+			div.product {
+				background-color: #F6F6F6;
+				width: 145px;
+				height: 175px;
+				margin: 0 25px 25px 0;
+				border: 1px solid #E1E1E1;
+				text-align: center;
+			}
+			
+			div.product div:first-child {
+				height: 140px;
+				line-height: 140px;
+				font-size: 35px;
+				color: #DADADA;
+				border-bottom: 1px dashed #E1E1E1;
+			}
+			
+			#table_cImages td div {
+				height: 115px;
+				width: 105px;
+				margin: 0 0 7px 7px;
+				text-align: center;
+				line-height: 115px;
+				font-size: 25px;
+				color: #DADADA;
+				padding: 5px 5px 0 0;
+			}
+			
+			#table_cImages td {
+				text-align: center;
+				border: 1px solid #E1E1E1;
+				background-color: #F6F6F6;
+			}
+			
+			#table_cImages button {
+				margin: 0 auto 5px;
+				border: none;
+				border-radius: 3px;
+				color: #FFFFFF;
+				background-color: #4AA2FB;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+			</div>
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>产品名称：
+						</td>
+						<td>
+							<input id='cProductName' name='cProductName' maxlength="50" class='easyui-validatebox' data-options='required:true' style='width:500px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>产品分类：
+						</td>
+						<td>
+							<input id='iCategoryID' name='iCategoryID' type='hidden' value='0' />
+							<input id='cCategoryName' name='cCategoryName' maxlength="100" class='easyui-validatebox' data-options='required:true' readonly="readonly" style='width:500px;cursor: pointer;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>产品介绍：
+						</td>
+						<td>
+							<textarea id="cDescription" rows="10" style="width: 500px;height: 250px;"></textarea>
+						</td>
+					</tr>
+					<!--<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>产品图片：
+						</td>
+						<td>
+							<table cellspacing="4px">
+								<tr>
+									<td>
+										<div id='product-left' class='product'>
+											<div>左位图</div>
+											<div class='easyui-linkbutton' style='display: inline-block;position: relative;top:5.5px;margin:0 5px;'>
+												<input id='input_Upload_left' type='file' style='display: none;' />
+											</div>
+										</div>
+									</td>
+									<td>
+										<div id='product-front' class='product'>
+											<div>正位图</div>
+											<div class='easyui-linkbutton' style='display: inline-block;position: relative;top:5.5px;margin:0 5px;'>
+												<input id='input_Upload_front' type='file' style='display: none;' />
+											</div>
+										</div>
+									</td>
+									<td>
+										<div id='product-right' class='product'>
+											<div>右位图</div>
+											<div class='easyui-linkbutton' style='display: inline-block;position: relative;top:5.5px;margin:0 5px;'>
+												<input id='input_Upload_right' type='file' style='display: none;' />
+											</div>
+										</div>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>-->
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>360°细节图：
+						</td>
+						<td>
+							&nbsp;&nbsp;图片数量：4-20张； 图片格式：png；<br/> &nbsp;&nbsp;建议尺寸：1600*1200 注:(尺寸小于1600*1200时,不能开启放大镜功能) <br/>&nbsp;&nbsp;每张图片＜1MB；图片名称请按图片顺序以**的数字命名.例如：1.png、2.png
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'></td>
+						<td style='width: 475px;'>
+							<div class='easyui-linkbutton' style='display: inline-block;margin:3px 7px;'>
+								<input id='input_Upload_360' type='file' style='display: none;' />
+							</div>
+							<table id='table_cImages' cellspacing="7px"></table>
+						</td>
+						<td style='vertical-align: bottom;text-align: left;padding-bottom: 7px;'>
+							<a href='javascript:viewInstance()' class='easyui-linkbutton'>查看范例</a>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span>排列顺序：
+						</td>
+						<td>
+							<input id='iOrderNo' name='iOrderNo' type='number' class='easyui-validatebox' data-options='required:true' value="1" />
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = getHashValue('Action');
+			var _iParentID = getHashValue('iParentID');
+			var _iProductID = getHashValue('iProductID');
+			var _strFun = getHashValue('Fun');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _iDDLCount = 0;
+			var _iServerID = 0;
+			var _cFilePath = '';
+			var _cLFilename = '';
+			var _cFFilename = '';
+			var _cRFilename = '';
+			var _cImages = [];
+			var _entrust = getHashValue();
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+						setUpload();
+					}
+				});
+			});
+
+			function initPage() {
+				_Action == 'new' ? _Action = 'Add' : _Action = 'Update';
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				dcnloader.load(['ComboList', 'Clearbutton', 'DCNDiv', 'Kindeditor', 'Uploadify'], function() {
+					$('#cDescription').kindeditor({
+						width: 500,
+						minWidth: 200
+					});
+					for(var i = 0; i < 5; i++) {
+						$('#table_cImages').append('<tr><td id="cImages_' + (i * 4 + 1) + '"><div>' + (i * 4 + 1) + '</div></td><td id="cImages_' + (i * 4 + 2) + '"><div>' + (i * 4 + 2) + '</div></td><td id="cImages_' + (i * 4 + 3) + '"><div>' + (i * 4 + 3) + '</div></td><td id="cImages_' + (i * 4 + 4) + '"><div>' + (i * 4 + 4) + '</div></td></tr>');
+					}
+					if(_Action == 'Update') {
+						initData();
+					}
+				});
+				$('#cCategoryName').on('click', function() {
+					popupDialog(_strSysUrl + 'OSP/ProductCategoryManage.html#entrust=ProductDetail', 'parent.filliCategoryID', '选择产品类型', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+			}
+
+			function initData() {
+				postData({
+					url: 'DcCdProductManage',
+					params: {
+						Action: 'GetList',
+						iProductID: _iProductID,
+						GetImages: true
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#cProductName').val(m_objData.cProductName);
+							$('#iCategoryID').val(m_objData.iCategoryID);
+							$('#cCategoryName').val(m_objData.cCategoryName);
+							$('#cDescription').kindeditor('editor').html(m_objData.cDescription.replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
+							$('#iOrderNo').val(m_objData.iOrderNo);
+							_iServerID = m_objData.iServerID;
+							_cFilePath = m_objData.cFilePath;
+							_cLFilename = m_objData.cLFilename;
+							_cFFilename = m_objData.cFFilename;
+							_cRFilename = m_objData.cRFilename;
+							_cImages = m_objData.cImages.split(',');
+							if(m_objData.cLFilename != '') {
+								$('#product-left div:first').html('<img style="margin:15px;width:121px;height:100px;" src="/' + m_objData.cFilePath + '/72/' + m_objData.cLFilename + '"/>');
+							}
+							if(m_objData.cFFilename != '') {
+								$('#product-front div:first').html('<img style="margin:15px;width:121px;height:100px;" src="/' + m_objData.cFilePath + '/72/' + m_objData.cFFilename + '"/>');
+							}
+							if(m_objData.cRFilename != '') {
+								$('#product-right div:first').html('<img style="margin:15px;width:121px;height:100px;" src="/' + m_objData.cFilePath + '/72/' + m_objData.cRFilename + '"/>');
+							}
+							if(_cImages[0] == '') {
+								_cImages = [];
+							}
+							for(var i = 0; i < _cImages.length; i++) {
+								$('#cImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + m_objData.cFilePath + '/' + _cImages[i] + '"><img style="width:75px;height:95px;" src="/' + m_objData.cFilePath + '/150/' + _cImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ')">删除</button>');
+							}
+						}
+					}
+				});
+			}
+
+			function setUpload() {
+				$('input[type="file"]').each(function() {
+					var target = $(this).attr('id');
+					var options = {
+						'uploader': _strSysUrl + 'JS/uploadify-v2.1.4/scripts/uploadify.swf',
+						'cancelImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/cancel.png',
+						'buttonImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/upload_btn.png',
+						'script': getInterfaceName("DcCdAttachmentManage", true),
+						'queueID': 'div_FileQueue',
+						'auto': true,
+						'multi': false,
+						'width': 55,
+						'height': 22,
+						'buttonText': '',
+						'method': 'post',
+						'onError': function(event, ID, fileObj, errorObj) {
+							if(errorObj.type === "File Size") {
+								var target = _currScenePosition.split('-')[1];
+								$("#input_Upload_" + target).uploadifyCancel(ID);
+								$.messager.alert('提示', '超过文件上传大小限制！', 'info');
+							} else {
+								$.messager.alert('提示', '上传失败！', 'info');
+							}
+						},
+						'onSelect': function(e, queueId, fileObj) {
+							$('#' + target).uploadifySettings('scriptData', {
+								Action: 'Upload',
+								iType: 70,
+								cObjectCode: 'OSP'
+							});
+						},
+						'onComplete': function(event, queueId, fileObj, response, data) {
+							var m_result = convertToJson(response);
+							if(m_result.DcCode != undefined && m_result.DcCode == 0) {
+								var m_objData = m_result.rows[0];
+								_iServerID = m_objData.iServerID;
+								_cFilePath = m_objData.cFileUrl;
+								if(target != 'input_Upload_360') {
+									var scenePosition = target.split('_')[2];
+									switch(scenePosition) {
+										case 'right':
+											_cRFilename = m_objData.cFileName;
+											break;
+										case 'front':
+											_cFFilename = m_objData.cFileName;
+											break;
+										case 'left':
+											_cLFilename = m_objData.cFileName;
+											break;
+									};
+									$('#product-' + scenePosition + ' div:first').html('<img style="margin:15px;width:121px;height:100px;" src="/' + m_objData.cFileUrl + '/thumbnail/' + m_objData.cThumbnail + '"/>');
+								} else {
+									_cImages.push(m_objData.cFileName);
+									var index = _cImages.length;
+									$('#cImages_' + index).children('div').html('<a href="/' + m_objData.cFilePath + '" data-lightbox="roadtrip"><img style="width:75px;height:95px;" src="/' + m_objData.cFileUrl + 'thumbnail/' + m_objData.cThumbnail + '"/></a>').after('<button type="button" onclick="delImage(' + (index - 1) + ')">删除</button>');
+								}
+							} else {
+								if(m_result.DcMessage != undefined && m_result.DcMessage != '') {
+									$.messager.alert('提示', m_result.DcMessage, 'info');
+								} else {
+									$.messager.alert('提示', '上传失败！', 'info');
+								}
+							}
+						}
+					};
+					if(target == 'input_Upload_360') {
+						options.multi = true;
+					}
+					$("#" + target).uploadify(options);
+				});
+			}
+
+			function filliCategoryID(iCategoryID) {
+				postData({
+					url: 'DcCdProductCategoryManage',
+					params: {
+						Action: 'GetList',
+						iCategoryID: iCategoryID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#iCategoryID').val(m_objData.iCategoryID);
+							$('#cCategoryName').val(m_objData.cCategoryName);
+							cancel();
+						}
+					}
+				});
+			}
+
+			function saveData() {
+					var params = {
+						Action: _Action
+					};
+					postData({
+						url: 'DcCdProductManage',
+						params: params,
+						form: 'form_Edit',
+						validate: true,
+						onPost: function() {
+							this.params.cDescription = $('#cDescription').kindeditor('editor').html();
+							if(this.params.cDescription==''){
+								$.messager.alert('提示','请填写产品介绍！','info');
+								return false;
+							}
+							if(_cImages.length<4){
+								$.messager.alert('提示','请至少上传四张产品细节图！','info');
+								return false;
+							}
+							this.params.iServerID = _iServerID;
+							this.params.cLFilename = _cLFilename;
+							this.params.cFFilename = _cFFilename;
+							this.params.cRFilename = _cRFilename;
+							this.params.cImages = _cImages.join(',');
+							if(_Action == 'Update') {
+								this.params.iProductID = _iProductID;
+							}
+							return true;
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								if(_strFun != '') {
+									eval(_strFun);
+								}
+								if(_Action=='Update'){
+									$.messager.alert('提示', '保存成功', 'info');
+								}else{
+									cancelSelf();
+								}
+							}
+						}
+					});
+			}
+
+			function delImage(i) {
+				$('#table_cImages').empty();
+				_cImages.splice(i, 1);
+				for(var i = 0; i < 5; i++) {
+					$('#table_cImages').append('<tr><td id="cImages_' + (i * 4 + 1) + '"><div>' + (i * 4 + 1) + '</div></td><td id="cImages_' + (i * 4 + 2) + '"><div>' + (i * 4 + 2) + '</div></td><td id="cImages_' + (i * 4 + 3) + '"><div>' + (i * 4 + 3) + '</div></td><td id="cImages_' + (i * 4 + 4) + '"><div>' + (i * 4 + 4) + '</div></td></tr>');
+				}
+				for(var i = 0; i < _cImages.length; i++) {
+					$('#cImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + _cFilePath + '/' + _cImages[i] + '"><img style="width:75px;height:95px;" src="/' + _cFilePath + '/150/' + _cImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ',\'cImages\')">删除</button>');
+				}
+			}
+
+			function viewInstance() {
+				//查看范例模态框
+				popupDialog(_strSysUrl + 'OSP/ProductInstance.html', '', '产品范例', false, 900, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

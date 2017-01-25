@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<style>
+			a.btn-operate {
+				margin: 2px;
+			}
+			
+			table {
+				border-spacing: 15px;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<table id='MainTable' style="width: 850px;" class="TableCenter">
+				<thead>
+					<tr>
+						<td style='border:1px solid #E4E2E3;padding:5px;background-color:#F7F7F7;'>
+							<span style='font-size:14px;margin-top:4px;float:left;'>全景漫游场景管理</span>
+							<a href='javascript:void(0)' class='easyui-linkbutton btn-operate' onclick='setGroupCard();' style='float:right;'>设置组名片</a>
+							<a href='javascript:void(0)' class='easyui-linkbutton btn-operate' onclick='setGroupAudio();' style='float:right;'>设置组音频</a>
+							<a href='javascript:void(0)' class='easyui-linkbutton btn-operate' onclick='setGroupSpecialEfficiency()' style='float:right;'>设置组特效</a>
+							<a href='javascript:void(0)' class='easyui-linkbutton btn-operate' onclick='reorderScene()' style='float:right;'>场景排序</a>
+							<a href='javascript:void(0)' class='easyui-linkbutton btn-operate' onclick='addScene()' style='float:right;'>添加场景</a>
+							<a href='javascript:void(0)' class='easyui-linkbutton btn-operate' onclick='setMainGroup();' style='float:right;'>设为主场景组</a>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span style='font-size:14px;'>组名称：</span>
+							<span id='cGroupName' style='font-size:14px;'></span>
+							<a id='btn-edit-cGroupName' href='javascript:void(0)' class='easyui-linkbutton btn-operate'>编辑</a>
+						</td>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = '';
+			var _iDDLCount = 0;
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _strFun = getHashValue('Fun');
+			var _iGroupID = getHashValue('iGroupID');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				postData({
+					url: 'DcCdSceneGroupManage',
+					params: {
+						Action: 'GetList',
+						iGroupID: _iGroupID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#cGroupName').html(m_objData.cGroupName);
+							$('#btn-edit-cGroupName').on('click', function() {
+								var cGroupName = $('#cGroupName').html();
+								$('#cGroupName').html('<input id="tempcGroupName" type="text"/>');
+								$('#tempcGroupName').val(cGroupName).focus();
+								$('#btn-edit-cGroupName').hide();
+								$('#tempcGroupName').on('keydown', function() {
+									if(event.keyCode == 13 && $('#tempcGroupName').val() != '') {
+										postData({
+											url: 'DcCdSceneGroupManage',
+											params: {
+												Action: 'Update',
+												iGroupID: _iGroupID,
+												cGroupName: $('#tempcGroupName').val(),
+												cDescription: m_objData.cDescription,
+												iParentID: m_objData.iParentID,
+												bIsMain: m_objData.bIsMain,
+												bEnabled: m_objData.bEnabled
+											},
+											success: function(ci_result) {
+												if(ci_result.DcCode == 0) {
+													$('#cGroupName').html($('#tempcGroupName').val());
+													$('#btn-edit-cGroupName').show();
+												}
+											}
+										});
+									} else if(event.keyCode == 27) {
+										$('#cGroupName').html(cGroupName);
+										$('#btn-edit-cGroupName').show();
+									}
+								});
+							});
+						}
+					}
+				});
+				initData();
+			}
+
+			function initData() {
+				postData({
+					url: 'DcCdSceneManage',
+					params: {
+						Action: 'GetData',
+						iGroupID: _iGroupID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								var tr = '<tr><td style="padding:5.5px;background-color:#F7F7F7;border:1px solid #E4E2E3;"><span style="font-size:15px;">场景名称：' + item.cSceneName + '<span><br/>';
+								tr += '<img style="width:134px;height:125px;" src="/' + item.cFilePath + '/150/' + item.cLFilename + '"/>';
+								tr += '<img style="width:134px;height:125px;" src="/' + item.cFilePath + '/150/' + item.cFFilename + '"/>';
+								tr += '<img style="width:134px;height:125px;" src="/' + item.cFilePath + '/150/' + item.cRFilename + '"/>';
+								tr += '<img style="width:134px;height:125px;" src="/' + item.cFilePath + '/150/' + item.cAFilename + '"/>';
+								tr += '<img style="width:134px;height:125px;" src="/' + item.cFilePath + '/150/' + item.cTFilename + '"/>';
+								tr += '<img style="width:134px;height:125px;" src="/' + item.cFilePath + '/150/' + item.cBFilename + '"/><br/>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="setRoamingPoint(' + item.iSceneID + ')">设置漫游点</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="setMarkPoint(' + item.iSceneID + ')">设置标注点</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="editScene(' + item.iSceneID + ')">编辑场景</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="setSceneAudio(' + item.iSceneID + ')">设置音频</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="setSceneExplain(' + item.iSceneID + ')">场景说明</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="setSceneCard(' + item.iSceneID + ')">编辑名片</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="downloadScene(' + item.iSceneID + ')">下载场景</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="setVisualAngle(' + item.iSceneID + ')">设置视角</a>';
+								tr += '<a id="toggleBtn-' + item.iSceneID + '" href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="toggleMenu(' + item.iSceneID + ')">更多▼</a>';
+								tr += '<div id="toggleMenu-' + item.iSceneID + '" style="display:none;">';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="setSpecialEfficiency(' + item.iSceneID + ')">设置特效</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="previewScene(' + item.iSceneID + ')">预览场景</a>';
+								tr += '<a id="btn-shield-' + item.iSceneID + '" href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="shieldScene(' + item.iSceneID + ')">' + (item.bEnabled == true ? '屏蔽场景' : '恢复显示') + '</a>';
+								tr += '<a href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="delScene(' + item.iSceneID + ')">删除</a>';
+								tr += '</div>';
+								tr += '</td></tr>';
+								$('#MainTable tbody').append(tr);
+							});
+							$.parser.parse('#MainTable');
+						}
+					}
+				})
+			}
+
+			function reorderScene() {
+				popupDialog(_strSysUrl + 'OSP/SceneReorder.html#iGroupID=' + _iGroupID, 'parent.refresh', '组场景排序', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setGroupSpecialEfficiency() {
+				popupDialog(_strSysUrl + 'OSP/GroupSpecialEfficiency.html#iGroupID=' + _iGroupID, '', '编辑场景组特效', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setRoamingPoint(iSceneID) {
+				window.open(_strSysUrl + 'OSP/SceneRoamingPoint.html#iSceneID=' + iSceneID);
+			}
+
+			function setMarkPoint(iSceneID) {
+				window.open(_strSysUrl + 'OSP/SceneMarkPoint.html#iSceneID=' + iSceneID);
+			}
+
+			function editScene(iSceneID) {
+				popupDialog(_strSysUrl + 'OSP/SceneDetail.html#Action=Update&iSceneID=' + iSceneID, '', '编辑全景漫游场景', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setGroupAudio() {
+				popupDialog(_strSysUrl + 'OSP/BusinessAudio.html#iGroupID=' + _iGroupID, '', '设置组音频', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setSceneAudio(iSceneID) {
+				popupDialog(_strSysUrl + 'OSP/BusinessAudio.html#iSceneID=' + iSceneID, '', '设置场景音频', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setVisualAngle(iSceneID) {
+				popupDialog(_strSysUrl + 'OSP/SceneVisualAngle.html#iSceneID=' + iSceneID, '', '设置第一视角', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setSceneExplain(iSceneID) {
+				popupDialog(_strSysUrl + 'OSP/SceneExplainManage.html#iSceneID=' + iSceneID, '', '设置场景说明', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setGroupCard(iGroupID) {
+				popupDialog(_strSysUrl + 'OSP/BusinessCard.html#iGroupID=' + _iGroupID, '', '设置组名片', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setSceneCard(iSceneID) {
+				popupDialog(_strSysUrl + 'OSP/BusinessCard.html#iSceneID=' + iSceneID, '', '设置场景名片', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function setMainGroup() {
+				$.messager.confirm('提示', '是否将此场景组设置为主场景组？', function(r) {
+					if(r) {
+						postData({
+							url: 'DcCdSceneGroupManage',
+							params: {
+								Action: 'Update',
+								iGroupID: _iGroupID,
+								bIsMain: true
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$.messager.alert('info', '保存成功', 'info');
+									if(_strFun != '') {
+										eval(_strFun);
+									}
+								} else {
+									$.messager.alert('info', ci_result.DcMessage, 'info');
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function setSpecialEfficiency(iSceneID) {
+				window.open(_strSysUrl + 'OSP/SceneSpecialEfficiency.html#iSceneID=' + iSceneID);
+			}
+
+			function previewScene(iSceneID) {
+				window.open(_strSysUrl + 'OSP/SceneDisplay.html?iSceneID=' + iSceneID);
+			}
+			
+			function downloadScene(iSceneID){
+				postData({
+					url:'DcCdSceneManage',
+					params:{
+						Action:'GetData',
+						iSceneID:iSceneID
+					},
+					success:function(ci_result){
+						if(existData(ci_result)){
+							var m_objData = ci_result.rows[0];
+							m_objData.cRFilename!=''?window.open('./Ajax/DcCdSceneManage.ashx?Action=Download&cFilename='+m_objData.cRFilename):null;
+							m_objData.cFFilename!=''?window.open('./Ajax/DcCdSceneManage.ashx?Action=Download&cFilename='+m_objData.cFFilename):null;
+							m_objData.cLFilename!=''?window.open('./Ajax/DcCdSceneManage.ashx?Action=Download&cFilename='+m_objData.cLFilename):null;
+							m_objData.cAFilename!=''?window.open('./Ajax/DcCdSceneManage.ashx?Action=Download&cFilename='+m_objData.cAFilename):null;
+							m_objData.cTFilename!=''?window.open('./Ajax/DcCdSceneManage.ashx?Action=Download&cFilename='+m_objData.cTFilename):null;
+							m_objData.cBFilename!=''?window.open('./Ajax/DcCdSceneManage.ashx?Action=Download&cFilename='+m_objData.cBFilename):null;
+						}
+					}
+				});
+			}
+
+			function shieldScene(iSceneID) {
+				var $targetBtn = $('#btn-shield-' + iSceneID);
+				var $updateRegion = $targetBtn.parent();
+				if($targetBtn.text() == '屏蔽场景') {
+					$.messager.confirm('提示', '确认屏蔽此场景？', function(r) {
+						if(r) {
+							postData({
+								url: 'DcCdSceneManage',
+								params: {
+									Action: 'Update',
+									iSceneID: iSceneID,
+									bEnabled: false
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										$targetBtn.replaceWith('<a id="btn-shield-' + iSceneID + '" href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="shieldScene(' + iSceneID + ')">恢复显示</a>');
+										$.parser.parse($updateRegion);
+									}
+								}
+							});
+						}
+					});
+				} else {
+					$.messager.confirm('提示', '确认恢复显示此场景？', function(r) {
+						if(r) {
+							postData({
+								url: 'DcCdSceneManage',
+								params: {
+									Action: 'Update',
+									iSceneID: iSceneID,
+									bEnabled: true
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										$targetBtn.replaceWith('<a id="btn-shield-' + iSceneID + '" href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="shieldScene(' + iSceneID + ')">屏蔽场景</a>');
+										$.parser.parse($updateRegion);
+									}
+								}
+							});
+						}
+					});
+				}
+			}
+
+			function addScene() {
+				popupDialog(_strSysUrl + 'OSP/SceneDetail.html#Action=Add&iParentID=' + _iGroupID, 'parent.refresh', '添加全景漫游场景', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function delScene(iSceneID) {
+				$.messager.confirm('提示', '您确定要删除该场景吗？', function(r) {
+					if(r) {
+						postData({
+							url: 'DcCdSceneManage',
+							params: {
+								Action: 'Delete',
+								cIDList: iSceneID
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									refresh();
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function toggleMenu(iSceneID) {
+				var $targetBtn = $('#toggleBtn-' + iSceneID);
+				var $targetMenu = $('#toggleMenu-' + iSceneID);
+				var $updateRegion = $targetBtn.parent();
+				if($targetBtn.text() == '更多▼') {
+					$targetMenu.slideDown();
+					$targetBtn.replaceWith('<a id="toggleBtn-' + iSceneID + '" href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="toggleMenu(' + iSceneID + ')">收起▲</a>');
+				} else {
+					$targetMenu.slideUp();
+					$targetBtn.replaceWith('<a id="toggleBtn-' + iSceneID + '" href="javascript:void(0)" class="easyui-linkbutton btn-operate" onclick="toggleMenu(' + iSceneID + ')">更多▼</a>');
+				}
+				$.parser.parse($updateRegion);
+			}
+
+			function refresh() {
+				$('#MainTable tbody').empty();
+				initData();
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

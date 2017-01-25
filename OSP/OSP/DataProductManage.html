@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../JS/lightbox2/css/lightbox.min.css,../JS/lightbox2/js/lightbox.min.js,../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js"></script>
+		<style type="text/css">
+			#datalist {
+				border: 1px solid #E0E0E0;
+				border-bottom: none;
+				border-radius: 0 0 3px 3px;
+				margin: 0 10px auto 10px;
+			}
+			
+			#datalist .easyui-linkbutton {
+				position: relative;
+				top: -12.5px;
+			}
+			
+			#route {
+				height: 35px;
+				line-height: 35px;
+				border: 1px solid #E0E0E0;
+				border-bottom: none;
+				margin: 10px 10px 0 10px;
+				padding-left: 8.5px;
+				border-radius: 3px 3px 0 0;
+			}
+			
+			div.row {
+				height: 35px;
+				line-height: 35px;
+				border-bottom: 1px solid #E0E0E0;
+			}
+			
+			div.col {
+				height: 35px;
+				line-height: 35px;
+				float: left;
+			}
+			
+			div.row div.col:nth-child(1) {
+				margin-left: 3px;
+				width: 40px;
+			}
+			
+			div.row div.col:nth-child(2) {
+				width: 25%;
+				margin-left: 5px;
+			}
+			
+			div.row div.col:nth-child(3) {
+				width: auto;
+			}
+			
+			div.row div.col:nth-child(4) {
+				float: right;
+				margin-right: 5%;
+			}
+			
+			div.folder:hover {
+				background-color: #EFEFEF;
+				cursor: pointer;
+			}
+			
+			a.btn {
+				display: inline-block;
+				cursor: pointer;
+				width: 28px;
+				height: 35px;
+				background: url(../Image/view-icons.png) -999px -999px no-repeat;
+				margin-right: 2.5px;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div>
+				<div id='route'></div>
+				<div id='datalist'></div>
+			</div>
+		</div>
+		<div id='footer' data-options="region:'south',border:false" style="display: none;height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _iParentID = 0;
+			var _iStorey = [];
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _select = getQueryStringValue('select');
+			var _strFun = getHashValue('Fun');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+			});
+
+			function initPage() {
+				getDataGroupList();
+				if(_select == 1) {
+					$('#footer').show();
+				}
+			}
+
+			function getDataGroupList(iParentID) {
+				if(iParentID != undefined) {
+					_iParentID = iParentID;
+				}
+				changeRoute();
+				postData({
+					url: 'DcCdProductCategoryManage',
+					params: {
+						Action: 'GetList',
+						iParentID: _iParentID
+					},
+					success: function(ci_result) {
+						$('#datalist').empty();
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								$('#datalist').append('<div id=' + item.iCategoryID + ' class="row folder" onclick="getDataGroupList(' + item.iCategoryID + ')"><div class="col file_type icon_folder"></div><div class="col">' + item.cCategoryName + '</div><div class="col"></div><div class="col"></div></div>');
+							});
+						}
+						postData({
+							url: 'DcCdProductManage',
+							params: {
+								Action: 'GetList',
+								iCategoryID: _iParentID
+							},
+							success: function(ci_result) {
+								if(existData(ci_result)) {
+									var m_objData = ci_result.rows;
+									if(_select == 1) {
+										$.each(m_objData, function(i, item) {
+											var fileCover = getCoverFromFileItem(item);
+											$('#datalist').append('<div id=' + item.iProductID + ' class="row"><div class="col">' + fileCover + '</div><div class="col">' + item.cProductName + '</div><div class="col"></div><div class="col"><a href="javascript:void(0)" style="margin-top:17px;" class="easyui-linkbutton btn-select" onclick="selectProduct(' + item.iProductID + ');">选择</a></div></div>');
+										});
+									} else {
+										$.each(m_objData, function(i, item) {
+											var fileCover = getCoverFromFileItem(item);
+											$('#datalist').append('<div id=' + item.iProductID + ' class="row"><div class="col">' + fileCover + '</div><div class="col">' + item.cProductName + '</div><div class="col"></div><div class="col"></div></div>');
+										});
+									}
+								}
+								$.parser.parse('#datalist');
+							}
+						});
+					}
+				});
+			}
+
+			function getCoverFromFileItem(fileitem) {
+				var fileCover = '';
+				var fileExts = null;
+				switch(fileExts) {
+					case 'jpg':
+					case 'png':
+						fileCover = '<a href="/' + fileitem.cFilePath + '/' + fileitem.cFilename + '" data-lightbox="roadtrip"><img style="width:27px;height:27px;margin:4.5px 10px 3px 6px;" src="/' + fileitem.cFilePath + '/72/' + fileitem.cFilename + '"/></a>';
+						break;
+					default:
+						fileCover = '<div class="file_type icon_' + fileExts + '"></div>'
+				}
+				return fileCover;
+			}
+
+			function changeRoute(iParentID) {
+				if(iParentID != undefined) {
+					_iParentID = iParentID;
+				}
+				$('#route').empty();
+				_iStorey = [];
+				calculateStorey(_iParentID);
+			}
+
+			function calculateStorey(iCategoryID) {
+				postData({
+					url: 'DcCdProductCategoryManage',
+					params: {
+						Action: 'GetList',
+						iCategoryID: iCategoryID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result) && iCategoryID != 0) {
+							var m_objData = ci_result.rows[0];
+							_iStorey.unshift(m_objData);
+							calculateStorey(m_objData.iParentID);
+						} else {
+							$('#route').append('<a href="#" onclick="getDataGroupList(0)">全部分组</a>');
+							$.each(_iStorey, function(i, item) {
+								$('#route').append('&nbsp;&gt;&nbsp;<a href="#" onclick="getDataGroupList(' + item.iCategoryID + ')">' + item.cCategoryName + '</a>');
+							});
+						}
+					}
+				});
+			}
+
+			function selectProduct(iProductID) {
+				if(_strFun != '') {
+					_strFun += '(' + iProductID + ')';
+					eval(_strFun);
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

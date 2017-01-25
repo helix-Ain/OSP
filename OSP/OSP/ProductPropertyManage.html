@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=css/Style.css"></script>
+		<style>
+			.pagename {
+				background: url(../Image/06_6.png) no-repeat left;
+				text-indent: 25px;
+				height: 25px;
+				line-height: 25px;
+			}
+			
+			.pagespilt {
+				background: url(../Image/06_9.png) no-repeat center;
+				height: 25px;
+				width: 16px;
+				display: block;
+			}
+			
+			.buttonspilt {
+				color: #A4684B;
+				padding: 0 3px;
+			}
+			
+			.headerlist li {
+				float: left;
+			}
+		</style>
+	</head>
+
+	<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+		<div data-options="region:'north',border:false" style="height: 40px; min-width: 800px;">
+			<div id="div_Header" style="margin: 10px;">
+				<ul id="ul_Header" class="headerlist">
+					<li class="pagename">产品特性</li>
+				</ul>
+			</div>
+			<div id="div_Buttons" style="float: right; margin-right: 5px; text-align: left;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dcn-icon-new" onclick="newData()">添加</a><span class="buttonspilt">|</span>
+				<a href="javascript:void(0)" class="easyui-linkbutton" plain="true"  onclick="deleteData()">删除</a>
+			</div>
+		</div>
+		<div data-options="region:'center',border:false">
+			<table id="datalist" class='easyui-datagrid' rownumbers='true' pagination='true' fit='true'>
+				<thead>
+					<tr>
+						<th data-options="field:'ck'" checkbox='true'></th>
+						<th data-options="field:'btn',width:75" formatter="formatBtn"></th>
+						<th data-options="field:'cName',width:150">特性名称</th>
+						<th data-options="field:'cContent',width:350">特性内容</td>
+						<th data-options="field:'iOrderNo',width:150">排列顺序</td>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</body>
+
+</html>
+
+<script type="text/javascript" language="javascript">
+	var _iProductID = getHashValue('iProductID');
+	var _strDetailiFrameID = "div_DataGroupHandle";
+
+	$(function() {
+		checkPagePower({
+			onload: function() {
+				initPage();
+			}
+		});
+	});
+
+	function initPage() {
+		initData();
+	}
+
+	function initData() {
+		postData({
+			url: 'DcCdProductpropertyManage',
+			params: {
+				Action: 'GetList',
+				iProductID: _iProductID
+			},
+			success: function(ci_result) {
+				window.console.log(ci_result);
+				if(existData(ci_result)) {
+					var m_objData = ci_result.rows;
+					var data = [];
+					$.each(m_objData, function(i, item) {
+						data.push({
+							'iID': item.iID,
+							'btn': item.iID,
+							'cName': item.cName,
+							'cContent': item.cContent,
+							'iOrderNo': item.iOrderNo
+						});
+					});
+					$('#datalist').datagrid('loadData', data);
+				}
+			}
+		});
+	}
+
+	function formatBtn(val, row) {
+		return '<div style="text-align:left;white-space:normal;height:auto;" class="datagrid-cell datagrid-cell-c1-btn"><a href="javascript:void(0)" onclick="editData(' + val + ');" style="width:50px;display:block;color:Gray;" title="查看详情"><img src="../image/06_8.png" style="vertical-align:middle;">查看</a></div>';
+	}
+
+	function newData() {
+		popupDialog(_strSysUrl + 'OSP/ProductPropertyDetail.html#Action=Add&iProductID=' + _iProductID, 'parent.refresh', '新建产品特性', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+	}
+
+	function deleteData() {
+		var m_row = $('#datalist').datagrid('getChecked');
+		window.console.log(m_row);
+		if(m_row.length > 0) {
+			$.messager.confirm('提示', '确定要删除所选' + m_row.length + '条记录吗？', function(r) {
+				if(r) {
+					var m_arrID = [];
+					$.each(m_row, function() {
+						m_arrID.push(this.iID);
+					});
+					postData({
+						url: 'DcCdProductPropertyManage',
+						params: {
+							Action: 'Delete',
+							cIDList: m_arrID.join(',')
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								$.messager.alert('提示', '删除成功', 'info');
+								refresh();
+							}
+						}
+					});
+				}
+			});
+		} else {
+			$.messager.alert('提示', '请选择记录', 'info');
+		}
+	}
+
+	function editData(id) {
+		popupDialog(_strSysUrl + 'OSP/ProductPropertyDetail.html#Action=Update&iProductID=' + _iProductID + '&ID=' + id, 'parent.refresh', '编辑产品类别', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+	}
+
+	function refresh() {
+		$('#datalist').datagrid('loadData', {
+			total: 0,
+			rows: []
+		});
+		initData();
+	}
+
+	function cancelSelf() {
+		try {
+			parent.cancel();
+		} catch(err) {
+			$('body').css('display', 'none');
+		}
+	}
+
+	function cancel() {
+		closedPopupDialog(_strDetailiFrameID);
+	}
+</script>

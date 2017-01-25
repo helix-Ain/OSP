@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html ng-app='app'>
+
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<link rel='stylesheet' href='CSS/Ionic/ionic.min.css' />
+		<script src="JS/Ionic/ionic.bundle.min.js"></script>
+		<script src="JS/Constants.js"></script>
+		<script src='http://api.map.baidu.com/api?v=2.0&ak=D85e9f5f1c47381984bbce6eaffcff42'></script>
+		<script src="JS/Common.js?v=1.0"></script>
+		<style>
+			a {
+				text-decoration: none;
+			}
+			
+			.anchorBL {
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body ng-controller='app' ng-init='init()' ng-cloak>
+		<ion-content id='allmap' ng-style='allmapStyle'>
+		</ion-content>
+		<ion-footer-bar ng-if='bIsVR' align-title='center' style='padding:10px 0;height: 110px;'>
+			<div class='row' style='padding:0;'>
+				<div ng-click='prev()' class='col col-10' style='padding:17px 0 0 5px;text-align: left;cursor:pointer;'>
+					<img ng-show='btnPrev' src='/OSP/Mobile/Images/btn-left.png' style='width:18px;height:45px;' />
+				</div>
+				<div class='col col-50' style='padding:0;'>
+					<div style='margin-bottom:2px;word-break: keep-all;white-space: nowrap;overflow: hidden;text-overflow:ellipsis;'>
+						<span style='font-size: 17px;font-weight: 700;margin-right:3px;word-break: keep-all;white-space: nowrap;'>{{cSceneName}}</span>
+						<img src='/OSP/Mobile/Images/scene3.png' style='width:21px;height: 21px;position: relative;top:3px;' />
+					</div>
+					<div style='color:#AFB0B4;margin-bottom: 2px;'>
+						<i class='icon ion-navigate' style='font-size: 17px;'></i>
+						<span>{{fDistance}}</span>
+					</div>
+					<div style='margin-bottom:2px;' ng-if='showbIsVR'>
+						<img ng-click='goScene()' src='/OSP/Mobile/Images/btn-lookscene.png' style='display: inline-block;width:95px;height:30px;cursor: pointer;' />
+					</div>
+				</div>
+				<div class='col col-30' style='padding:0;' ng-if='showReturnSearch'>
+					<img onclick='location="SceneSearch.html"' src='/OSP/Mobile/Images/btn-returnsearch.png' style='position: relative;top:7px;width:70px;height:75px;cursor: pointer;' />
+				</div>
+				<div ng-click='next()' class='col col-10' style='padding:17px 5px 0 0;text-align:right;cursor:pointer;'>
+					<img ng-show='btnNext' src='/OSP/Mobile/Images/btn-right.png' style='width:18px;height: 45px;' />
+				</div>
+			</div>
+		</ion-footer-bar>
+		<script>
+			var _iSceneID = getQueryStringValue('iSceneID');
+			var _Keyword = decodeURI(getQueryStringValue('Keyword'));
+			var _bIsVR = getQueryStringValue('bIsVR');
+			var Map;
+			var Marker;
+			app.controller('app', function($scope, $window, commonService) {
+				$scope.bIsVR = _bIsVR == 1 ? true : false;
+				$scope.showReturnSearch = _Keyword != '' ? true : false;
+				if($scope.bIsVR) {
+					$scope.allmapStyle = {
+						"position": "absolute",
+						"bottom": "110px"
+					};
+				} else {
+					$scope.allmapStyle = {
+						"position": "absolute"
+					};
+				}
+				$scope.sceneList = [];
+				$scope.sceneIndex = 0;
+				$scope.btnPrev = false;
+				$scope.btnNext = false;
+				$scope.init = function() {
+					initPage();
+				}
+
+				$scope.prev = function() {
+					if($scope.sceneIndex > 0) {
+						$scope.sceneIndex--;
+						$scope.cSceneName = $scope.sceneList[$scope.sceneIndex].cSceneName;
+						if($scope.sceneList[$scope.sceneIndex].fDistance != -1) {
+							$scope.fDistance = $scope.sceneList[$scope.sceneIndex].fDistance + 'm';
+						} else {
+							$scope.fDistance = '距离无法计算';
+						}
+						$scope.btnNext = true;
+						if($scope.sceneIndex == 0) {
+							$scope.btnPrev = false;
+						}
+						var point = new BMap.Point($scope.sceneList[$scope.sceneIndex].fLongitude, $scope.sceneList[$scope.sceneIndex].fLatitude);
+						Map.centerAndZoom(point, 16);
+						var sContent = '';
+						if($scope.sceneList[$scope.sceneIndex].bIsVR) {
+							sContent += "<img style='float:left;border-radius:3px;width:100px;height:100px;margin-right:5px;' src='/Attachment/VR/" + $scope.sceneList[$scope.sceneIndex].iSceneID + "/vtour/panos/" + $scope.sceneList[$scope.sceneIndex].iSceneID + ".tiles/thumb.jpg'/>";
+							$scope.showbIsVR = true;
+						} else {
+							$scope.showbIsVR = false;
+						}
+						sContent += '<p style="font-size:13.5px;">' + $scope.sceneList[$scope.sceneIndex].cSceneName + '</p>';
+						var infoWindow = new BMap.InfoWindow(sContent);
+						Marker[$scope.sceneIndex].openInfoWindow(infoWindow);
+					}
+				}
+
+				$scope.next = function() {
+					if($scope.sceneIndex < $scope.sceneList.length - 1) {
+						$scope.sceneIndex++;
+						$scope.cSceneName = $scope.sceneList[$scope.sceneIndex].cSceneName;
+						if($scope.sceneList[$scope.sceneIndex].fDistance != -1) {
+							$scope.fDistance = $scope.sceneList[$scope.sceneIndex].fDistance + 'm';
+						} else {
+							$scope.fDistance = '距离无法计算';
+						}
+						$scope.btnPrev = true;
+						if($scope.sceneIndex == $scope.sceneList.length - 1) {
+							$scope.btnNext = false;
+						}
+						var point = new BMap.Point($scope.sceneList[$scope.sceneIndex].fLongitude, $scope.sceneList[$scope.sceneIndex].fLatitude);
+						Map.centerAndZoom(point, 16);
+						var sContent = '';
+						if($scope.sceneList[$scope.sceneIndex].bIsVR) {
+							sContent += "<img style='float:left;border-radius:3px;width:100px;height:100px;margin-right:5px;' src='/Attachment/VR/" + $scope.sceneList[$scope.sceneIndex].iSceneID + "/vtour/panos/" + $scope.sceneList[$scope.sceneIndex].iSceneID + ".tiles/thumb.jpg'/>";
+							$scope.showbIsVR = true;
+						} else {
+							$scope.showbIsVR = false;
+						}
+						sContent += '<p style="font-size:13.5px;">' + $scope.sceneList[$scope.sceneIndex].cSceneName + '</p>';
+						var infoWindow = new BMap.InfoWindow(sContent);
+						Marker[$scope.sceneIndex].openInfoWindow(infoWindow);
+					}
+				}
+
+				$scope.goScene = function() {
+					if(_iSceneID != '') {
+						$window.location = 'SceneDisplay.html?iSceneID=' + _iSceneID;
+					} else if($scope.sceneList.length > 0) {
+						$window.location = 'SceneDisplay.html?iSceneID=' + $scope.sceneList[$scope.sceneIndex].iSceneID;
+					}
+				}
+
+				function initPage() {
+					if(_iSceneID != '') {
+						//没有全景图地图
+						commonService.postData({
+							url: 'DcCdAppInterface',
+							params: {
+								Action: 'SceneList',
+								VRID: _iSceneID
+							},
+							success: function(ci_result) {
+								if(existData(ci_result)) {
+									var m_objData = ci_result.rows[0];
+									initMap(m_objData.fLongitude, m_objData.fLatitude);
+								}
+							}
+						});
+					} else {
+						//展示关键字下所有场景标注点
+						commonService.showMask();
+						var geolocation = new BMap.Geolocation();
+						//使用百度地址定位当前位置经纬度
+						geolocation.getCurrentPosition(function(r) {
+							if(this.getStatus() == BMAP_STATUS_SUCCESS) {
+								commonService.postData({
+									url: 'DcCdAppInterface',
+									params: {
+										Action: 'SceneQuery',
+										Keyword: _Keyword,
+										Longitude: r.point.lng,
+										Latitude: r.point.lat
+									},
+									success: function(ci_result) {
+										if(existData(ci_result)) {
+											var m_objData = ci_result.rows;
+											if(m_objData.length > 1) {
+												$scope.btnNext = true;
+											}
+											m_objData.forEach(function(value) {
+												value.fDistance = parseInt(value.fDistance);
+											});
+											$scope.sceneList = m_objData;
+											$scope.cSceneName = m_objData[0].cSceneName;
+											if(m_objData[0].fDistance != -1) {
+												$scope.fDistance = m_objData[0].fDistance + 'm';
+											} else {
+												$scope.fDistance = '距离无法计算';
+											}
+											initMap();
+										}
+										commonService.hideMask();
+									}
+								});
+							} else {
+								commonService.showAlert('failed' + this.getStatus());
+							}
+						}, {
+							enableHighAccuracy: true
+						});
+					}
+				}
+
+				function initMap(fLongitude, fLatitude) {
+					Map = new BMap.Map('allmap');
+					var Geo = new BMap.Geocoder();
+					if($scope.bIsVR) {
+						var myIcon = new BMap.Icon('./Images/map_bIsVR.png', new BMap.Size(31, 50));
+						$scope.showbIsVR = true;
+					} else {
+						var myIcon = new BMap.Icon('./Images/map_bIsnVR.png', new BMap.Size(23, 42));
+					}
+					var bottom_right_navigation = new BMap.NavigationControl({
+						anchor: BMAP_ANCHOR_BOTTOM_RIGHT,
+						type: BMAP_NAVIGATION_CONTROL_SMALL
+					});
+					Map.addControl(bottom_right_navigation);
+					if(fLongitude != undefined && fLatitude != undefined && fLongitude != '' && fLatitude != '') {
+						var point = new BMap.Point(fLongitude, fLatitude);
+						Marker = new BMap.Marker(point, {
+							icon: myIcon
+						});
+						Map.centerAndZoom(point, 16);
+						Marker.addEventListener('click', back);
+						Map.addOverlay(Marker);
+						if($scope.bIsVR) {
+							var sContent = "<img style='float:left;border-radius:3px;width:100px;height:100px;margin-right:5px;' src='/Attachment/VR/" + _iSceneID + "/vtour/panos/" + _iSceneID + ".tiles/thumb.jpg'/>";
+							sContent += '<p style="font-size:13.5px;">' + $scope.cSceneName + '</p>';
+							var infoWindow = new BMap.InfoWindow(sContent);
+							Marker.openInfoWindow(infoWindow);
+						}
+					} else if($scope.sceneList.length > 0) {
+						Marker = [];
+						$scope.cSceneName = $scope.sceneList[0].cSceneName;
+						angular.forEach($scope.sceneList, function(value, key) {
+							var point = new BMap.Point(value.fLongitude, value.fLatitude);
+							Marker[key] = new BMap.Marker(point, {
+								icon: myIcon
+							});
+							Marker[key].iSceneID = value.iSceneID;
+							Marker[key].bIsVR = value.bIsVR;
+							Marker[key].addEventListener('click', gotoDetail);
+							Map.addOverlay(Marker[key]);
+							if(key == 0) {
+								Map.centerAndZoom(point, 16);
+								var sContent = '';
+								if(value.bIsVR) {
+									sContent += "<img style='float:left;border-radius:3px;width:100px;height:100px;margin-right:5px;' src='/Attachment/VR/" + value.iSceneID + "/vtour/panos/" + value.iSceneID + ".tiles/thumb.jpg'/>";
+									$scope.showbIsVR = true;
+								} else {
+									$scope.showbIsVR = false;
+								}
+								sContent += '<p style="font-size:13.5px;">' + $scope.cSceneName + '</p>';
+								var infoWindow = new BMap.InfoWindow(sContent);
+								Marker[key].openInfoWindow(infoWindow);
+							}
+						});
+					}
+				}
+			});
+
+			function gotoDetail() {
+				this.bIsVR = this.bIsVR==true?1:0;
+				location = 'BusinessDetail.html?iSceneID='+this.iSceneID+'&bIsVR='+this.bIsVR;
+			}
+
+			function back() {
+				history.back();
+			}
+		</script>
+	</body>
+
+</html>

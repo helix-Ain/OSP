@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js"></script>
+	</head>
+
+	<body style='display:none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id="div_Msg" class="file_message easyui-panel" data-options="noheader:true,fit:false,width:120,collapsed:true">
+			</div>
+			<div style='margin:5px 0 0;'>
+				<div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+				</div>
+				<div style='display: inline-block;'>
+					<a href="javascript:void(0)" style='margin-left:15px;' class="easyui-linkbutton" iconcls="dc-icon-editadd" plain="true" onclick="addCategory()">新建类别</a>
+				</div>
+			</div>
+			<div style='padding:7px 0 0 18px;' id='datatree-container'>
+				<ul id='datatree' data-options='iconCls:"icon-add"'>
+					<li id='0'>
+						<span>全部类别</span>
+						<ul id='node-0'></ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div id='isEntrust' data-options="region:'south',border:false" style="height: 35px; overflow: hidden;display: none;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _iParentID = 0;
+			var _iCategoryID = 0;
+			var _entrust = getHashValue('entrust');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _strFun = getHashValue('Fun');
+
+			checkPagePower({
+				onload: function() {
+					initPage();
+				}
+			});
+
+			function initPage() {
+				if(_entrust == 'ProductDetail' || _entrust == 'ProductCategoryDetail') {
+					$('#isEntrust').show();
+				}
+				getTree();
+			}
+
+			function getTree() {
+				postData({
+					url: 'DcCdProductCategoryManage',
+					params: {
+						Action: 'GetTree',
+						ParentID: 0
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var already = 0;
+							for(var j = 0; j < m_objData.length - 1; j++) {
+								for(var i = 0; i < m_objData.length - 1 - j; i++) {
+									if(m_objData[i].iParentID > m_objData[i + 1].iParentID) {
+										var t = m_objData[i];
+										m_objData[i] = m_objData[i + 1];
+										m_objData[i + 1] = t;
+									}
+								}
+							}
+							while(already < m_objData.length) {
+								$.each(m_objData, function(i, item) {
+									if($('#node-' + item.iParentID).length > 0 && $('#' + item.iCategoryID).length <= 0) {
+										$('#node-' + item.iParentID).append('<li id=' + item.iCategoryID + '><span>' + item.cCategoryName + '<span style="position:absolute;right:15px;"><a href="#" class="easyui-linkbutton" plain="true" iconCls="dc-icon-editadd" title="添加子类别" onclick="addCategory(' + item.iCategoryID + ')"></a><a href="#" class="easyui-linkbutton" plain="true" iconCls="dc-icon-pencil" title="编辑" onclick="updateCategory(' + item.iCategoryID + ')"></a><a href="#" class="easyui-linkbutton" plain="true" iconCls="dc-icon-shunxu" title="排序" onclick="AdjustGroupOrder(' + item.iParentID + ')"></a><a href="#" class="easyui-linkbutton" plain="true" iconCls="dc-icon-cancel" title="删除" onclick="delCategory(' + item.iCategoryID + ')"></a></span></span><ul id="node-' + item.iCategoryID + '"></ul></li>');
+										already++;
+									}
+								});
+							}
+						}
+						var options = {
+							'animate': true,
+							'lines': true,
+						};
+						$('#datatree').tree(options);
+						$.parser.parse('#datatree');
+					}
+				});
+			}
+
+			function addCategory(iCategoryID) {
+				if(iCategoryID == undefined) {
+					iCategoryID = 0;
+				}
+				popupDialog(_strSysUrl + 'OSP/ProductCategoryDetail.html#Action=Add&iCategoryID=' + iCategoryID, 'parent.refresh', '新建产品类别', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function updateCategory(iCategoryID) {
+				popupDialog(_strSysUrl + 'OSP/ProductCategoryDetail.html#Action=Update&iCategoryID=' + iCategoryID, 'parent.refresh', '修改产品类别 ', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function delCategory(iCategoryID) {
+				$.messager.confirm('提示', '您确定删除吗?', function(r) {
+					if(r) {
+						postData({
+							url: 'DcCdProductCategoryManage',
+							params: {
+								Action: 'Delete',
+								iCategoryID: iCategoryID
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									var branch = $("#datatree").tree("getSelected");
+									$('#datatree').tree('remove', branch.target);
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function saveData() {
+				var iCategoryID = $('#datatree').tree('getSelected');
+				if(iCategoryID != null) {
+					if(_strFun != '') {
+						_strFun += '(' + iCategoryID['id'] + ')';
+					}
+					eval(_strFun);
+				} else {
+					$.messager.alert('提示', '请选择一个类别', 'info');
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog();
+			}
+
+			function AdjustGroupOrder(iParentID) {
+				popupDialog(_strSysUrl + 'OSP/DataGroupAdjust.html#entrust=ProductCategoryManage&iParentID=' + iParentID, 'parent.refresh', '调整产品类别顺序', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+			}
+
+			function refresh() {
+				$('#datatree').remove();
+				$('#datatree-container').html('<ul id="datatree" data-options=\'iconCls:"icon-add"\'><li id="0"><span>全部类别</span><ul id=\'node-0\'></ul></li></ul>');
+				getTree();
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

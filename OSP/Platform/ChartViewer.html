@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+    <!--<script src="JS/flot/jquery.flot.js" type="text/javascript"></script>
+
+    <script src="JS/flot/jquery.flot.stack.js" type="text/javascript"></script>
+
+    <script src="JS/flot/jquery.flot.pie.js" type="text/javascript"></script>-->
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'center',border:false,title:'查询条件',iconCls:'dc-icon-search'">
+        <ul class="searchForm1">
+        </ul>
+        <div style="width: 650px; height: 450px;">
+            <div id="div_Chart" class="example-chart" style="height: 400px; width: 500px; float: left;">
+            </div>
+            <div id="div_Label" style="float: left;">
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript" language="javascript">
+    var _iReportID = 0;
+    var _iX = 0;
+    var _iY = 0;
+    var previousPoint = null;
+
+    initReady(function() {
+        var m_strScript = [];
+        if ($.browser.msie && ($.browser.version == '6.0' || $.browser.version == '7.0' || $.browser.version == '8.0')) {
+            m_strScript.push(_strSysUrl + 'JS/flot/excanvas.min.js');
+        }
+        m_strScript.push(_strSysUrl + 'JS/flot/jquery.flot.js');
+        m_strScript.push(_strSysUrl + 'JS/flot/jquery.flot.stack.js');
+        m_strScript.push(_strSysUrl + 'JS/flot/jquery.flot.pie.js');
+
+        var m_objFileLoader = new fileLoader();
+        m_objFileLoader.readyFunction[m_objFileLoader.readyFunction.length] = function() {
+            $("#div_Chart").bind("plothover", function(event, pos, item) {
+                if (item) {
+                    if (previousPoint != (item.seriesIndex + "_" + item.dataIndex)) {
+                        previousPoint = item.seriesIndex + "_" + item.dataIndex;
+                        $("#tooltip").remove();
+                        var m_strContent = " : " + item.series.data[item.dataIndex][1];
+                        if (item.series.label != undefined) {
+                            m_strContent = item.series.label + m_strContent;
+                        }
+                        else {
+                            m_strContent = item.series.xaxis.ticks[item.dataIndex].label + m_strContent;
+                        }
+                        showTooltip(item.pageX, item.pageY, m_strContent);
+                    }
+                }
+                else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+
+            $('#div_Chart').mousemove(function(e) {
+                //_iX = e.originalEvent.x || e.originalEvent.layerX || 0;
+                //_iY = e.originalEvent.y || e.originalEvent.layerY || 0;
+                _iX = e.pageX;
+                _iY = e.pageY;
+            });
+            checkPagePower({ onload: function() { initPage(); }, showMask: false });
+        };
+        m_objFileLoader.load(m_strScript);
+    });
+
+    function initPage() {
+        _iReportID = getHashValue("ReportID");
+        postData({
+            url: "DcCdReportManage",
+            params: { Action: "GetReportColumns", iReportID: _iReportID },
+            isSys: true,
+            success: function(ci_result) {
+                var m_strHtml = "";
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+
+                    ci_result.rows.sort(function(a, b) { return a.iColumnID - b.iColumnID; });
+                    var m_iColumnID = 0;
+                    for (var i = 0; i < ci_result.rows.length; i++) {
+                        if (ci_result.rows[i].iColumnID > 0) {
+                            if (m_iColumnID != ci_result.rows[i].iColumnID) {
+                                m_iColumnID = ci_result.rows[i].iColumnID;
+                                m_strHtml += '<li class="searchText1">';
+                                m_strHtml += '<input type="text" class="dc-input" dc-tip="请输入' + ci_result.rows[i].cColumnName + '" name="' + ci_result.rows[i].cColumnAlias + '" /></li>';
+                            }
+                        }
+                    }
+                    if (m_strHtml.length > 0) {
+                        m_strHtml += '<li class="searchText1"><a href="javascript:void(0)" onclick="searchChart();" class="dc-button">查询</a></li>';
+                    }
+                    $(".searchForm1").html(m_strHtml);
+                    getChart(_iReportID);
+                    setTimeout(function() {
+                        $('.dc-input').dcinput();
+                    }, 100);
+                }
+            }
+        });
+    }
+
+    function getChart(ci_iReportID) {
+        postData({
+            url: "DcCdReportManage",
+            params: { Action: "GetReportData", iReportID: _iReportID, QueryStr: getQuery() },
+            isSys: true,
+            success: function(ci_result) {
+                if (ci_result.rows == undefined) {
+                    ci_result.rows = [];
+                }
+                $.plot("#div_Chart", ci_result.rows, {
+                    series: {
+                        stack: ci_result.bars,
+                        lines: {
+                            show: ci_result.lines,
+                            fill: false
+                        },
+                        bars: {
+                            show: ci_result.bars,
+                            barWidth: 0.6,
+                            align: "center"
+                        },
+                        pie: {
+                            show: ci_result.pie
+                        },
+                        points: {
+                            show: ci_result.points
+                        }
+                    },
+                    xaxis: {
+                        ticks: ci_result.ticks
+                    },
+                    legend: {
+                        noColumns: 2,
+                        container: $("#div_Label")
+                    },
+                    grid: {
+                        hoverable: true,
+                        clickable: true
+                    }
+                });
+
+            }
+        });
+    }
+
+    function showTooltip(x, y, contents) {
+        setTimeout(function() {
+            $("<div id='tooltip'>" + contents + "</div>").css({
+                position: "absolute",
+                display: "none",
+                top: (y == undefined ? _iY - 15 : y - 15),
+                left: (x == undefined ? _iX : x + 5),
+                border: "1px solid #fdd",
+                padding: "2px",
+                "background-color": "#fee",
+                opacity: 0.80
+            }).appendTo("body").fadeIn(200);
+        }, 10);
+    }
+
+    function searchChart() {
+        getChart(_iReportID);
+    }
+
+    function getQuery() {
+        var m_strReturn = "";
+        var m_objList = $(".searchForm1 input");
+        if (m_objList.length > 0) {
+            var m_strSign = getSeparativeSign();
+            $.each(m_objList, function(index) {
+                if ($(m_objList[index]).val() != "") {
+                    if (m_strReturn.length > 0) {
+                        m_strReturn += (m_strSign + ',' + m_strSign);
+                    }
+                    m_strReturn += $(m_objList[index]).attr("name");
+                    m_strReturn += m_strSign;
+                    m_strReturn += $(m_objList[index]).val();
+                }
+            });
+        }
+        return m_strReturn;
+    }
+</script>
+

@@ -1,0 +1,333 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<title></title>
+
+		<script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+		<script type='text/javascript' src='js/Constants.js'></script>
+
+		<script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js"></script>
+
+		<style type="text/css">
+			.pagename {
+				background: url(../Image/06_6.png) no-repeat left;
+				text-indent: 25px;
+				height: 25px;
+				line-height: 25px;
+			}
+			
+			.pagespilt {
+				background: url(../Image/06_9.png) no-repeat center;
+				height: 25px;
+				width: 16px;
+				display: block;
+			}
+			
+			.buttonspilt {
+				color: #A4684B;
+				padding: 0 3px;
+			}
+			
+			.headerlist li {
+				float: left;
+			}
+		</style>
+	</head>
+
+	<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+		<div data-options="region:'north',border:false" style="height: 40px; min-width: 800px;">
+			<div id="div_Header" style="margin: 10px;">
+				<ul id="ul_Header" class="headerlist">
+				</ul>
+			</div>
+			<div id="div_Buttons" style="float: right; margin-right: 5px; text-align: left;">
+			</div>
+		</div>
+		<div data-options="region:'center',border:false">
+			<table id="tab_List" style="display: none;">
+			</table>
+		</div>
+	</body>
+
+</html>
+
+<script type="text/javascript" language="javascript">
+	var general_objPage = null;
+
+	var _operate = getHashValue('operate');
+	checkPagePower({
+		onload: function() {
+			general_initPage();
+		}
+	});
+
+	function general_initPage() {
+		general_objPage = {
+			settingCode: '',
+			pageCode: '',
+			pageName: '',
+			params: [],
+			datagridOptions: {
+				fitColumns: true
+			},
+			init: function() {
+				this.pageName = decodeURI(getQueryStringValue('Name'));
+				this.pageCode = getQueryStringValue('Code');
+
+				var m_objMy = this;
+				if(this.pageName != '') {
+					$('<li class="pagename">' + this.pageName + '</li>').appendTo('#ul_Header');
+				}
+				if(this.pageCode != '') {
+					postData({
+						url: "DcCdCustomPageManage",
+						params: {
+							Action: "pagegetlist",
+							cPageCode: this.pageCode
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								m_objMy.settingCode = m_objData.cDataGridCode;
+
+								if(m_objMy.pageName == '') {
+									m_objMy.pageName = m_objData.cPageName;
+									$('<li class="pagename">' + m_objMy.pageName + '</li>').appendTo('#ul_Header');
+								}
+
+								if(m_objData.cOptions != '') {
+									var m_objOptions = convertToJson('{' + m_objData.cOptions + '}');
+									for(var i in m_objOptions) {
+										m_objMy.datagridOptions[i] = m_objOptions[i];
+									}
+								}
+								if(m_objData.cFunction != '') {
+									var m_script = document.createElement("script");
+									m_script.text = m_objData.cFunction;
+									document.documentElement.childNodes[0].appendChild(m_script);
+								}
+								if(m_objData.cFiles != '') {
+									var m_objScript = [];
+									$.each(m_objData.cFiles.split(','), function() {
+										if(this != '') {
+											m_objScript.push(this);
+										}
+									});
+									if(m_objScript.length > 0) {
+										var m_objFileLoader = new fileLoader();
+										m_objFileLoader.load(m_objScript);
+									}
+								}
+								if(m_objMy.settingCode != '') {
+									getQuerys(m_objData);
+									getButtons(m_objData);
+								}
+							}
+						}
+					});
+				}
+
+				function getButtons(ci_objData) {
+					postData({
+						url: 'DcCdCustomPageManage',
+						params: {
+							Action: "btngetlist",
+							iCustomPageID: ci_objData.iCustomPageID
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objScript = [];
+								var m_objButtons = [];
+								$.each(ci_result.rows, function() {
+									var m_objButton = [];
+									m_objButton.push('<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" '); //onclick="showFilter()">筛选</a>');
+									//设置图标
+									if(this.cIconCls != '') {
+										m_objButton.push('iconcls="' + this.cIconCls + '" ');
+									} else {
+										switch(this.iType) {
+											case 1:
+												m_objButton.push('iconcls="dc-icon-filter" ');
+												break;
+											case 2:
+												m_objButton.push('iconcls="dc-icon-setting" ');
+												break;
+										}
+									}
+									//设置点击事件
+									switch(this.iType) {
+										case 1:
+											m_objButton.push('onclick="$(this).linkbutton(($(this).linkbutton(\'options\').selected?\'unselect\':\'select\'));$(\'#tab_List\').datagrid(\'displayFileter\');"');
+											break;
+										case 2:
+											m_objButton.push('onclick="showDataGridSetting(\'' + ci_objData.cDataGridCode + '\', \'general_objPage.bindData\');"');
+											break;
+										default:
+											if(this.cOnClick != '') {
+												m_objButton.push('onclick="' + this.cOnClick + '"');
+											}
+											break;
+									}
+									m_objButton.push('>');
+									//设置文本
+									if(this.cText != '') {
+										m_objButton.push(this.cText);
+									} else {
+										switch(this.iType) {
+											case 1:
+												m_objButton.push('筛选');
+												break;
+											case 2:
+												m_objButton.push('列表显示设置');
+												break;
+										}
+									}
+									m_objButton.push('</a>');
+									m_objButtons.push(m_objButton.join(''));
+									//加载文件
+									if(this.cFiles != '') {
+										$.each(this.cFiles.split(','), function() {
+											m_objScript.push(this);
+										});
+									}
+									//添加JS Function
+									if(this.cFunction != '') {
+										var m_script = document.createElement("script");
+										m_script.text = this.cFunction.replaceAll('&lt;', '<');
+										document.documentElement.childNodes[0].appendChild(m_script);
+									}
+								});
+								if(m_objButtons.length > 0) {
+									$(m_objButtons.join('<span class="buttonspilt">|</span>')).appendTo('#div_Buttons');
+									$.parser.parse('#div_Buttons');
+								}
+								if(m_objScript.length > 0) {
+									var m_objFileLoader = new fileLoader();
+									m_objFileLoader.load(m_objScript);
+								}
+								if(_operate != '') {
+									_operate += '()';
+									eval(_operate);
+								}
+							}
+						}
+					});
+				}
+
+				function getQuerys(ci_objData) {
+					postData({
+						url: 'DcCdCustomPageManage',
+						params: {
+							Action: "QueGetList",
+							iCustomPageID: ci_objData.iCustomPageID
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								//添加默认条件
+								m_objMy.params.push({
+									cColumnName: ci_result.rows[0].cColumnAlias,
+									iLogic: ci_result.rows[0].iLogicType,
+									cValue: ci_result.rows[0].cValue,
+									iValueType: ci_result.rows[0].iValueType
+								});
+
+								if($('#ul_Header').children().length > 0) {
+									$('<li class="pagespilt"></li>').appendTo('#ul_Header');
+								}
+								$('<li><a href="javascript:void(0)" id="a_Filter" class="easyui-menubutton" data-options="menu:\'#div_FilterItem\'"><span id="span_Text">' + ci_result.rows[0].cQueryName + '</span></a></li>').appendTo('#ul_Header');
+								var m_objItem = $('<div id="div_FilterItem" style="background:#fff;width:150px;">').appendTo('#div_Header');
+								$.parser.parse('#div_Header');
+								m_objItem.data('rows', ci_result.rows);
+								m_objItem.menu({
+									onClick: function(item) {
+										if(item.iconCls != 'icon-ok') {
+											m_objItem.find('.icon-ok').removeClass('icon-ok');
+											m_objItem.menu('setIcon', {
+												target: item.target,
+												iconCls: 'icon-ok'
+											});
+											m_objMy.params = [];
+											$('#span_Text').html(item.text);
+
+											var m_objData = m_objItem.data('rows');
+											$.each(m_objData, function() {
+												if(this.iQueryID == parseInt(item.id)) {
+													m_objMy.params.push({
+														cColumnName: this.cColumnAlias,
+														iLogic: this.iLogicType,
+														cValue: this.cValue,
+														iValueType: this.iValueType
+													});
+													return true;
+												}
+											});
+											$('#tab_List').datagrid('load');
+										}
+									}
+								});
+
+								$.each(ci_result.rows, function() {
+									m_objItem.menu('appendItem', {
+										text: this.cQueryName,
+										id: this.iQueryID
+									});
+								});
+								m_objItem.menu('appendItem', {
+									text: '全部记录',
+									id: 0
+								});
+								m_objItem.menu('setIcon', {
+									target: m_objItem.find('.menu-item')[0],
+									iconCls: 'icon-ok'
+								});
+							}
+							m_objMy.bindData();
+						}
+					});
+				}
+			},
+			bindData: function() {
+				if(this.settingCode != '') {
+					var m_objMy = this;
+					this.datagridOptions.settingCode = this.settingCode;
+					this.datagridOptions.onBeforeLoad = function(param) {
+						if(m_objMy.params.length > 0) {
+							var m_objParams = [];
+							$.each(m_objMy.params, function() {
+								var m_dDate = new Date();
+								switch(this.iValueType) {
+									case 1:
+										m_objParams.push(this.cColumnName + getSeparativeSign() + '3' + getSeparativeSign() + m_dDate.format('yyyy-MM-dd'));
+										m_objParams.push(this.cColumnName + getSeparativeSign() + '4' + getSeparativeSign() + new Date(m_dDate.setDate(m_dDate.getDate() + 1)).format('yyyy-MM-dd'));
+										break;
+									case 2:
+										break;
+									case 3:
+										break;
+									case 4:
+										break;
+									default:
+										m_objParams.push(this.cColumnName + getSeparativeSign() + this.iLogic + getSeparativeSign() + this.cValue);
+										break;
+								}
+							});
+							if(param.searchQuery == undefined || param.searchQuery == '') {
+								param.searchQuery = '';
+							} else {
+								param.searchQuery += getSeparativeSign() + "," + getSeparativeSign();
+							}
+							param.searchQuery += m_objParams.join(getSeparativeSign() + "," + getSeparativeSign());
+						}
+						return true;
+					}
+
+					$('#tab_List').datagrid('init', this.datagridOptions);
+				}
+			}
+		}
+
+		general_objPage.init();
+	}
+</script>

@@ -1,0 +1,262 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js"></script>
+
+</head>
+<body style="display: none;">
+    <div id="div_Body" class="easyui-tabs" data-options="fit:true">
+        <div id="div_Detail" title="基本资料">
+            <div style="max-width: 800px; min-width: 500px;" class="TableCenter">
+                <form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+                <table style="min-width: 100%;">
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>页面编号：
+                        </td>
+                        <td>
+                            <input name="cPageCode" class="easyui-validatebox" data-options="required:true" style="width: 400px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>页面名：
+                        </td>
+                        <td>
+                            <input name="cPageName" class="easyui-validatebox" data-options="required:true" style="width: 400px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>页面类型：
+                        </td>
+                        <td>
+                            <div id="div_Type" name="iType">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>数据来源：
+                        </td>
+                        <td>
+                            <input id="txt_DataGrid" type="text" name="cDataGridDesc" class="easyui-validatebox"
+                                data-options="required:true" style="width: 400px;" />
+                            <input id="hidd_DataGrid" name="iDataGridID" type="hidden" />
+                            <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-search" plain="true"
+                                title="查询" onclick="openSearch()"></a>
+                        </td>
+                    </tr>
+                    <tr group="Button_define">
+                        <td class="tabletext">
+                            DataGrid设置：
+                        </td>
+                        <td colspan="3">
+                            <textarea rows="5" name="cOptions" class="TextEdit" style="width: 400px;"></textarea>
+                        </td>
+                    </tr>
+                    <tr group="Button_define">
+                        <td class="tabletext">
+                            JS Function：
+                        </td>
+                        <td>
+                            <textarea rows="5" name="cFunction" class="TextEdit" style="width: 400px;"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            引用文件：
+                        </td>
+                        <td>
+                            <textarea rows="3" name="cFiles" class="TextEdit" style="width: 400px;"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext" style="width: 30%;">
+                            描述：
+                        </td>
+                        <td class="tableinput" style="width: 70%;">
+                            <textarea rows="2" name="cDesc" class="TextEdit" style="width: 400px;"></textarea>
+                        </td>
+                    </tr>
+                </table>
+                </form>
+            </div>
+            <div class="ButtonBar">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveDetail()">保存</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+            </div>
+        </div>
+        <div title="页面按钮" group="Ex">
+        </div>
+        <div title="预设条件" group="Ex">
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iID = 0;
+    var _iViewID = 0;
+    var _strAction = "";
+    var _strFun = '';
+
+    initReady(function() {
+        setControlEnable("txt_DataGrid", false);
+
+        _strAction = getHashValue("Action");
+        if (_strAction == "new") {
+            newData();
+        }
+
+        _strFun = getHashValue("Fun");
+        if (_strFun != '') {
+            _strFun += '(m_iID)';
+        }
+
+        $('#div_Body').tabs({
+            onSelect: function(title, index) {
+                $('div[group="Ex"]').empty();
+                $('.easyui-dialog').dialog('destroy');
+                var m_obj = $('#div_Body').tabs('getTab', index);
+                switch (index) {
+                    case 1:
+                        m_obj.panel('refresh', 'CustomPageManageButton.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 2:
+                        m_obj.panel('refresh', 'CustomPageManageQuery.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                }
+            }
+        });
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        dcnloader.load(['ListBox', 'ComboList'], function() {
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'cusp', subCat: 'Type' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Type').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            required: true,
+                            data: ci_result.rows,
+                            onLoadSuccess: function() {
+                                if (_strAction == "pageadd") {
+                                    $('#div_Type').combolist('selectFirst');
+                                }
+                            }
+                        });
+                    }
+                    if (_strAction != "pageadd") {
+                        _iID = getHashValue("ID");
+                        getDetail(_iID);
+                    }
+                    $('[name="cPageCode"]').focus();
+                }
+            });
+        });
+    }
+
+    function cancelSelf() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function cancel() {
+        closedPopupDialog();
+    }
+
+    function newData() {
+        _iID = 0;
+        _strAction = 'pageadd';
+        $('#btn_Guide').css('display', '');
+        while ($('#div_Body').tabs('exists', 1)) {
+            $('#div_Body').tabs('close', 1);
+        }
+    }
+
+    function getDetail(ci_iID) {
+        if (ci_iID > 0) {
+            postData({
+                url: "DcCdCustomPageManage",
+                params: { Action: "pagegetlist", iCustomPageID: ci_iID },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        var m_objData = ci_result.rows[0];
+                        _strAction = "pageupdate";
+                        _iViewID = m_objData.iViewID;
+                        parent.dialogSetTitle('自定义页面【' + m_objData.cPageName + '】详细资料');
+
+                        $("#form_Edit").form("load", m_objData);
+                        $('#div_Type').combolist('select', m_objData.iType);
+                    }
+                    else {
+                        $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+                    }
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+        }
+    }
+
+    function saveDetail() {
+        postData({
+            url: 'DcCdCustomPageManage',
+            params: { Action: _strAction, iCustomPageID: _iID },
+            validate: true,
+            form: 'form_Edit',
+            success: function(ci_result) {
+                var m_iID = 0;
+                if (_strAction == 'pageadd') {
+                    if (existData(ci_result)) {
+                        m_iID = ci_result.rows[0].iCustomPageID;
+                        location.hash = '#ID=' + m_iID + '&Fun=' + _strFun;
+                        setTimeout(function() {
+                            location.reload();
+                        }, 500);
+                    }
+                }
+                else {
+                    parent.dialogSetTitle('自定义页面【' + $('[name="cPageName"]').val() + '】详细资料');
+                    $.messager.alert('提示', '保存成功', 'info');
+                }
+                if (_strFun != '') {
+                    eval(_strFun);
+                }
+            }
+        });
+    }
+
+    function openSearch() {
+        popupDialog(_strSysUrl + 'Platform/SearchDataGrid.html', 'parent.readDBColumn', '数据表查询');
+    }
+
+    function readDBColumn(ci_objData) {
+        closedPopupDialog();
+        if (ci_objData != undefined && ci_objData.length > 0) {
+            $('#txt_DataGrid').val((ci_objData[0].cDesc == '' ? ci_objData[0].cCode : ci_objData[0].cDesc));
+            $('#hidd_DataGrid').val(ci_objData[0].iDataGridID);
+        }
+    }
+</script>
+

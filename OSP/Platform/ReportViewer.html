@@ -1,0 +1,221 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=../JS/EsayUI/datagrid-groupview.min.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'center',border:false,title:'查询条件',iconCls:'dc-icon-search'">
+        <div id="div_Toolbar" style="display: none; height: auto; background-color: White;">
+            <ul class="searchForm1">
+            </ul>
+        </div>
+        <table id="tab_List" style="display: none;">
+        </table>
+        <form id="form1" method="post" novalidate="novalidate" action="" enctype="MULTIPART/FORM-DATA">
+        </form>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript" language="javascript">
+    var _iReportID = 0;
+
+    checkPagePower({ onload: function() { initPage(1); } });
+
+    function initPage(ci_iType) {
+        _iReportID = getHashValue("ReportID");
+        if (ci_iType == 1) {
+            loadingMask();
+        }
+        postData({
+            url: "DcCdReportManage",
+            params: { Action: "GetReportColumns", iReportID: _iReportID },
+            isSys: true,
+            success: function(ci_result) {
+                var m_strHtml = "";
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                    var m_strGroupBy = "";
+                    var m_arrSum = new Array();
+                    var m_arrAvg = new Array();
+                    var m_arrMin = new Array();
+                    var m_arrMax = new Array();
+                    ci_result.rows.sort(function(a, b) { return a.iOrder - b.iOrder; });
+                    var m_objColumns = { total: 0, rows: [[]] };
+                    for (var i = 0; i < ci_result.rows.length; i++) {
+                        if (ci_result.rows[i].iColumnID > 0) {
+                            m_objColumns.rows[0].push({ title: ci_result.rows[i].cColumnName, field: ci_result.rows[i].cColumnAlias, width: 50, sortable: true, sorter: function(a, b) {
+                                if (!isNaN(a) && !isNaN(b)) {
+                                    return (Number(a) > Number(b) ? 1 : -1);
+                                }
+                                else {
+                                    a = a.split('/');
+                                    b = b.split('/');
+                                    if (a[2] == b[2]) {
+                                        if (a[0] == b[0]) {
+                                            return (a[1] > b[1] ? 1 : -1);
+                                        } else {
+                                            return (a[0] > b[0] ? 1 : -1);
+                                        }
+                                    } else {
+                                        return (a[2] > b[2] ? 1 : -1);
+                                    }
+                                }
+                            }
+                            });
+                            if (ci_result.rows[i].bIsGroupBy) {
+                                m_strGroupBy = ci_result.rows[i].cColumnAlias;
+                            }
+                            if (ci_result.rows[i].bIsSum) {
+                                m_arrSum[m_arrSum.length] = new Array();
+                                m_arrSum[m_arrSum.length - 1][0] = ci_result.rows[i].cColumnAlias;
+                            }
+                            if (ci_result.rows[i].bIsAvg) {
+                                m_arrAvg[m_arrAvg.length] = new Array();
+                                m_arrAvg[m_arrAvg.length - 1][0] = ci_result.rows[i].cColumnAlias;
+                            }
+                            if (ci_result.rows[i].bIsMin) {
+                                m_arrMin[m_arrMin.length] = new Array();
+                                m_arrMin[m_arrMin.length - 1][0] = ci_result.rows[i].cColumnAlias;
+                            }
+                            if (ci_result.rows[i].bIsMax) {
+                                m_arrMax[m_arrMax.length] = new Array();
+                                m_arrMax[m_arrMax.length - 1][0] = ci_result.rows[i].cColumnAlias;
+                            }
+                            m_strHtml += '<li class="searchText1">';
+                            m_strHtml += '<input type="text" class="dc-input" dc-tip="请输入' + ci_result.rows[i].cColumnName + '" name="' + ci_result.rows[i].cColumnAlias + '" /></li>';
+                        }
+                    }
+                    hiddMask();
+                    //var m_objGrid = { singleSelect: true, columns: m_objColumns.rows, fit: true, rownumbers: true, remoteSort: false, showFooter: true, fitColumns: true, toolbar: "#div_Toolbar" };
+                    var m_objGrid = { columns: m_objColumns.rows, remoteSort: false, rownumbers: false, pagination: false, showFooter: true };
+                    if (m_strGroupBy != "") {
+                        m_objGrid.sortName = m_strGroupBy;
+                        m_objGrid.groupField = m_strGroupBy;
+                        m_objGrid.view = groupview;
+                        m_objGrid.groupFormatter = function(value, rows) {
+                            var m_strValue = value;
+                            if (m_strValue == '') {
+                                m_strValue = '【未填写】';
+                            }
+                            return m_strValue + '( ' + rows.length + '条记录)';
+                        };
+                    }
+                    setDataGrid("tab_List", "div_Toolbar", "", [], "", "", "", m_objGrid);
+
+                    //$('#tab_List').datagrid(m_objGrid).datagrid("fitColumns");
+                    $('#tab_List').datagrid("fitColumns");
+
+                    postData({
+                        url: "DcCdReportManage",
+                        params: { Action: "GetReportData", iReportID: _iReportID, QueryStr: getQuery() },
+                        isSys: true,
+                        success: function(ci_result) {
+                            var m_objFooter = [];
+                            if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                                if (m_arrSum.length > 0) {
+                                    var m_objSum = {};
+                                    for (var j = 0; j < m_arrSum.length; j++) {
+                                        m_arrSum[j][1] = 0.00;
+                                        for (var i = 0; i < ci_result.rows.length; i++) {
+                                            m_arrSum[j][1] += Number(ci_result.rows[i][m_arrSum[j][0]]);
+                                        }
+                                        m_objSum[m_arrSum[j][0]] = "<b>总计：</b>" + m_arrSum[j][1];
+                                    }
+                                    m_objFooter.push(m_objSum);
+                                }
+                                if (m_arrAvg.length > 0) {
+                                    var m_objSum = {};
+                                    for (var j = 0; j < m_arrAvg.length; j++) {
+                                        m_arrAvg[j][1] = 0.00;
+                                        for (var i = 0; i < ci_result.rows.length; i++) {
+                                            m_arrAvg[j][1] += Number(ci_result.rows[i][m_arrAvg[j][0]]);
+                                        }
+                                        m_arrAvg[j][1] = m_arrAvg[j][1] / ci_result.rows.length;
+                                        m_objSum[m_arrAvg[j][0]] = "<b>平均数：</b>" + m_arrAvg[j][1];
+                                    }
+                                    m_objFooter.push(m_objSum);
+                                }
+                                if (m_arrMin.length > 0) {
+                                    var m_objSum = {};
+                                    var m_objSort = cloneJson(ci_result.rows);
+                                    for (var j = 0; j < m_arrMin.length; j++) {
+                                        m_objSort.sort(function(a, b) { return a[m_arrMin[j][0]] - b[m_arrMin[j][0]]; });
+                                        m_objSum[m_arrMin[j][0]] = "<b>最小值：</b>" + m_objSort[0][m_arrMin[j][0]];
+                                    }
+                                    m_objFooter.push(m_objSum);
+                                }
+                                if (m_arrMax.length > 0) {
+                                    var m_objSum = {};
+                                    var m_objSort = cloneJson(ci_result.rows);
+                                    for (var j = 0; j < m_arrMax.length; j++) {
+                                        m_objSort.sort(function(a, b) { return b[m_arrMax[j][0]] - a[m_arrMax[j][0]]; });
+                                        m_objSum[m_arrMax[j][0]] = "<b>最大值：</b>" + m_objSort[0][m_arrMax[j][0]];
+                                    }
+                                    m_objFooter.push(m_objSum);
+                                }
+                                if (m_objFooter.length > 0) {
+                                    ci_result.footer = m_objFooter;
+                                }
+                            }
+                            else {
+                                ci_result.footer = [];
+                            }
+                            $('#tab_List').datagrid('loadData', ci_result)//.datagrid("fitColumns");
+                            $('.dc-input').dcinput();
+                        }
+                    });
+                }
+                if (m_strHtml.length > 0) {
+                    m_strHtml += '<li class="searchText1"><a href="javascript:void(0)" onclick="initPage(2);" class="dc-button">查询</a></li>';
+                }
+                m_strHtml += '<li class="searchText1"><a href="javascript:void(0)" onclick="outExcel()" class="dc-button">导出Excel</a></li>';
+
+                if (ci_iType == 1) {
+                    $(".searchForm1").html(m_strHtml);
+                }
+            }
+        });
+    }
+
+    function outExcel() {
+        $('#form1').form('submit', {
+            url: getInterfaceName("DcCdReportManage", true) + "?action=GetExcel&iReportID=" + _iReportID,
+            success: function(result) {
+                result = convertToJson(result);
+                if (!checkReturnJson(result)) {
+                    $.messager.alert('提示', result.DcMessage, 'info');
+                }
+            },
+            failure: function(ci_result) {
+                $.messager.alert('提示', '导出Excel失败', 'info');
+            }
+        }).error(function(err) { alert(err.responseText); });
+    }
+
+    function getQuery() {
+        var m_strReturn = "";
+        var m_objList = $(".searchForm1 input");
+        if (m_objList.length > 0) {
+            var m_strSign = getSeparativeSign();
+            $.each(m_objList, function(index) {
+                if ($(m_objList[index]).val() != "") {
+                    if (m_strReturn.length > 0) {
+                        m_strReturn += (m_strSign + ',' + m_strSign);
+                    }
+                    m_strReturn += $(m_objList[index]).attr("name");
+                    m_strReturn += m_strSign;
+                    m_strReturn += $(m_objList[index]).val();
+                }
+            });
+        }
+        return m_strReturn;
+    }
+</script>
+

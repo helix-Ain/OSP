@@ -1,0 +1,732 @@
+<krpano version="1.19" title="Virtual Tour">
+	<include url="skin/vtourskin.xml" />
+	<include url="plugins/video-player.xml"/>
+	<style name="spotDelIcon" url="/OSP/Images/video-oper-del.png" onclick="js(deleteHotspot(get(name)))"/>
+	<style name="spotOKIcon" url="/OSP/Images/video-oper-ok.png" onclick="js(saveData(get(name)))"/>
+	<style name="spotDragIcon" url="/OSP/Images/drag-icon.png" visible="false" />
+	<style name="drawstyle" url="/krpano/viewer/plugins/textfield.swf" css="text-align:center; color:#FFFFFF; font-family:Arial; font-size:14px;" backgroundcolor="0x000000" backgroundalpha="0.0" roundedge="0" border="false" align="lefttop" height="38" padding="10 0" width="120" />
+	<style name="drawLinestyle" url="/krpano/viewer/plugins/textfield.swf" backgroundcolor="0xffffff" backgroundalpha="1.0" roundedge="0" border="false" align="lefttop" height="2" width="120" x="0" y="40" />
+	<style name="drawhotspotstyle" keep="true" visible="true" capture="false" fillcolor="0x000000" fillalpha="0.6" borderwidth="1.0" bordercolor="0xffffff" borderalpha="1.0" />
+	<style name="drawokhotspotstyle" keep="true" visible="true" capture="false" fillcolor="0x000000" fillalpha="0.6" borderwidth="1.0" bordercolor="0xffffff" borderalpha="1.0" onclick="js(deleteHotspot(get(name)))" />
+	<style name="drawpointstyle" url="/OSP/Images/drag-arrow.png" height="20" width="20" crop="0|20|20|20" onovercrop="0|0|20|20" ondown="dragPoint(get(name));" />
+	<style name="drawhotspotReleaseStyle" fillcolor="0x4affff" fillalpha="0.0" onover="set(fillalpha,0.4);operdragIcon(get(name),'true','false');copy(layer[tooltip].html, tooltip); set(layer[tooltip].visible, true); tween(layer[tooltip].alpha, 1.0, 0.5); asyncloop(hovering, copy(layer[tooltip].x,mouse.stagex); copy(layer[tooltip].y,mouse.stagey); );" onout="set(fillalpha,0.0);operdragIcon(get(name),'false','true');tween(layer[tooltip].alpha, 0.0, 0.25, default, set(layer[tooltip].visible,false), copy(layer[tooltip].x,mouse.stagex); copy(layer[tooltip].y,mouse.stagey); );" borderwidth="0.0" bordercolor="0xffffff" borderalpha="0.0" />
+	<style name="videoBorderon" url="/OSP/Images/video-black-on.png" onclick="js(deleTempVideoHotspot(get(name)))" drag="true" />
+	<style name="book" url="/OSP/Images/t4.png"/>
+	<style name="info" url="/OSP/Images/t2.png"/>
+	<style name="product" url="/OSP/Images/t3.png"/>
+	<style name="video" url="/OSP/Images/t6.png"/>
+	<style name="pic" url="/OSP/Images/t1.png"/>
+	<style name="link" url="/OSP/Images/t5.png"/>
+	<style name="zoomingImg" keep="true" onover="set(iszoom, true);set(startzoom, true);copy(copy_mousefovchange, control.mousefovchange);copy(copy_touchzoom, control.touchzoom);set(control.mousefovchange, 0);set(control.touchzoom, false);set(thisobj,get(name));" onout="set(iszoom, false);copy(control.mousefovchange, copy_mousefovchange);copy(control.touchzoom, copy_touchzoom);set(thisobj,null);" />
+	<layer name="operList" keep="true" align="center" type="container" width="120" height="82" x="0" y="0" bgborder="2 0xffffff" bgalpha="0.6" pointIndex="0" visible="false" bgcolor="0x000000">
+		<layer name="startDraw" keep="true" style="drawstyle" html="开始绘制" x="0" y="0" ondown="switchDrawStaus()" opended="true" />
+		<layer name="startDrawLine" keep="true" style="drawLinestyle" />
+		<layer name="startDrawOk" keep="true" style="drawstyle" html="确定" x="0" y="42" onclick="drawOk()" />
+		<layer name="startDrawDrag" keep="true" url="/OSP/Images/drag-user.png" align="righttop" width="31" height="31" x="0" y="0" oy="-16" ox="16" ondown="dragDrawLayer()" zorder="2" />
+	</layer>
+	<skin_settings maps="false"
+	maps_type="google"
+	maps_bing_api_key=""
+	maps_google_api_key=""
+	maps_zoombuttons="false"
+	gyro="true"
+	webvr="true"
+	webvr_gyro_keeplookingdirection="false"
+	webvr_prev_next_hotspots="true"
+	littleplanetintro="false"
+	title="true"
+	thumbs="true"
+	thumbs_width="120" thumbs_height="80" thumbs_padding="10" thumbs_crop="0|40|240|160"
+	thumbs_opened="false"
+	thumbs_text="false"
+	thumbs_dragging="true"
+	thumbs_onhoverscrolling="false"
+	thumbs_scrollbuttons="false"
+	thumbs_scrollindicator="false"
+	thumbs_loop="false"
+	tooltips_buttons="false"
+	tooltips_thumbs="false"
+	tooltips_hotspots="false"
+	tooltips_mapspots="false"
+	deeplinking="false"
+	loadscene_flags="MERGE"
+	loadscene_blend="OPENBLEND(0.5, 0.0, 0.75, 0.05, linear)"
+	loadscene_blend_prev="SLIDEBLEND(0.5, 180, 0.75, linear)"
+	loadscene_blend_next="SLIDEBLEND(0.5,   0, 0.75, linear)"
+	loadingtext="loading..."
+	layout_width="100%"
+	layout_maxwidth="814"
+	controlbar_width="-24"
+	controlbar_height="40"
+	controlbar_offset="20"
+	controlbar_offset_closed="-40"
+	controlbar_overlap.no-fractionalscaling="10"
+	controlbar_overlap.fractionalscaling="0"
+	design_skin_images="vtourskin.png"
+	design_bgcolor="0x2D3E50"
+	design_bgalpha="0.8"
+	design_bgborder="0"
+	design_bgroundedge="1"
+	design_bgshadow="0 4 10 0x000000 0.3"
+	design_thumbborder_bgborder="3 0xFFFFFF 1.0"
+	design_thumbborder_padding="2"
+	design_thumbborder_bgroundedge="0"
+	design_text_css="color:#FFFFFF; font-family:Arial;"
+	design_text_shadow="1"
+	/>
+	<style name="tooltip" onover="operdragIcon(get(name),'true','false');copy(layer[tooltip].html, tooltip); set(layer[tooltip].visible, true); tween(layer[tooltip].alpha, 1.0, 0.5); asyncloop(hovering, copy(layer[tooltip].x,mouse.stagex); copy(layer[tooltip].y,mouse.stagey); );" onout="operdragIcon(get(name),'false','true');tween(layer[tooltip].alpha, 0.0, 0.25, default, set(layer[tooltip].visible,false), copy(layer[tooltip].x,mouse.stagex); copy(layer[tooltip].y,mouse.stagey); );" />
+	<layer name="tooltip" keep="true" url="/krpano/viewer/plugins/textfield.swf" parent="STAGE" visible="false" alpha="0" enabled="false" align="lefttop" edge="bottom" oy="-2" autowidth="true" autoheight="true" backgroundcolor="0x000000" backgroundalpha="0.5" roundedge="5" css="text-align:center; color:#FFFFFF; font-family:Arial,宋体; font-size:12px;" padding="5" html="" />
+	<blendmodes name="no blending"       description="无过渡效果"  blend="NOBLEND" />
+	<blendmodes name="simple crossblending" description="简单淡入淡出" blend="BLEND(1.0, easeInCubic)" />
+	<blendmodes name="zoom blend"        description="缩放过渡"  blend="ZOOMBLEND(2.0, 2.0, easeInOutSine)" />
+	<blendmodes name="black-out"         description="黑场过渡"  blend="COLORBLEND(2.0, 0x000000, easeOutSine)" />
+	<blendmodes name="white-flash"       description="白场过渡"  blend="LIGHTBLEND(1.0, 0xFFFFFF, 2.0, linear)" />
+	<blendmodes name="right-to-left"     description="从右至左"  blend="SLIDEBLEND(1.0, 0.0, 0.2, linear)" />
+	<blendmodes name="top-to-bottom"     description="从上至下"   blend="SLIDEBLEND(1.0, 90.0, 0.01, linear)" />
+	<blendmodes name="diagonal"          description="对角线"     blend="SLIDEBLEND(1.0, 135.0, 0.4, linear)" />
+	<blendmodes name="circle open"       description="圆形展开"      blend="OPENBLEND(1.0, 0.0, 0.2, 0.0, linear)" />
+	<blendmodes name="vertical open"     description="垂直展开"     blend="OPENBLEND(0.7, 1.0, 0.1, 0.0, linear)" />
+	<blendmodes name="horizontal open"   description="水平展开"    blend="OPENBLEND(1.0, -1.0, 0.3, 0.0, linear)" />
+	<blendmodes name="elliptic + zoom"   description="椭圆缩放"      blend="OPENBLEND(1.0, -0.5, 0.3, 0.8, linear)" />
+	<include url="skin/vtourskin_design_ultra_light.xml" />
+	<action name="operdragIcon">txtadd(hs_drag,%1,'_drag');
+		set(hotspot[get(hs_drag)].visible,%2);</action>
+	<action name="draghotspot">spheretoscreen(ath, atv, hotspotcenterx, hotspotcentery, 'l');
+		sub(drag_adjustx, mouse.stagex, hotspotcenterx);
+		sub(drag_adjusty, mouse.stagey, hotspotcentery);
+		asyncloop(pressed, sub(dx, mouse.stagex, drag_adjustx);
+		sub(dy, mouse.stagey, drag_adjusty);
+		screentosphere(dx, dy, ath, atv); print_hotspot_pos();
+		js(moveIcon(get(name)));
+		);</action>
+	<action name="print_hotspot_pos">
+		<![CDATA[
+		copy(print_ath, ath);
+		copy(print_atv, atv);
+		roundval(print_ath, 3);
+		roundval(print_atv, 3);
+		calc(plugin[hotspot_pos_info].html, '&lt;hotspot name="' + name + '"[br]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...[br]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ath="' + print_ath + '"[br]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;atv="' + print_atv + '"[br]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...[br]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/&gt;');
+		]]>
+	</action>
+	<action name="dragDrawLayer">copy(drag_currentx, layer[operList].x);
+		copy(drag_currenty, layer[operList].y);
+		copy(drag_stagex, mouse.stagex);
+		copy(drag_stagey, mouse.stagey);
+		asyncloop(pressed,
+		calc(layer[operList].x, drag_currentx + (mouse.stagex - drag_stagex));
+		calc(layer[operList].y, drag_currenty + (mouse.stagey - drag_stagey));
+		);</action>
+	<action name="addHotspotFun">if(%1==1,
+		txtadd(hs, 'N',get(hotspot.count));
+		addhotspot(get(hs));
+		set(hotspot[get(hs)].url,'/OSP/Images/%4.png');
+		set(hotspot[get(hs)].keep,%7);
+		hotspot[get(hs)].loadstyle("tooltip");
+		set(hotspot[get(hs)].scale,1);
+		set(hotspot[get(hs)].ondown,'draghotspot(get(hs))');
+		set(hotspot[get(hs)].ath,get(view.hlookat));
+		set(hotspot[get(hs)].atv,get(view.vlookat));
+		set(hotspot[get(hs)].renderer,'css3d');
+		set(hotspot[get(hs)].zorder,5);
+		if(%5==1,
+		txtadd(tooltip,'',%3);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		,
+		txtadd(tooltip,'返回',%3);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		);
+		,
+		txtadd(hs,'N',get(hotspot.count));
+		addhotspot(get(hs));
+		set(hotspot[get(hs)].url,'/OSP/Images/%2.png');
+		set(hotspot[get(hs)].scale,1);
+		set(hotspot[get(hs)].ondown,'draghotspot');
+		hotspot[get(hs)].loadstyle("tooltip");
+		set(hotspot[get(hs)].ath,get(view.hlookat));
+		set(hotspot[get(hs)].atv,get(view.vlookat));
+		set(hotspot[get(hs)].renderer,'css3d');
+		set(hotspot[get(hs)].zorder,5);
+		if(%3==1,
+		txtadd(tooltip,'',%4);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		,
+		txtadd(tooltip,'返回',%4);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		);
+		);
+
+		txtadd(hs_ok,get(hs),'_ok');
+		addhotspot(get(hs_ok));
+		hotspot[get(hs_ok)].loadstyle('spotOkIcon');
+		set(hotspot[get(hs_ok)].scale,1);
+		set(hotspot[get(hs_ok)].oy,-45);
+		set(hotspot[get(hs_ok)].ath,get(view.hlookat));
+		set(hotspot[get(hs_ok)].atv,get(view.vlookat));
+		set(hotspot[get(hs_ok)].renderer,'css3d');
+		set(hotspot[get(hs_ok)].zorder,5);
+
+		txtadd(hs_del,get(hs),'_del');
+		addhotspot(get(hs_del));
+		hotspot[get(hs_del)].loadstyle('spotDelIcon');
+		set(hotspot[get(hs_del)].scale,1);
+		set(hotspot[get(hs_del)].ox,45);
+		set(hotspot[get(hs_del)].oy,-45);
+		set(hotspot[get(hs_del)].ath,get(view.hlookat));
+		set(hotspot[get(hs_del)].atv,get(view.vlookat));
+		set(hotspot[get(hs_del)].renderer,'css3d');
+		set(hotspot[get(hs_del)].zorder,5);
+
+		txtadd(hs_drag,get(hs),'_drag');
+		addhotspot(get(hs_drag));
+		hotspot[get(hs_drag)].loadstyle('spotDragIcon');
+		set(hotspot[get(hs_drag)].scale,1);
+		set(hotspot[get(hs_drag)].ox,55);
+		set(hotspot[get(hs_drag)].ath,get(view.hlookat));
+		set(hotspot[get(hs_drag)].atv,get(view.vlookat));
+		set(hotspot[get(hs_drag)].renderer,'css3d');
+		set(hotspot[get(hs_drag)].zorder,5);</action>
+	<action name="initHotspotFun">if(%1==1 || %1==3,
+		txtadd(hs,'P',%2);
+		addhotspot(get(hs));
+		set(hotspot[get(hs)].url,'/OSP/Images/%5.png');
+		set(hotspot[get(hs)].keep,%8);
+		set(hotspot[get(hs)].scale,1.1);
+		if(%1==1,
+		hotspot[get(hs)].loadstyle("tooltip");
+		set(hotspot[get(hs)].onclick,'js(deleteHotspot(get(name)))');
+		,
+		set(hotspot[get(hs)].onloaded,add_all_the_time_tooltip());
+		set(hotspot[get(hs)].onclick,operdragIcon(get(name),'false','true');tween(layer[tooltip].alpha, 0.0, 0.25, default, set(layer[tooltip].visible,false), copy(layer[tooltip].x,mouse.stagex); copy(layer[tooltip].y,mouse.stagey); );sceneTransition(%3,%7,%11));
+		);
+		set(hotspot[get(hs)].ath,%9);
+		set(hotspot[get(hs)].atv,%10);
+		set(hotspot[get(hs)].renderer,'css3d');
+		set(hotspot[get(hs)].zorder,5);
+		if(%6==1,
+		txtadd(tooltip,'',%4);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		,
+		txtadd(tooltip,'返回',%4);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		);
+		,
+		txtadd(hs,'P',%2);
+		addhotspot(get(hs));
+		set(hotspot[get(hs)].url,'/OSP/Images/%3.png');
+		set(hotspot[get(hs)].scale,1.1);
+		if(%1==2,
+		hotspot[get(hs)].loadstyle("tooltip");
+		set(hotspot[get(hs)].onclick,'js(deleteHotspot(get(name)))');
+		,
+		set(hotspot[get(hs)].onloaded,add_all_the_time_tooltip());
+		set(hotspot[get(hs)].onclick,openurl(%5,_self));
+		);
+		set(hotspot[get(hs)].keep,%6);
+		set(hotspot[get(hs)].ath,%7);
+		set(hotspot[get(hs)].atv,%8);
+		set(hotspot[get(hs)].renderer,'css3d');
+		set(hotspot[get(hs)].zorder,5);
+		if(%4==1,
+		txtadd(tooltip,%5);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		,
+		txtadd(tooltip,'返回',%5);
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		);
+		);</action>
+	<action name="addMarkPointFun">txtadd(hs, 'N',get(hotspot.count));
+		txtadd(hotstyle,%1,'|tooltip');
+		txtadd(tooltip,'',%2);
+		addhotspot(get(hs));
+		hotspot[get(hs)].loadstyle(get(hotstyle));
+		set(hotspot[get(hs)].tooltip,get(tooltip));
+		set(hotspot[get(hs)].scale,1);
+		set(hotspot[get(hs)].ondown,'draghotspot(get(hs))');
+		set(hotspot[get(hs)].ath,get(view.hlookat));
+		set(hotspot[get(hs)].atv,get(view.vlookat));
+		set(hotspot[get(hs)].renderer,'css3d');
+		set(hotspot[get(hs)].zorder,5);
+
+		txtadd(hs_ok,get(hs),'_ok');
+		addhotspot(get(hs_ok));
+		hotspot[get(hs_ok)].loadstyle('spotOkIcon');
+		set(hotspot[get(hs_ok)].scale,1);
+		set(hotspot[get(hs_ok)].oy,-45);
+		set(hotspot[get(hs_ok)].ath,get(view.hlookat));
+		set(hotspot[get(hs_ok)].atv,get(view.vlookat));
+		set(hotspot[get(hs_ok)].renderer,'css3d');
+		set(hotspot[get(hs_ok)].zorder,5);
+
+		txtadd(hs_del,get(hs),'_del');
+		addhotspot(get(hs_del));
+		hotspot[get(hs_del)].loadstyle('spotDelIcon');
+		set(hotspot[get(hs_del)].scale,1);
+		set(hotspot[get(hs_del)].ox,45);
+		set(hotspot[get(hs_del)].oy,-45);
+		set(hotspot[get(hs_del)].ath,get(view.hlookat));
+		set(hotspot[get(hs_del)].atv,get(view.vlookat));
+		set(hotspot[get(hs_del)].renderer,'css3d');
+		set(hotspot[get(hs_del)].zorder,5);
+
+		txtadd(hs_drag,get(hs),'_drag');
+		addhotspot(get(hs_drag));
+		hotspot[get(hs_drag)].loadstyle('spotDragIcon');
+		set(hotspot[get(hs_drag)].scale,1);
+		set(hotspot[get(hs_drag)].ox,55);
+		set(hotspot[get(hs_drag)].ath,get(view.hlookat));
+		set(hotspot[get(hs_drag)].atv,get(view.vlookat));
+		set(hotspot[get(hs_drag)].renderer,'css3d');
+		set(hotspot[get(hs_drag)].zorder,5);</action>
+	<action name="initMarkPointFun">txtadd(hs,'M',%1);
+		txtadd(hotstyle,%2,'|tooltip');
+		addhotspot(get(hs));
+		hotspot[get(hs)].loadstyle(get(hotstyle));
+		set(hotspot[get(hs)].tooltip,%3);
+		set(hotspot[get(hs)].scale,1);
+		if(%6!=1,
+		set(hotspot[get(hs)].onclick,'js(deleteHotspot(get(name)))');
+		,
+		set(hotspot[get(hs)].onclick,'js(showMarkPointContent(%1))');
+		set(hotspot[get(hs)].onloaded,hotspot_animate());
+		);
+		set(hotspot[get(hs)].ath,%4);
+		set(hotspot[get(hs)].atv,%5);
+		set(hotspot[get(hs)].renderer,'css3d');</action>
+	<action name="startDraw">set(hotspot[drawHotspot].tooltip,%1);
+		set(layer[operList].visible,true);</action>
+	<action name="switchDrawStaus">if(layer[startDraw].opended,
+		set(layer[startDraw].opended,false);
+		set(layer[startDraw].html,"取消绘制");
+		set(cursors.standard,pointer);
+		set(events[drawShape_event].onmousedown, drawShape());
+		,
+		set(layer[startDraw].opended,true);
+		drawDelete();
+		);</action>
+	<action name="drawShape">set(cursors.dragging,pointer);
+		screentosphere(mouse.stagex, mouse.stagey, ath, atv);
+		copy(print_ath, ath);
+		copy(print_atv, atv);
+		roundval(print_ath, 3);
+		roundval(print_atv, 3);
+		copy(this_index,hotspot[drawHotspot].onIndex);
+		set(hotspot[drawHotspot].point[get(this_index)].ath,get(print_ath));
+		set(hotspot[drawHotspot].point[get(this_index)].atv,get(print_atv));
+		txtadd(this_point_name,"hotspot_point_",get(this_index));
+		addhotspot(get(this_point_name));
+		hotspot[get(this_point_name)].loadstyle("drawpointstyle");
+		set(hotspot[get(this_point_name)].ath,get(print_ath));
+		set(hotspot[get(this_point_name)].atv,get(print_atv));
+		invalidatescreen();
+		add(this_index,1);
+		set(hotspot[drawHotspot].onIndex,get(this_index));</action>
+	<action name="drawOk">copy(point_count,hotspot[drawHotspot].point.count);
+		if(point_count GT 0,
+		set(pointtype,get(hotspot[drawHotspot].ptype));
+		js(saveData(get(hotspot[drawHotspot].point)));
+		,
+		jscall(alert("您还没有绘制选区！"));
+		);</action>
+	<action name="drawDelete">for(set(i,0), i LT hotspot[drawHotspot].point.count, inc(i),
+		txtadd(this_point_name,"hotspot_point_",get(i));
+		removehotspot(get(this_point_name));
+		);
+		set(toId,get(hotspot[drawHotspot].toid));
+		set(ptype,get(hotspot[drawHotspot].ptype));
+		set(tooltip,get(hotspot[drawHotspot].tooltip));
+		removehotspot(drawHotspot);
+		addhotspot(drawHotspot);
+		hotspot[drawHotspot].loadstyle("drawhotspotstyle|tooltip");
+		set(hotspot[drawHotspot].toid,get(toId));
+		set(hotspot[drawHotspot].ptype,get(ptype));
+		set(hotspot[drawHotspot].tooltip,get(tooltip));
+		set(hotspot[drawHotspot].onIndex,"0");
+		cancleDrawShape();</action>
+	<action name="cancleDrawShape">set(layer[startDraw].html,"开始绘制");
+		set(layer[startDraw].opended,true);
+		set(events[drawShape_event].onmousedown, null);
+		set(cursors.dragging,move);</action>
+	<action name="dragPoint">if(%2 != dragging,
+		copy(this_ath,hotspot[%1].ath);
+		copy(this_atv,hotspot[%1].atv);
+		spheretoscreen(this_ath, this_atv, hotspotcenterx, hotspotcentery);
+		sub(drag_adjustx, mouse.stagex, hotspotcenterx);
+		sub(drag_adjusty, mouse.stagey, hotspotcentery);
+		dragPoint(%1,dragging);
+		,
+		if(pressed,
+		sub(dx, mouse.stagex, drag_adjustx);
+		sub(dy, mouse.stagey, drag_adjusty);
+
+		screentosphere(dx, dy, ath, atv);
+		copy(print_ath, ath);
+		copy(print_atv, atv);
+		roundval(print_ath, 3);
+		roundval(print_atv, 3);
+
+		set(hotspot[%1].ath,get(print_ath));
+		set(hotspot[%1].atv,get(print_atv));
+
+		set(this_name,%1);
+		txtreplace(point_index,this_name,'hotspot_point_','');
+		set(hotspot[drawHotspot].point[get(point_index)].ath,get(print_ath));
+		set(hotspot[drawHotspot].point[get(point_index)].atv,get(print_atv));
+		invalidatescreen();
+		delayedcall(0, dragPoint(%1,dragging) );
+		);
+		);</action>
+	<action name="deleteHotspotFun">removehotspot(%1);</action>
+	<action name="sceneTransition">js(sceneTransition(%1,%2,%3));</action>
+	<action name="sceneLinkTransition">openurl(%1);</action>
+	<action name="control_startup">set(control.mouse, moveto);
+		set(control.touch, moveto);
+		set(control.movetospeed,"1000.0");</action>
+	<action name="addVideoHotspotFun">set(dw,200);
+		txtadd(hotspotname,"tempHotspot_",%1);
+		addhotspot(get(hotspotname));
+		set(hotspot[get(hotspotname)].ath,%2);
+		set(hotspot[get(hotspotname)].atv,%3);
+		set(hotspot[get(hotspotname)].width,get(dw));
+		set(hotspot[get(hotspotname)].height,get(dw));
+		set(hotspot[get(hotspotname)].ox,%4);
+		set(hotspot[get(hotspotname)].oy,%5);
+		set(hotspot[get(hotspotname)].toId,%6);
+		set(hotspot[get(hotspotname)].url,"/OSP/Images/video-bg.png");
+		set(hotspot[get(hotspotname)].edge,"lefttop");
+		set(hotspot[get(hotspotname)].pointtype,"1");
+		set(hotspot[get(hotspotname)].distorted,"true");
+		set(hotspot[get(hotspotname)].zorder,2);
+		hotspot[get(hotspotname)].loadstyle("zoomingImg");
+
+		txtadd(draghotspottip,"tempHotspot_",%1,"_tip");
+		addhotspot(get(draghotspottip));
+		set(hotspot[get(draghotspottip)].ath,%2);
+		set(hotspot[get(draghotspottip)].atv,%3);
+		div(thisx,get(dw),2);
+		add(thisx,%4);
+		div(thisy,get(dw),2);
+		add(thisy,%5);
+		set(hotspot[get(draghotspottip)].ox,get(thisx));
+		set(hotspot[get(draghotspottip)].oy,get(thisy));
+		set(hotspot[get(draghotspottip)].edge,"center");
+		set(hotspot[get(draghotspottip)].distorted,"true");
+		set(hotspot[get(draghotspottip)].url,"/OSP/Images/drag-user.png");
+		set(hotspot[get(draghotspottip)].zorder,3);
+
+		txtadd(zoomhotspottip,"tempHotspot_",%1,"_zooming");
+		addhotspot(get(zoomhotspottip));
+		set(hotspot[get(zoomhotspottip)].ath,%2);
+		set(hotspot[get(zoomhotspottip)].atv,%3);
+		sub(thiszoomx,get(dw),32);
+		add(thiszoomx,%4);
+		sub(thiszoomy,get(dw),13);
+		add(thiszoomy,%5);
+		set(hotspot[get(zoomhotspottip)].ox,get(thiszoomx));
+		set(hotspot[get(zoomhotspottip)].oy,get(thiszoomy));
+		set(hotspot[get(zoomhotspottip)].edge,"center");
+		set(hotspot[get(zoomhotspottip)].distorted,"true");
+		set(hotspot[get(zoomhotspottip)].url,"/OSP/Images/zoomIcon.png");
+		set(hotspot[get(zoomhotspottip)].zorder,3);
+		set(hotspot[get(zoomhotspottip)].ondown,zoomingHotspot(get(hotspotname)));
+
+		txtadd(draghotspotname,"tempHotspot_",%1,"_drag");
+		addhotspot(get(draghotspotname));
+		set(hotspot[get(draghotspotname)].ath,get(view.hlookat));
+		set(hotspot[get(draghotspotname)].atv,get(view.vlookat));
+		set(hotspot[get(draghotspotname)].edge,"center");
+		set(hotspot[get(draghotspotname)].alpha,0.0);
+		set(hotspot[get(draghotspotname)].url,"/OSP/Images/drag-user.png");
+		set(hotspot[get(draghotspotname)].zorder,1);
+
+		txtadd(okhotspotname,"tempHotspot_",%1,"_ok");
+		addhotspot(get(okhotspotname));
+		set(hotspot[get(okhotspotname)].ath,%2);
+		set(hotspot[get(okhotspotname)].atv,%3);
+		set(hotspot[get(okhotspotname)].edge,"lefttop");
+		set(hotspot[get(okhotspotname)].distorted,"true");
+		set(hotspot[get(okhotspotname)].crop,"0|0|40|40");
+		set(hotspot[get(okhotspotname)].url,"/OSP/Images/oper-arrow.png");
+		set(hotspot[get(okhotspotname)].zorder,2);
+		sub(thisoky,%5,50);
+		set(hotspot[get(okhotspotname)].ox,%4);
+		set(hotspot[get(okhotspotname)].oy,get(thisoky));
+		set(hotspot[get(okhotspotname)].ondown,js(okTempVideoHotspot(get(hotspotname))));
+
+		txtadd(delehotspotname,"tempHotspot_",%1,"_dele");
+		addhotspot(get(delehotspotname));
+		set(hotspot[get(delehotspotname)].ath,%2);
+		set(hotspot[get(delehotspotname)].atv,%3);
+		set(hotspot[get(delehotspotname)].edge,"lefttop");
+		set(hotspot[get(delehotspotname)].distorted,"true");
+		set(hotspot[get(delehotspotname)].crop,"0|40|40|40");
+		set(hotspot[get(delehotspotname)].url,"/OSP/Images/oper-arrow.png");
+		set(hotspot[get(delehotspotname)].zorder,2);
+		add(thisdelex,%4,50);
+		sub(thisdeley,%5,50);
+		set(hotspot[get(delehotspotname)].ox,get(thisdelex));
+		set(hotspot[get(delehotspotname)].oy,get(thisdeley));
+		set(hotspot[get(delehotspotname)].ondown,js(deleTempVideoHotspot(get(hotspotname))));
+
+		txtadd(click_event,"dragImg(",get(draghotspotname),",",get(hotspotname),")");
+		set(hotspot[get(hotspotname)].ondown,get(click_event));
+		set(hotspot[get(draghotspottip)].ondown,get(click_event));</action>
+	<action name="addTempVideoOk">copy(thisath,hotspot[%1].ath);
+		copy(thisatv,hotspot[%1].atv);
+		copy(thisox,hotspot[%1].ox);
+		copy(thisoy,hotspot[%1].oy);
+		copy(thisw,hotspot[%1].width);
+		copy(thish,hotspot[%1].height);
+		copy(toId,hotspot[%1].toId);
+		copy(pointtype,hotspot[%1].pointtype);
+		copy(playstatus,hotspot[%1].playstatus);
+		js(addTempVideoOk(get(thisath),get(thisatv),get(thisox),get(thisoy),get(thisw),get(thish),get(toId),get(pointtype),get(playstatus),%1));</action>
+	<action name="deleTempVideoOk">txtadd(draghotspottip,%1,"_tip");
+		txtadd(zoomhotspottip,%1,"_zooming");
+		txtadd(draghotspotname,%1,"_drag");
+		txtadd(okhotspotname,%1,"_ok");
+		txtadd(delehotspotname,%1,"_dele");
+		removehotspot(%1);
+		removehotspot(get(draghotspottip));
+		removehotspot(get(zoomhotspottip));
+		removehotspot(get(draghotspotname));
+		removehotspot(get(okhotspotname));
+		removehotspot(get(delehotspotname));</action>
+	<action name="changeHotspotposition">set(hotspot[%1].ox,%2);
+		set(hotspot[%1].oy,%3);
+		set(hotspot[%1].ath,%4);
+		set(hotspot[%1].atv,%5);
+
+		div(thisx,get(hotspot[%1].width),2);
+		add(thisx,%2);
+		div(thisy,get(hotspot[%1].height),2);
+		add(thisy,%3);
+
+		txtadd(draghotspottip,%1,"_tip");
+		set(hotspot[get(draghotspottip)].ox,get(thisx));
+		set(hotspot[get(draghotspottip)].oy,get(thisy));
+		set(hotspot[get(draghotspottip)].ath,%4);
+		set(hotspot[get(draghotspottip)].atv,%5);
+
+		sub(thisoky,%3,50);
+		txtadd(okhotspotname,%1,"_ok");
+		set(hotspot[get(okhotspotname)].ox,%2);
+		set(hotspot[get(okhotspotname)].oy,get(thisoky));
+		set(hotspot[get(okhotspotname)].ath,%4);
+		set(hotspot[get(okhotspotname)].atv,%5);
+
+		add(thisdelex,%2,50);
+		sub(thisdeley,%3,50);
+		txtadd(delehotspotname,%1,"_dele");
+		set(hotspot[get(delehotspotname)].ox,get(thisdelex));
+		set(hotspot[get(delehotspotname)].oy,get(thisdeley));
+		set(hotspot[get(delehotspotname)].ath,%4);
+		set(hotspot[get(delehotspotname)].atv,%5);
+
+		txtadd(zoomhotspottip,%1,"_zooming");
+		sub(thiszoomx,get(hotspot[%1].width),32);
+		add(thiszoomx,%2);
+		sub(thiszoomy,get(hotspot[%1].height),13);
+		add(thiszoomy,%3);
+		set(hotspot[get(zoomhotspottip)].ox,get(thiszoomx));
+		set(hotspot[get(zoomhotspottip)].oy,get(thiszoomy));
+		set(hotspot[get(zoomhotspottip)].ath,%4);
+		set(hotspot[get(zoomhotspottip)].atv,%5);</action>
+	<action name="zoomingHotspot">copy(drag_stagex, mouse.stagex);
+		copy(drag_stagey, mouse.stagey);
+		asyncloop(pressed,
+		sub(dx, mouse.stagex, drag_stagex);
+		sub(dy, mouse.stagey, drag_stagey);
+		copy(drag_stagex, mouse.stagex);
+		copy(drag_stagey, mouse.stagey);
+
+		mul(sitx,get(dx),0.5);
+		add(hotspot[%1].width,sitx);
+
+		mul(sity,get(dy),0.5);
+		add(hotspot[%1].height,sity);
+
+		resizeIconPosition(%1);
+		);</action>
+	<action name="resizeIconPosition">txtadd(draghotspottip,%1,"_tip");
+		txtadd(zoomhotspottip,%1,"_zooming");
+		copy(thisw,hotspot[%1].width);
+		copy(thish,hotspot[%1].height);
+		if(hotspot[%1].pointtype == "1",
+		copy(thisscale,hotspot[%1].scale);
+		copy(thisox,hotspot[%1].ox);
+		copy(thisoy,hotspot[%1].oy);
+		mul(thisw,thisscale);
+		mul(thish,thisscale);
+
+		div(thisx,get(thisw),2);
+		add(thisx,get(thisox));
+		div(thisy,get(thish),2);
+		add(thisy,get(thisoy));
+		set(hotspot[get(draghotspottip)].ox,get(thisx));
+		set(hotspot[get(draghotspottip)].oy,get(thisy));
+
+		sub(thiszoomx,get(thisw),32);
+		add(thiszoomx,get(thisox));
+		sub(thiszoomy,get(thish),13);
+		add(thiszoomy,get(thisoy));
+		set(hotspot[get(zoomhotspottip)].ox,get(thiszoomx));
+		set(hotspot[get(zoomhotspottip)].oy,get(thiszoomy));
+		,
+		txtadd(okhotspotname,%1,"_ok");
+		txtadd(delehotspotname,%1,"_dele");
+
+		div(dx,get(thisw),2);
+		div(dy,get(thish),2);
+
+		sub(thiszoomx,get(dx),31);
+		sub(thiszoomy,get(dy),13);
+		set(hotspot[get(zoomhotspottip)].ox,get(thiszoomx));
+		set(hotspot[get(zoomhotspottip)].oy,get(thiszoomy));
+
+		mul(thisokx,get(dx),-1);
+		mul(thisoky,get(dy),-1);
+		add(thisokx,20);
+		sub(thisoky,30);
+		set(hotspot[get(okhotspotname)].ox,get(thisokx));
+		set(hotspot[get(okhotspotname)].oy,get(thisoky));
+
+		mul(thisdelex,get(dx),-1);
+		add(thisdelex,65);
+		mul(thisdeley,get(dy),-1);
+		sub(thisdeley,30);
+		set(hotspot[get(delehotspotname)].ox,get(thisdelex));
+		set(hotspot[get(delehotspotname)].oy,get(thisdeley));
+		);</action>
+	<action name="dragImg">if(%3 != dragging,
+		if(hotspot[%2].pointtype == "1",
+		copy(this_ath,hotspot[%1].ath);
+		copy(this_atv,hotspot[%1].atv);
+		,
+		copy(this_ath,hotspot[%2].ath);
+		copy(this_atv,hotspot[%2].atv);
+		);
+		spheretoscreen(this_ath, this_atv, hotspotcenterx, hotspotcentery);
+		sub(drag_adjustx, mouse.stagex, hotspotcenterx);
+		sub(drag_adjusty, mouse.stagey, hotspotcentery);
+		dragImg(%1,%2,dragging);
+		,
+		if(pressed,
+		sub(dx, mouse.stagex, drag_adjustx);
+		sub(dy, mouse.stagey, drag_adjusty);
+
+		screentosphere(dx, dy, ath, atv);
+		copy(print_ath, ath);
+		copy(print_atv, atv);
+		roundval(print_ath, 3);
+		roundval(print_atv, 3);
+
+		if(hotspot[%2].pointtype == "1",
+		set(hotspot[%1].ath,get(print_ath));
+		set(hotspot[%1].atv,get(print_atv));
+
+		js(changeHotspotposition(get(print_ath),get(print_atv),%2));
+		,
+		txtadd(okhotspotname,%2,"_ok");
+		txtadd(delehotspotname,%2,"_dele");
+		txtadd(zoominghotspotname,%2,"_zooming");
+		txtadd(draghotspottip,%2,"_tip");
+
+		set(hotspot[%2].ath,get(print_ath));
+		set(hotspot[%2].atv,get(print_atv));
+		set(hotspot[get(okhotspotname)].ath,get(print_ath));
+		set(hotspot[get(okhotspotname)].atv,get(print_atv));
+		set(hotspot[get(delehotspotname)].ath,get(print_ath));
+		set(hotspot[get(delehotspotname)].atv,get(print_atv));
+		set(hotspot[get(zoominghotspotname)].ath,get(print_ath));
+		set(hotspot[get(zoominghotspotname)].atv,get(print_atv));
+		set(hotspot[get(draghotspottip)].ath,get(print_ath));
+		set(hotspot[get(draghotspottip)].atv,get(print_atv));
+		);
+
+		delayedcall(0, dragImg(%1,%2,dragging) );
+		);
+		);</action>
+	<action name="startup">if(startscene === null OR !scene[get(startscene)], copy(startscene,scene[0].name); );
+		loadscene(get(startscene), null, MEGER);
+		if(startactions !== null, startactions() );
+		control_startup();
+	</action>
+    <layer name="pcGroup" keep="true" type="container" width="100%" height="100%" visible='false'>
+		<layer name="sceneSelectPc" onclick="switch(layer[auto_thumbs].visible)" keep="true" url="/OSP/Images/select-scene.png" width="112" height="118" x='15' align='leftbottom' scale="0.6"/>
+		<layer name="sceneSharePc" onclick="js(shareScene())" keep="true" url="/OSP/Images/share.png" width="70" height="118" x='95' align='leftbottom' scale="0.6"/>
+		<layer name="musicOnPc" onclick="switchMusicPc(get(name))" keep="true" url="/OSP/Images/musicon.png" width="87" height="118" x='15' align='rightbottom' scale="0.6"/>
+		<layer name="musicOffPc" onclick="switchMusicPc(get(name))" keep="true" url="/OSP/Images/musicoff.png" width="87" height="118" x='15' align='rightbottom' scale="0.6" visible="false"/>
+	</layer>
+	<layer name="mobileGroup" keep="true" type="container" width="100%" height="100%" visible='false'>
+		<layer name="sceneSearch" onclick="openurl('SceneSearch.html',_self)" keep="true" url="/OSP/Images/search.png" width="56" height="56" x='7' y='72' align='lefttop' scale="0.6"/>
+		<layer name="sceneMap" onclick="js(openMap())" keep="true" url="/OSP/Images/map.png" width="56" height="56" x='7' y='115' align='lefttop' scale="0.6"/>
+		<layer name="moreOperate" onclick="js(switchMenu())" keep="true" url="/OSP/Images/more.png" width="56" height="56" x='7' y='42' align='righttop' scale="0.6"/>
+		<layer name="vr" onclick="plugin[WebVr].enterVR()" keep="true" url="/OSP/Images/vr.png" width="56" height="56" x='7' y='85' align='righttop' scale="0.6"/>
+		<layer name="sceneSelect" onclick="switch(layer[auto_thumbs].visible)" keep="true" url="/OSP/Images/select-scene.png" width="112" height="118" x='3' align='leftbottom' scale="0.6"/>
+		<layer name="sceneShare" onclick="js(shareScene())" keep="true" url="/OSP/Images/share.png" width="70" height="118" x='70' align='leftbottom' scale="0.6"/>
+		<layer name="musicOn" onclick="switchMusic(get(name))" keep="true" url="/OSP/Images/musicon.png" width="87" height="118" x='3' align='rightbottom' scale="0.6" />
+		<layer name="musicOff" onclick="switchMusic(get(name))" keep="true" url="/OSP/Images/musicoff.png" width="87" height="118" x='3' align='rightbottom' scale="0.6" visible="false"/>
+	</layer>
+	<hotspot name="drawHotspot" style="drawhotspotstyle|tooltip" onIndex="0" />
+	<plugin name="soundinterface"
+	url.flash="%SWFPATH%/plugins/soundinterface.swf"
+	url.html5="%SWFPATH%/plugins/soundinterface.js"
+	rootpath=""
+	preload="true"
+	keep="true"
+	/>
+	<autorotate enabled="true" waittime='1.0' speed='25.0'/>
+	<action name='gravitySwitch'>set(plugin[skin_gyro].enabled,%1);</action>
+	<action name='autorotateSwitch'>if(%1==true,
+		autorotate.start();
+		,
+		autorotate.stop();
+		);</action>
+	<action name='switchMusic'>if(%1=='musicon'
+		,
+		set(layer["musicOn"].visible,false);
+		set(layer["musicOff"].visible,true);
+		,
+		set(layer["musicOn"].visible,true);
+		set(layer["musicOff"].visible,false);
+		);
+		pausesoundtoggle(bgsnd);</action>
+	<action name='switchMusicPc'>if(%1=='musiconpc',
+		set(layer["musicOnPc"].visible,false);
+		set(layer["musicOffPc"].visible,true);
+		,
+		set(layer["musicOnPc"].visible,true);
+		set(layer["musicOffPc"].visible,false);
+		);
+		pausesoundtoggle(bgsnd);</action>
+	<action name="hotspot_animate">if(oy == 0 OR oy == 1 ,
+		tween(oy,-5,0.8,easeOutQuad,hotspot_animate());
+		,
+		tween(oy,1,0.5,easeOutQuad,hotspot_animate());
+		);
+	</action>
+ 	<action name="add_all_the_time_tooltip">
+		txtadd(tooltipname, 'tooltip_', get(name));
+		addhotspot(get(tooltipname));
+		txtadd(hotspot[get(tooltipname)].parent, 'hotspot[', get(name), ']');
+		set(hotspot[get(tooltipname)].url,'/krpano/viewer/plugins/textfield.swf');
+		set(hotspot[get(tooltipname)].align,top);
+		copy(hotspot[get(tooltipname)].ath,hotspot[get(name)].ath);
+		copy(hotspot[get(tooltipname)].atv,hotspot[get(name)].atv);
+		set(hotspot[get(tooltipname)].ox,0);
+		set(hotspot[get(tooltipname)].oy,-50);
+		set(hotspot[get(tooltipname)].autowidth,true);
+		set(hotspot[get(tooltipname)].height,26);
+		set(hotspot[get(tooltipname)].backgroundcolor,0xffffff);
+		set(hotspot[get(tooltipname)].roundedge,5);
+		set(hotspot[get(tooltipname)].backgroundalpha,0.6);
+		set(hotspot[get(tooltipname)].border,false);
+		set(hotspot[get(tooltipname)].css,'text-align:center; color:#000000; font-family:Arial; font-size:12px;');
+		copy(hotspot[get(tooltipname)].html,hotspot[get(name)].tooltip);
+		copy(hotspot[get(tooltipname)].keep,hotspot[get(name)].keep);
+		set(hotspot[get(tooltipname)].vcenter,true);
+		set(hotspot[get(tooltipname)].padding,5);
+		set(hotspot[get(tooltipname)].renderer,'css3d');
+		set(hotspot[get(tooltipname)].zorder,5);
+	</action>
+</krpano>

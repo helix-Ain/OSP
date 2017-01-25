@@ -1,0 +1,438 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <style type="text/css">
+        .indicator { position: absolute; font-size: 9px; width: 20px; height: 10px; display: none; color: red; }
+    </style>
+    <div id="div_Column_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a href="javascript:void(0)" class="easyui-linkbutton"
+            iconcls="dc-icon-editadd" plain="true" onclick="column_openSearch()">添加</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-cancel" plain="true"
+            onclick="column_deleteData()">删除</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                plain="true" iconcls="dc-icon-cancel" onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_Column_List" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true">
+                </th>
+                <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iReportColumnID, 'column_editData');}">
+                    <div style="width: 50px; height: 5px; display: block;">
+                    </div>
+                </th>
+                <th data-options="field:'cTableName',width:100,sortable:true">
+                    所属视图
+                </th>
+                <th data-options="field:'cColumnDesc',width:150,sortable:true">
+                    字段描述
+                </th>
+                <th data-options="field:'cDataTypeDesc',width:60,sortable:true">
+                    字段数据类型
+                </th>
+                <th data-options="field:'bIsGroupBy',width:60,sortable:true,formatter: function(value,row,index){return getYes(value);}">
+                    分组字段
+                </th>
+                <th data-options="field:'bIsDisplay',width:60,sortable:true,formatter: function(value,row,index){return getYes(value);}">
+                    报表中可见
+                </th>
+                <th data-options="field:'bIsQuery',width:60,sortable:true,formatter: function(value,row,index){return getYes(value);}">
+                    查询条件
+                </th>
+                <th data-options="field:'cSubTotalTypeDesc',width:60,sortable:true">
+                    小计
+                </th>
+                <th data-options="field:'cTotalTypeDesc',width:60,sortable:true">
+                    总计
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_Column_Detail" class="easyui-dialog" title="字段详细资料" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form action="" id="form_Column_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 550px;" class="TableCenter">
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    所属视图：
+                </td>
+                <td>
+                    <input name="cTableName" class="TextReadOnly" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    字段描述：
+                </td>
+                <td>
+                    <input name="cColumnDesc" class="TextReadOnly" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    数据类型：
+                </td>
+                <td>
+                    <input name="cDataTypeDesc" class="TextReadOnly" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    报表中可见：
+                </td>
+                <td>
+                    <input id="chk_Column_IsDisplay" type="checkbox" name="bIsDisplay" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    查询条件：
+                </td>
+                <td>
+                    <input id="chk_Column_IsQuery" type="checkbox" name="bIsQuery" />
+                </td>
+            </tr>
+            <!--<tr>
+                <td class="tabletext">
+                    数据格式：
+                </td>
+                <td>
+                    <input name="cFormat" class="easyui-validatebox" data-options="required:false" style="width: 380px;" />
+                </td>
+            </tr>-->
+            <tr>
+                <td class="tabletext">
+                    分组字段：
+                </td>
+                <td>
+                    <input id="chk_Column_IsGroupBy" type="checkbox" name="bIsGroupBy" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    小计：
+                </td>
+                <td>
+                    <div id="div_Column_SubTotal" name="iSubTotalType">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    总计：
+                </td>
+                <td>
+                    <div id="div_Column_Total" name="iTotalType">
+                    </div>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="column_saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="column_cancel()">关闭</a>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var _column_iID = 0;
+        var _column_iDDLCount = 0;
+        var _column_iSearchType = 0;
+        var _column_strAction = '';
+        var _column_objIn = $('<div class="indicator">>>></div>').appendTo('body');
+
+        checkPagePower({ onload: function() { column_initPage(); }, showMask: false, parse: false, check: false });
+
+        function column_initPage() {
+            $('.TextReadOnly').attr("readonly", "readonly");
+            $.parser.parse('#div_Column_Detail');
+            $('#div_Column_Detail').dialog({ onClose: function() { $(".tooltip").remove(); } });
+
+            column_getColumnList();
+        }
+
+        function column_getColumnList() {
+            setDataGrid("tab_Column_List", "div_Column_Toolbar", "DcCdReportManage", { Action: "ColGetList", iReportID: _iID }, "iReportColumnID", "iIndex", "", {
+                onDblClickRow: function(rowIndex, rowData) { $("#tab_Column_List").datagrid("selectRow", rowIndex); column_editData(rowData.iReportColumnID); },
+                onClickRow: function(rowIndex, rowData) { $("#tab_Column_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                pagination: false,
+                loadFilter: function(data) {
+                    data.rows.sort(function(a, b) { return a.iOrder - b.iOrder; });
+                    return data;
+                },
+                onLoadSuccess: function() {
+                    try {
+                        setDnd();
+                    } catch (ex) { }
+                }
+            });
+        }
+
+        function column_openDialog(ci_strTitle) {
+            $('#div_Column_Detail').dialog({ width: 570, height: 350, title: ci_strTitle }).dialog('open');
+        }
+
+        function column_cancel() {
+            $('#div_Column_Detail').dialog('close')
+        }
+
+        function column_newData() {
+            _column_iID = 0;
+            _column_strAction = 'ColAdd';
+            $('#div_Column_Detail').form('clear');
+            $('#div_Column_Type').combolist('selectFirst');
+            $('input[id^="chk_Column_Is"]').attr('checked', 'checked');
+            column_openDialog("添加字段");
+        }
+
+        function column_editData(ci_iID) {
+            _column_iID = ci_iID;
+            if (_column_iID > 0) {
+                setTimeout(function() {
+                    var m_objData = $("#tab_Column_List").datagrid("getSelected");
+                    if (m_objData != null) {
+                        _column_iID = m_objData.iReportColumnID;
+                        _column_strAction = "ColUpdate";
+                        var m_objParams = { Action: 'combo', cat: 'repco', subCat: 'TotalType' };
+                        switch (m_objData.iDataType) {
+                            case 1:
+                            case 2:
+                            case 9:
+                                m_objParams.fValue1 = 1;
+                                break;
+                        }
+                        //$('#div_Column_SubTotal,#div_Column_Total').combolist('reset');
+                        postData({
+                            url: "DcCdCodeMasterManage",
+                            params: m_objParams,
+                            isSys: true,
+                            success: function(ci_result) {
+                                if (existData(ci_result)) {
+                                    $('#div_Column_SubTotal,#div_Column_Total').combolist({
+                                        valueField: 'cCodeItem',
+                                        textField: 'cDesc',
+                                        data: ci_result.rows
+                                    });
+                                }
+                                $('#div_Column_Detail').form('load', m_objData);
+                                $('#div_Column_SubTotal').combolist('select', m_objData.iSubTotalType);
+                                $('#div_Column_Total').combolist('select', m_objData.iTotalType);
+                                $('#chk_Column_IsGroupBy').attr('checked', (m_objData.bIsGroupBy ? 'checked' : false));
+                                $('#chk_Column_IsDisplay').attr('checked', (m_objData.bIsDisplay ? 'checked' : false));
+                                $('#chk_Column_IsQuery').attr('checked', (m_objData.bIsQuery ? 'checked' : false));
+
+                                column_openDialog("字段详细资料");
+                            }
+                        });
+                    }
+                    else {
+                        $.messager.alert('提示', '请选择记录', 'info');
+                    }
+                }, 100);
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function column_saveData() {
+            postData({
+                url: 'DcCdReportManage',
+                params: { Action: _column_strAction, iReportColumnID: _column_iID, iReportID: _iID },
+                validate: true,
+                form: 'form_Column_Edit',
+                onPost: function() {
+                    if (this.params.iSubTotalType == undefined || this.params.iSubTotalType == null) {
+                        this.params.iSubTotalType = 0;
+                    }
+                    if (this.params.iTotalType == undefined || this.params.iTotalType == null) {
+                        this.params.iTotalType = 0;
+                    }
+                    return true;
+                },
+                success: function(ci_result) {
+                    $('#tab_Column_List').datagrid('reload');
+                    column_cancel();
+                }
+            });
+        }
+
+        function column_deleteData() {
+            var m_objData = $("#tab_Column_List").datagrid("getChecked");
+            if (m_objData.length > 0) {
+                $.messager.confirm('提示', '确定要删除所选' + m_objData.length + '条记录吗？', function(r) {
+                    if (r) {
+                        var m_strIDList = "";
+                        for (var i = 0; i < m_objData.length; i++) {
+                            if (m_strIDList.length > 0) {
+                                m_strIDList += ",";
+                            }
+                            m_strIDList += m_objData[i].iReportColumnID;
+                        }
+                        if (m_strIDList != "") {
+                            postData({
+                                url: "DcCdReportManage",
+                                params: { Action: "ColDelete", iReportColumnID: m_strIDList },
+                                success: function(ci_result) {
+                                    $('#tab_Column_List').datagrid('reload');
+                                    $.messager.alert('提示', '删除成功', 'info');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function column_openSearch(ci_iType) {
+            var m_iViewID = _iViewID;
+            if (m_iViewID > 0) {
+                if (ci_iType == undefined) {
+                    ci_iType = 1;
+                }
+                _column_iSearchType = ci_iType;
+                popupDialog('SearchViewColumn_R.html#iViewID=' + m_iViewID + '&Type=' + ci_iType, 'parent.column_readViewColumn', '字段查询', true);
+            }
+            else {
+                $.messager.alert('提示', '请选择视图', 'info');
+            }
+        }
+
+        function column_readViewColumn(ci_objData) {
+            closedPopupDialog();
+            if (ci_objData != undefined && ci_objData.length > 0) {
+                var m_objData = $('#tab_Column_List').datagrid('getData');
+                if (existData(m_objData)) {
+                    for (var i = 0; i < m_objData.rows.length; i++) {
+                        for (var j = 0; j < ci_objData.length; j++) {
+                            if (ci_objData[j].iViewColumnID == m_objData.rows[i].iViewColumnID) {
+                                ci_objData.splice(j, 1);
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (ci_objData.length > 0) {
+                    var m_objIDList = [];
+                    for (var i = 0; i < ci_objData.length; i++) {
+                        m_objIDList.push(ci_objData[i].iViewColumnID);
+                    }
+                    postData({
+                        url: 'DcCdReportManage',
+                        params: { Action: 'coladd', iReportID: _iID, VcolIDList: m_objIDList.join(',') },
+                        success: function(ci_result) {
+                            $('#tab_Column_List').datagrid('reload');
+                        }
+                    });
+                }
+            }
+        }
+
+        function setDnd() {
+            $('.datagrid-row').draggable({
+                revert: true,
+                cursor: 'move',
+                edge: 5,
+                proxy: function(source) {
+                    var p = $('<div class="tree-node-proxy tree-dnd-no" style="position:absolute;border:1px solid #ccc;"/>').appendTo('body');
+                    p.html($(source).html());
+                    p.find('[field="ck"]').remove();
+                    p.find('[field="btn"]').remove();
+                    p.hide();
+                    return p;
+                },
+                onBeforeDrag: function(e) {
+                    e.data.startLeft = $(this).offset().left;
+                    e.data.startTop = $(this).offset().top;
+                },
+                onStartDrag: function() {
+                    $(this).draggable('proxy').css({
+                        left: -10000,
+                        top: -10000
+                    });
+                },
+                onDrag: function(e) {
+                    $(this).draggable('proxy').show().css({
+                        left: e.pageX + 15,
+                        top: e.pageY + 15
+                    });
+                    this.pageY = e.pageY;
+                    return false;
+                }
+            }).droppable({
+                accept: '.datagrid-row',
+                onDragOver: function(e, source) {
+                    $(source).draggable('proxy').removeClass('tree-dnd-no').addClass('tree-dnd-yes');
+
+                    var pageY = source.pageY;
+                    var top = $(e.target).offset().top;
+                    var bottom = top + $(e.target).outerHeight();
+
+                    if (pageY > top + (bottom - top) / 2) {
+                        _column_objIn.css({
+                            display: 'block',
+                            top: bottom - 5,
+                            left: $(e.target).offset().left - 18
+                        });
+                        source.position = 'bottom';
+                    } else {
+                        _column_objIn.css({
+                            display: 'block',
+                            top: top - 5,
+                            left: $(e.target).offset().left - 18
+                        });
+                        source.position = 'top';
+                    }
+                },
+                onDragLeave: function(e, source) {
+                    $(source).draggable('proxy').removeClass('tree-dnd-yes').addClass('tree-dnd-no');
+                    _column_objIn.hide();
+                },
+                onDrop: function(e, source) {
+                    _column_objIn.hide();
+                    $.messager.confirm('提示', '您确定要改变排序吗？', function(r) {
+                        if (r) {
+                            var m_objData = $('#tab_Column_List').datagrid('getData');
+                            var m_iSource = parseInt($(source).attr('datagrid-row-index'));
+                            var m_iTarget = parseInt($(e.target).attr('datagrid-row-index'));
+                            var m_iStart = 0;
+                            var m_objDataDetail = [];
+                            if (source.position == 'bottom') {
+                                m_iTarget++;
+                            }
+                            m_objData.rows.splice(m_iTarget, 0, m_objData.rows[m_iSource]);
+                            if (m_iSource > m_iTarget) {
+                                m_iStart = m_iTarget;
+                                m_objData.rows.splice(m_iSource + 1, 1);
+                            }
+                            else {
+                                m_iStart = m_iSource;
+                                m_objData.rows.splice(m_iSource, 1);
+                            }
+                            for (var i = m_iStart; i < m_objData.rows.length; i++) {
+                                m_objDataDetail.push(m_objData.rows[i].iReportColumnID + ',' + i);
+                            }
+                            postData({
+                                url: 'DcCdReportManage',
+                                params: { Action: 'colupdateindex', DataDetail: m_objDataDetail.join(';') },
+                                success: function(ci_result) {
+                                    $('#tab_Column_List').datagrid('reload');
+                                    $.messager.alert('提示', '修改成功', 'info');
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        } 
+    </script>
+
+</body>
+</html>

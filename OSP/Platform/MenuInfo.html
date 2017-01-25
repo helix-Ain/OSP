@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body>
+    <div>
+        <table id="Menu_List">
+        </table>
+    </div>
+
+    <script type="text/javascript">
+        checkPagePower({ onload: function() { initGird(); } });
+
+        function initGird() {
+            $('#Menu_List').datagrid({
+                title: '菜单列表', //表格标题
+                url: getInterfaceName("DcCdMenuMaster"), //请求数据的页面
+                sortName: 'cLoginName', //排序字段
+                idField: 'iUserID', //标识字段,主键
+                loadMsg: '正在加载数据...',
+                fit: true,
+                fitColumns: true,
+                nowrap: false, //是否换行，True 就会把数据显示在一行里
+                striped: true, //True 奇偶行使用不同背景色
+                collapsible: false, //可折叠
+                sortOrder: 'asc', //排序类型
+                remoteSort: true, //定义是否从服务器给数据排序
+                frozenColumns: [[//冻结的列，不会随横向滚动轴移动
+	                {title: '姓名登录', field: 'cLoginName', width: 150, sortable: true },
+				]],
+                columns: [[
+                    { title: '用户中文名', field: 'cUserChiName', width: 150, sortable: true },
+                    { title: '用户英文名', field: 'cUserEngName', width: 150, sortable: true },
+                    { title: '性别', field: 'cSexDesc', width: 50, sortable: true },
+                    { title: '邮箱地址', field: 'cEmail', width: 260, sortable: true }
+                ]],
+                singleSelect: true,
+                toolbar: "#div_Toolbar",
+                queryParams: { "action": "query", "dcmenuid": this.menuID },
+                pagination: true, //是否开启分页
+                pageNumber: 1, //默认索引页
+                pageSize: 20, //默认一页数据条数
+                rownumbers: true, //行号
+                onDblClickCell: function() { showEditUser(); }
+            });
+        }
+    </script>
+
+</body>
+</html>

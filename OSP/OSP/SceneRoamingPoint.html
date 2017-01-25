@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<script src='JS/krpano.js'></script>
+		<style>
+			* {
+				margin;
+				0;
+				padding: 0;
+			}
+			
+			body {
+				min-width: 1366px;
+			}
+			
+			div.panoList {
+				width: 25%;
+				height: 100%;
+				min-width: 340px;
+				float: right;
+				overflow: hidden;
+				background-color: #313131;
+				color: #FFFFFF;
+			}
+			
+			div.pano {
+				width: 75%;
+				height: 100%;
+				float: right;
+				overflow: hidden;
+			}
+			
+			div.panoList div span.title {
+				font-size: 17px;
+				font-weight: 100;
+				display: block;
+				margin-bottom: 10px;
+			}
+			
+			#btn-add {
+				width: 79px;
+				height: 25px;
+				background-color: #1476BA;
+				color: #FFFFFF;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				margin-right: 7px;
+			}
+			
+			#btn-reset {
+				width: 79px;
+				height: 25px;
+				background-color: #FF6C01;
+				color: #FFFFFF;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			
+			#preview-content {
+				display: none;
+				margin: 5px 5px 5px 0;
+			}
+			
+			#preview-list {
+				margin-top: 15px;
+				margin-bottom: : 15px;
+			}
+			
+			#preview-list img {
+				position: relative;
+				width: 23%;
+				height: 69px;
+				float: left;
+				margin: 5px 5px 5px 0;
+				z-index: 1;
+			}
+			
+			#preview-list input[type='radio'] {
+				position: absolute;
+				z-index: 999;
+				margin-left: -25px;
+				margin-top: 55px;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div style='width:100%;height: 100%;'>
+				<div class='panoList'>
+					<div style='padding:22px;'>
+						<span class='title'>添加漫游点</span><br />
+						<span class='title'><hr color="#707070"/></span><br />
+						<span class='title'>当前场景：<span id='cSceneName'></span></span><br />
+						<span class='title'>漫&nbsp;游&nbsp;点&nbsp;类&nbsp;型：<input id='iType' class='easyui-combobox' data-options="required:true,width:173,valueField:'id',textField:'text',editable:false"/></span><br />
+						<span class='title iType iType-1'>选择漫游场景：<input id='cToSceneName' placeholder="请选择漫游场景" class='easyui-validatebox' data-options='required:true' readonly="readonly" style='width:173px;cursor: pointer;'/><input type='hidden' id='iToSceneID' value='0'/></span><br />
+						<span class='title'>指&nbsp;&nbsp;&nbsp;示&nbsp;&nbsp;方&nbsp;&nbsp;向：<input id="iDirection" class="easyui-combobox" data-options="required:true,width:176,valueField:'id', textField:'text',editable:false" /></span><br />
+						<span class='title'>漫&nbsp;游&nbsp;点&nbsp;属&nbsp;性：<input id="iAttribute" class="easyui-combobox" data-options="required:true,width:175,valueField:'id', textField:'text',editable:false" /></span><br />
+						<span class='title iType iType-1'>选择漫游效果：<input id="iEffect" class="easyui-combobox" data-options="required:true,width:176,valueField:'id', textField:'text',editable:false"/></span><br />
+						<span class='title iType iType-2' style='display: none;'>外部链接URL：<input id='cUrl' class='easyui-validatebox' data-options="required:true" value="http://" style='width:173px;'/></span>
+						<span style='font-size: 10px;font-weight: 100;'><input id='bIsPreview' type='checkbox' style='margin-left:119px;'/><span style='position: relative;top:-2px;'>切换到下一个场景预览效果</span></span>
+						<div id='preview-content' class='iType iType-1'>
+							<p style='font-size: 15px;font-weight: 100;'>设置漫游点指向的场景画面</p>
+							<div id='preview-list'>
+								<img id='preview-front' />
+								<input type='radio' id='preview-radio-front' name='preview-radio' value='F' checked="checked" />
+								<img id='preview-back' />
+								<input type='radio' id='preview-radio-back' name='preview-radio' value='A' />
+								<img id='preview-left' />
+								<input type='radio' id='preview-radio-left' name='preview-radio' value='L' />
+								<img id='preview-right' />
+								<input type='radio' id='preview-radio-right' name='preview-radio' value='R' />
+							</div>
+						</div>
+						<div style='position: relative;top:15px;'>
+							<button id='btn-add' type='button' onclick='addHotspot()'>添加</button>
+							<button id='btn-reset' type='button'>重置</button><br />
+							<span id='tip' style='font-size: 15px;font-weight:100;color: #F9F007;display:block;margin-top:15px;'></span>
+						</div>
+					</div>
+				</div>
+				<div class='pano'>
+					<div id='pano' style='height:100%;width: 100%;'></div>
+				</div>
+			</div>
+		</div>
+		<script>
+			var _krpano;
+			var _strFun = getHashValue('Fun');
+			var _iSceneID = getHashValue('iSceneID');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+				$('#cToSceneName').click(function() {
+					popupDialog(_strSysUrl + 'OSP/SceneGroupManage.html?select=1', 'parent.fillcToSceneName', '选择漫游场景', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+				$('#btn-reset').click(function() {
+					$('#cToSceneName').val('');
+					$('#iToSceneID').val(0);
+					$('#iDirection,#iAttribute,#iEffect').combobox('clear');
+					var data = $('#iDirection').combobox('getData');
+					$('#iDirection').combobox('select', data[0].id);
+					var data = $('#iAttribute').combobox('getData');
+					$('#iAttribute').combobox('select', data[0].id);
+					var data = $('#iEffect').combobox('getData');
+					$('#iEffect').combobox('select', data[0].id);
+					$('#preview-content').hide();
+					$('#preview-radio-front').prop('checked',true);
+					$('#bIsPreview').prop('checked', false);
+					$('#cUrl').val('http://');
+				});
+			});
+
+			function initPage() {
+				var swf = '/Attachment/VR/' + _iSceneID + '/vtour/tour.swf';
+				var xml = '/krpano/templates/xml/main.xml';
+				embedpano({
+					swf: swf,
+					xml: xml,
+					target: 'pano',
+					html5: 'auto',
+					mobilescale: 1.0,
+					passQueryParameters: true,
+					onready: panoReady
+				});
+				postData({
+					url: 'DcCdSceneManage',
+					params: {
+						Action: 'GetList',
+						iSceneID: _iSceneID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#cSceneName').html(m_objData.cSceneName);
+						}
+					}
+				});
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Roaming',
+						cSubCat: 'Type'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								data.push({
+									'id': item.cCodeItem,
+									'text': item.cDesc,
+									'selected': i == 0 ? true : false
+								});
+							});
+							$('#iType').combobox({
+								onChange: function(newValue, oldValue) {
+									$('span.iType').hide();
+									$('span.iType-' + newValue).show();
+									if(newValue == 2) {
+										$('#preview-content').hide();
+									} else if(newValue == 1 && $('#iToSceneID').val() != 0) {
+										$('#preview-content').show();
+									}
+								}
+							}).combobox('loadData', data);
+						}
+					}
+				});
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Roaming',
+						cSubCat: 'Direction'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								data.push({
+									'id': item.cCodeItem,
+									'text': item.cDesc,
+									'selected': i == 0 ? true : false
+								});
+								$('#iDirection').combobox('loadData', data);
+							})
+						}
+					}
+				});
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Roaming',
+						cSubCat: 'Attribute'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								data.push({
+									'id': item.cCodeItem,
+									'text': item.cDesc,
+									'selected': i == 0 ? true : false
+								});
+							});
+							$('#iAttribute').combobox('loadData', data);
+						}
+					}
+				});
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Roaming',
+						cSubCat: 'Effect'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								data.push({
+									'id': item.cCodeItem,
+									'text': item.cDesc,
+									'selected': i == 0 ? true : false
+								});
+							});
+							$('#iEffect').combobox('loadData', data);
+						}
+					}
+				});
+			}
+
+			function initData() {
+				postData({
+					url: 'DcCdRoamingPointManage',
+					params: {
+						Action: 'GetList',
+						iSceneID: _iSceneID
+					},
+					showMask: false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								if(item.iAttribute == 2) {
+									item.iDirection = item.iDirection + 8;
+								}
+								if(item.iType == 1) {
+									_krpano.call('initHotspotFun(1,' + item.iPointID + ',' + item.iToSceneID + ',' + item.cToSceneName + ',' + item.iDirection + ',' + item.iAttribute + ',' + item.iEffect + ',' + item.bIsPreview + ',' + item.fImageY + ',' + item.fImageX + ')');
+								} else {
+									_krpano.call('initHotspotFun(2,' + item.iPointID + ',' + item.iDirection + ',' + item.iAttribute + ',' + item.cUrl + ',' + item.bIsPreview + ',' + item.fImageY + ',' + item.fImageX + ')');
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function panoReady(krpanoObj) {
+				_krpano = krpanoObj;
+				_krpano.call('loadpano("/Attachment/VR/' + _iSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+				//_krpano.call('loadscene(scene_'+_iSceneID+')');
+				_krpano.call('startup()');
+				_krpano.call('switch(layer[auto_thumbs].visible)');
+				_krpano.call('autorotateSwitch(false)');
+			}
+
+			function fillcToSceneName(iSceneID) {
+				postData({
+					url: 'DcCdSceneManage',
+					params: {
+						Action: 'GetList',
+						iSceneID: iSceneID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#iToSceneID').val(m_objData.iSceneID);
+							$('#cToSceneName').val(m_objData.cSceneName);
+							postData({
+								url: 'DcCdSceneManage',
+								params: {
+									Action: 'GetData',
+									iSceneID: iSceneID
+								},
+								success: function(ci_result) {
+									if(existData(ci_result)) {
+										var m_objData = ci_result.rows[0];
+										$('#preview-front').attr('src', '/' + m_objData.cFilePath + '/72/' + m_objData.cFFilename);
+										$('#preview-back').attr('src', '/' + m_objData.cFilePath + '/72/' + m_objData.cAFilename);
+										$('#preview-left').attr('src', '/' + m_objData.cFilePath + '/72/' + m_objData.cLFilename);
+										$('#preview-right').attr('src', '/' + m_objData.cFilePath + '/72/' + m_objData.cRFilename);
+										$('#preview-content').show();
+									}
+								}
+							});
+						}
+					}
+				});
+				cancel();
+			}
+
+			function addHotspot() {
+				var iType = $('#iType').combobox('getValue');
+				var iDirection = $('#iDirection').combobox('getValue');
+				var iAttribute = $('#iAttribute').combobox('getValue');
+				var bIsPreview = $('#bIsPreview').prop('checked');
+				if(iType == 1) {
+					var iToSceneID = $('#iToSceneID').val();
+					var cToSceneName = $('#cToSceneName').val();
+					var iEffect = $('#iEffect').combobox('getValue');
+					var cToImage = $('input[name="preview-radio"]:checked').val();
+					if(iToSceneID != '' && iDirection != '' && iAttribute != '' && iEffect != '') {
+						if(iAttribute == 2) {
+							iDirection = parseInt(iDirection) + 8;
+						}
+						_krpano.call('addHotspotFun(1,' + iToSceneID + ',' + cToSceneName + ',' + iDirection + ',' + iAttribute + ',' + iEffect + ',' + bIsPreview + ',' + cToImage + ')');
+					} else {
+						$('#tip').html('请填写相关信息！');
+						setTimeout(function() {
+							$('#tip').html('');
+						}, 3000);
+					}
+				} else {
+					var cUrl = $('#cUrl').val();
+					if(cUrl != '' && iDirection != '' && iAttribute != '') {
+						if(iAttribute == 2) {
+							iDirection = parseInt(iDirection) + 8;
+						}
+						_krpano.call('addHotspotFun(2,' + iDirection + ',' + iAttribute + ',' + cUrl + ',' + bIsPreview + ')');
+					} else {
+						$('#tip').html('请填写相关信息！');
+						setTimeout(function() {
+							$('#tip').html('');
+						}, 3000);
+					}
+				}
+			}
+
+			function deleteHotspot(delspotname) {
+				var flag = delspotname.substr(0, 1).toUpperCase();
+				$.messager.confirm('提示', '是否删除该漫游点？', function(r) {
+					if(r) {
+						if(flag == 'P') {
+							postData({
+								url: 'DcCdRoamingPointManage',
+								params: {
+									Action: 'Delete',
+									cIDList: delspotname.substr(1)
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										_krpano.call('deleteHotspotFun(' + delspotname + ')');
+									} else {
+										$.messager.alert('提示', ci_result.DcMessage, 'info');
+									}
+								}
+							});
+						} else {
+							var spotname = delspotname.split('_')[0];
+							_krpano.call('deleteHotspotFun(\'' + spotname + '\')');
+							_krpano.call('deleteHotspotFun(\'' + (spotname + '_ok') + '\')');
+							_krpano.call('deleteHotspotFun(\'' + (spotname + '_del') + '\')');
+							_krpano.call('deleteHotspotFun(\'' + (spotname + '_drag') + '\')');
+						}
+					}
+				});
+			}
+
+			function moveIcon(spotname) {
+				var okIcon = spotname + "_ok";
+				var delIcon = spotname + "_del";
+				var dragIcon = spotname + "_drag";
+				var thisath = _krpano.get("hotspot[" + spotname + "].ath");
+				var thisatv = _krpano.get("hotspot[" + spotname + "].atv");
+				_krpano.set("hotspot[" + okIcon + "].atv", thisatv);
+				_krpano.set("hotspot[" + okIcon + "].ath", thisath);
+				_krpano.set("hotspot[" + delIcon + "].atv", thisatv);
+				_krpano.set("hotspot[" + delIcon + "].ath", thisath);
+				_krpano.set("hotspot[" + dragIcon + "].atv", thisatv);
+				_krpano.set("hotspot[" + dragIcon + "].ath", thisath);
+			}
+
+			function sceneTransition(iToSceneID, iEffect) {
+				_krpano.call('loadpanoscene("/Attachment/VR/' + iToSceneID + '/vtour/tour.xml","scene_pano0001",null,MEGER,get(blendmodes[' + iEffect + '].blend))');
+			}
+
+			function saveData(okspotname) {
+				$.messager.confirm('提示', '是否保存该漫游点？', function(r) {
+					if(r) {
+						var spotname = okspotname.split('_')[0];
+						var thisath = _krpano.get("hotspot[" + spotname + "].ath");
+						var thisatv = _krpano.get("hotspot[" + spotname + "].atv");
+						var iType = $('#iType').combobox('getValue');
+						var iToSceneID = $('#iToSceneID').val();
+						var cUrl = $('#cUrl').val();
+						var iDirection = $('#iDirection').combobox('getValue');
+						var iAttribute = $('#iAttribute').combobox('getValue');
+						var iEffect = $('#iEffect').combobox('getValue');
+						var bIsPreview = $('#bIsPreview').prop('checked');
+						var cToImage = $('input[name="preview-radio"]:checked').val();
+						if((iType == 1 && iToSceneID != 0 && iDirection != '' && iAttribute != '' && iEffect != '') || (iType == 2 && iDirection != '' && cUrl != '')) {
+							postData({
+								url: 'DcCdRoamingPointManage',
+								params: {
+									Action: 'Add',
+									iSceneID: _iSceneID,
+									iType: iType,
+									iToSceneID: iToSceneID,
+									cUrl: cUrl,
+									fImageX: thisatv,
+									fImageY: thisath,
+									iDirection: iDirection,
+									iAttribute: iAttribute,
+									iEffect: iEffect,
+									bIsPreview: bIsPreview,
+									cToImage: cToImage
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										var newSpotName = 'P' + ci_result.DcMessage;
+										_krpano.set("hotspot[" + spotname + "].name", newSpotName);
+										_krpano.set("hotspot[" + newSpotName + "].ondown", null);
+										_krpano.set("hotspot[" + newSpotName + "].onclick", 'js(deleteHotspot(get(name)))');
+										_krpano.call('deleteHotspotFun(\'' + spotname + '_ok\')');
+										_krpano.call('deleteHotspotFun(\'' + spotname + '_del\')');
+										_krpano.call('deleteHotspotFun(\'' + spotname + '_drag\')');
+										$('#btn-reset').trigger('click');
+									} else {
+										$.messager.alert('提示', '保存失败', 'info');
+									}
+								}
+							});
+						} else {
+							$('#tip').html('请填写相关信息！');
+							setTimeout(function() {
+								$('#tip').html('');
+							}, 3000);
+						}
+					}
+				});
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

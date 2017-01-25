@@ -1,0 +1,359 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js"></script>
+
+</head>
+<body style="display: none;">
+    <div id="div_Body" class="easyui-tabs" data-options="fit:true">
+        <div id="div_Detail" title="基本资料">
+            <div style="max-width: 800px; min-width: 500px;" class="TableCenter">
+                <form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+                <table style="width: 100%;">
+                    <tr>
+                        <td class="tabletext" style="width: 30%;">
+                            <span class="require_sign">*</span>报表名：
+                        </td>
+                        <td style="width: 70%;">
+                            <input id="txt_ReportName" name="cName" type="text" class="easyui-validatebox" style="width: 300px;"
+                                data-options="required:true" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>数据来源：
+                        </td>
+                        <td>
+                            <input id="txt_View" name="cViewDesc" class="TextReadonly" style="display: none;" />
+                            <input id="ddl_View" name="iViewID" class="easyui-combobox" data-options="editable:false,width:150,required:true" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>报表类型：
+                        </td>
+                        <td>
+                            <div id="div_Type" name="iType">
+                            </div>
+                        </td>
+                    </tr>
+                    <tr group="1">
+                        <td class="tabletext" style="width: 30%;">
+                            <span class="require_sign">*</span>报表记录数：
+                        </td>
+                        <td style="width: 70%;">
+                            <input id="txt_Top" name="iTop" type="text" class="TextEdit" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext" style="width: 30%;">
+                            排序字段：
+                        </td>
+                        <td style="width: 70%;">
+                            <input id="ddl_SortViewColumnID" name="iSortViewColumnID" class="easyui-combobox"
+                                data-options="editable:false,width:150" />
+                            <a class="dcn-clearbutton" targetid="#ddl_SortViewColumnID"></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            排序类型：
+                        </td>
+                        <td>
+                            <div id="div_SortType" name="iSortType">
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                </form>
+            </div>
+            <div class="ButtonBar">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+            </div>
+        </div>
+        <div title="字段列表" group="Ex">
+        </div>
+        <div title="数据过滤" group="Ex">
+        </div>
+        <div title="数据预览" group="Ex">
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iID = 0;
+    var _iDDLCount = 0;
+    var _strFun = '';
+    var _strAction = "";
+    var _iType = 0;
+    var _iCategory = 0;
+    var _iViewID = 0;
+
+    initReady(function() {
+        setControlEnable('txt_View', false);
+        $('#div_Body').tabs({
+            onSelect: function(title, index) {
+                $('div[group="Ex"]').empty();
+                $('.easyui-dialog').dialog('destroy');
+                var m_obj = $('#div_Body').tabs('getTab', index);
+                switch (index) {
+                    case 1:
+                        m_obj.panel('refresh', 'ReportManageColumns' + _iType + '.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 2:
+                        m_obj.panel('refresh', 'ReportManageQuery.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 3:
+                        m_obj.panel({ content: '<iframe scrolling="yes" frameborder="0" style="width:100%;height:100%;" src="ReportManageViewer.html#ID=' + _iID + '"></iframe>' });
+                        $('#div_Body').tabs('resize');
+                        break;
+                }
+            }
+        });
+
+        _strAction = getHashValue("Action");
+        if (_strAction == "new") {
+            newData();
+        }
+
+        _iCategory = parseInt(getHashValue("Cat"));
+        if (!_iCategory > 0) {
+            _iCategory = 0;
+        }
+        _strFun = getHashValue("Fun");
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        $('#txt_Top').numberbox({ max: 5000, min: 1, precision: 0, required: true });
+        $('#ddl_SortViewColumnID').combobox({
+            onShowPanel: function() {
+                var m_objData = $(this).combobox('getData');
+                if (m_objData.length == 0) {
+                    $.messager.alert('提示', '请选择数据来源', 'info', function() { $('#ddl_SortViewColumnID').combobox('hidePanel'); });
+                }
+            }
+        });
+
+        if (_strAction == 'add') {
+            postData({
+                url: "DcCdDataViewManage",
+                params: { Action: "viewGetList", bIsReport: 1 },
+                success: function(ci_result) {
+                    $("#ddl_View").combobox({
+                        data: ci_result.rows,
+                        valueField: "iViewID",
+                        textField: "cDesc",
+                        onChange: function(ci_strNewValue, ci_strOldValue) {
+                            if (ci_strNewValue != ci_strOldValue) {
+                                $('#ddl_SortViewColumnID').combobox('loadData', []);
+                                getViewColumns(ci_strNewValue);
+                            }
+                        }
+                    });
+                    _iDDLCount++;
+                    _init();
+                }
+            });
+        }
+        else {
+            $('#txt_View').css('display', '');
+            $('#ddl_View').combobox('destroy');
+            _iDDLCount++;
+            _init();
+        }
+
+        dcnloader.load('ComboList', function() {
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'rep', subCat: 'SortType' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_SortType').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            data: ci_result.rows
+                        });
+                    }
+                    _iDDLCount++;
+                    _init();
+                }
+            });
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'rep', subCat: 'Type', fValue1: 1 },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Type').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            required: true,
+                            data: ci_result.rows,
+                            onLoadSuccess: function() {
+                                if (_strAction == "add") {
+                                    $(this).combolist('selectFirst');
+                                }
+                            },
+                            onChange: function(ci_strNewValue, ci_strOldValue) {
+                                if (ci_strNewValue != ci_strOldValue) {
+                                    if (ci_strNewValue == "1") {
+                                        $('[group=1]').show();
+                                        $('#txt_Top').numberbox({ required: true });
+                                    }
+                                    else {
+                                        $('[group=1]').hide();
+                                        $('#txt_Top').numberbox({ required: false });
+                                    }
+                                }
+                            }
+                            /*,
+                            formatter: function(row) {
+                            var m_objHml = [];
+                            m_objHml.push('<div>' + row.cDesc + '</div>');
+                            m_objHml.push(row.cRemark.replace(/&lt;/g, "<").replace(/&gt;/g, ">"));
+                            return m_objHml.join('');
+                            }
+                            */
+                        });
+                    }
+                    _iDDLCount++;
+                    _init();
+                }
+            });
+        });
+
+        function _init() {
+            if (_iDDLCount == 3) {
+                _iDDLCount = 0;
+                if (_strAction != "add") {
+                    _iID = getHashValue("ID");
+                    editData();
+                }
+                else {
+                    $('#txt_Top').numberbox('setValue', 1000);
+                }
+            }
+        }
+    }
+
+    function cancelSelf() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function cancel() {
+        closedPopupDialog();
+    }
+
+    function newData() {
+        _iID = 0;
+        _strAction = 'add';
+        while ($('#div_Body').tabs('exists', 1)) {
+            $('#div_Body').tabs('close', 1);
+        }
+    }
+
+    function editData() {
+        _strAction = "update";
+        if (_iID > 0) {
+            postData({
+                url: "DcCdReportManage",
+                params: { "action": "GetReport", iReportID: _iID },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        var m_objData = ci_result.rows[0];
+                        _iType = m_objData.iType;
+                        _iCategory = m_objData.iCategory;
+                        _iViewID = m_objData.iViewID;
+                        parent.dialogSetTitle('报表【' + m_objData.cName + '】详细资料');
+
+                        getViewColumns(m_objData.iViewID, function() {
+                            $('#form_Edit').form('load', m_objData);
+                            $('#div_SortType').combolist('select', m_objData.iSortType);
+                            $('#div_Type').combolist('select', m_objData.iType);
+                            $('#div_Type').combolist('disable');
+                        });
+                    }
+                    else {
+                        $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+                    }
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+        }
+    }
+
+    function saveData() {
+        postData({
+            url: 'DcCdReportManage',
+            params: { Action: _strAction, iReportID: _iID, Type: 2, iCategory: _iCategory },
+            form: 'form_Edit',
+            validate: true,
+            success: function(ci_result) {
+                var m_iID = 0;
+                if (_strAction == 'add') {
+                    if (existData(ci_result)) {
+                        m_iID = ci_result.rows[0].iReportID;
+                        location.hash = '#ID=' + m_iID + '&Fun=' + _strFun;
+                        setTimeout(function() {
+                            location.reload();
+                        }, 500);
+                    }
+                }
+                else {
+                    parent.dialogSetTitle('报表【' + this.params.cName + '】详细资料');
+                    $.messager.alert('提示', '保存成功', 'info');
+                }
+                if (_strFun != '') {
+                    eval(_strFun + '(m_iID)');
+                }
+            }
+        });
+    }
+
+    function getViewColumns(ci_iViewID, ci_fun) {
+        postData({
+            url: 'DcCdDataViewManage',
+            params: { Action: "ColGetList", iViewID: ci_iViewID },
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    $.each(ci_result.rows, function() {
+                        if (this.cDesc == '') {
+                            this.cDesc = this.cColumnName;
+                        }
+                    });
+
+                    $('#ddl_SortViewColumnID').combobox({
+                        data: ci_result.rows,
+                        valueField: "iViewColumnID",
+                        textField: "cDesc"
+                    });
+                }
+                if (ci_fun != undefined) {
+                    ci_fun();
+                }
+            }
+        });
+    }
+</script>
+

@@ -1,0 +1,278 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>公司主档</title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=../JS/EsayUI/jquery.validatebox.rules.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+        style="height: 80px;">
+        <ul class="searchForm1">
+            <li class="searchText1">
+                <input type="text" name="cCompanyCode" class="dc-search dc-input" dc-tip="请输入公司编号" />
+            </li>
+            <li class="searchText1">
+                <input type="text" name="cCompChiName" class="dc-search dc-input" dc-tip="请输入公司中文名" />
+            </li>
+            <li class="searchText1"><a href="javascript:void(0)" onclick="" class="dc-button">查询</a></li>
+        </ul>
+    </div>
+    <div data-options="region:'center',border:false,onResize:function(){openDetail();}">
+        <div id="div_Toolbar" style="display: none;" class="GridButtonBar">
+            <span class="GridButtonBarIco"></span><a id="btn_Add" class="easyui-linkbutton" iconcls="dc-icon-editadd"
+                plain="true" onclick="newData()">添加</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                    iconcls="dc-icon-pencil" plain="true" onclick="editData()">修改</a> <a href="javascript:void(0)"
+                        class="easyui-linkbutton" iconcls="dc-icon-cancel" plain="true" onclick="deleteData()">
+                        删除</a>
+        </div>
+        <table id="tab_List" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true">
+                    </th>
+                    <th data-options="field:'cCompanyCode',width:100,sortable:true">
+                        公司编号
+                    </th>
+                    <th data-options="field:'cCompChiName',width:100,sortable:true">
+                        中文名
+                    </th>
+                    <th data-options="field:'cCompEngName',width:100,sortable:true">
+                        英文名
+                    </th>
+                    <th data-options="field:'cAddress',width:100,sortable:true">
+                        中文地址
+                    </th>
+                    <th data-options="field:'cEngAddress',width:100,sortable:true">
+                        英文地址
+                    </th>
+                    <th data-options="field:'cContactPerson',width:150,sortable:true">
+                        联系人
+                    </th>
+                    <th data-options="field:'cContactTel',width:60,sortable:true">
+                        联系电话
+                    </th>
+                    <th data-options="field:'cContactFax',width:60,sortable:true">
+                        传真
+                    </th>
+                    <th data-options="field:'cContactEmail',width:100,sortable:true">
+                        联系邮箱
+                    </th>
+                    <th data-options="field:'cWebSite',width:40,sortable:true">
+                        主页
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="div_Edit" class="easyui-dialog" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'"
+            title="公司详细资料">
+            <div class="easyui-layout" data-options="fit:true,border:false">
+                <div data-options="region:'center',border:false">
+                    <form action="" id="form_Edit" method="post" class="companymanageform">
+                    <table style="width: 500px;" class="TableCenter">
+                        <tr>
+                            <td class="tabletext">
+                                公司编号：
+                            </td>
+                            <td class="tableinput">
+                                <input name="cCompanyCode" class="easyui-validatebox" data-options="required:true" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                中文名：
+                            </td>
+                            <td>
+                                <input name="cCompChiName" class="easyui-validatebox" data-options="prompt:'请输入公司中文名',required:true" />
+                            </td>
+                            <td class="tabletext">
+                                英文名：
+                            </td>
+                            <td>
+                                <input name="cCompEngName" class="easyui-validatebox" data-options="validType:'english'" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                中文地址：
+                            </td>
+                            <td colspan="3">
+                                <textarea name="cAddress" rows="2" class="TextEdit" style="width: 380px;"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                英文地址：
+                            </td>
+                            <td colspan="3">
+                                <textarea name="cEngAddress" rows="2" class="TextEdit" style="width: 380px;"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                联系人：
+                            </td>
+                            <td>
+                                <input name="cContactPerson" class="TextEdit" />
+                            </td>
+                            <td class="tabletext">
+                                联系电话：
+                            </td>
+                            <td>
+                                <input name="cContactTel" class="easyui-validatebox" data-options="validType:'phoneOrMobile'" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                传真：
+                            </td>
+                            <td>
+                                <input name="cContactFax" class="easyui-validatebox" data-options="validType:'faxNo'" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                联系邮箱：
+                            </td>
+                            <td colspan="3">
+                                <input name="cContactEmail" class="easyui-validatebox" data-options="validType:'email'"
+                                    style="width: 380px;" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                主页：
+                            </td>
+                            <td colspan="3">
+                                <input name="cWebSite" class="TextEdit" style="width: 380px;" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tabletext">
+                                备注：
+                            </td>
+                            <td colspan="3">
+                                <textarea name="cRemark" class="TextEdit" rows="2" style="width: 380px;"></textarea>
+                            </td>
+                        </tr>
+                    </table>
+                    </form>
+                    <div class="ButtonBar">
+                        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+                        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="javascript:$('#div_Edit').dialog('close')">
+                            取消</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _IsEdit = false;
+    var _Action;
+    var _ID;
+    var arrID = new Array();
+    var _ItemData = null;
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        setDataGrid("tab_List", "div_Toolbar", "DcCdCompanyManage", { "action": "query" }, "iCompanyID", "cCompanyCode", "", {
+            onDblClickRow: function(rowIndex, rowData) { $("#tab_List").datagrid("selectRow", rowIndex); showEditData(); },
+            onSelect: function(rowIndex, rowData) { _ItemData = rowData; }
+        });
+
+        $('#div_Edit').dialog({ onClose: function() { $(".tooltip").remove(); _IsEdit = false; } });
+    }
+
+    function openDetail() {
+        if (_IsEdit) {
+            $('#div_Edit').dialog({ width: 520, height: 400 }).dialog('open');
+        }
+    }
+
+    function showEditData() {
+        if (_ItemData != null && $("#tab_List").datagrid("getSelected") != null) {
+            $('#form_Edit').form('load', _ItemData);
+            _Action = 'edit';
+            _IsEdit = true;
+            _ID = _ItemData.iCompanyID;
+            $(".dc-input").dcreset();
+            openDetail();
+            return true;
+        }
+        return false;
+    }
+
+    function newData() {
+        $('#form_Edit').form('clear');
+        _Action = 'add';
+        _ID = "";
+        _IsEdit = true;
+        $(".dc-input").dcreset();
+        openDetail();
+    }
+
+    function editData() {
+        if (!showEditData()) {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function saveData() {
+        $('#form_Edit').form('submit', {
+            url: getInterfaceName("DcCdCompanyManage") + "?action=" + _Action + "&id=" + _ID,
+            onSubmit: function() {
+                return $(this).form('validate');
+            },
+            success: function(result) {
+                result = convertToJson(result);
+                if (checkReturnJson(result)) {
+                    $.messager.alert('提示', '保存成功', 'info', function() { $('#div_Edit').dialog('close'); $('#tab_List').datagrid('reload'); })
+                }
+                else {
+                    $.messager.alert('保存失败', result.DcMessage, 'error');
+                }
+            }
+        }).error(function(err) { alert(err.responseText); }); ;
+    }
+
+    function deleteData() {
+        if (selectDel()) {
+            $.messager.confirm('提示', '确定要删除所选' + arrID.length + '条记录吗？', function(r) {
+                if (r) {
+                    $.post(getInterfaceName("DcCdCompanyManage"), { 'id[]': arrID, action: "del" }, function(result) {
+                        result = convertToJson(result);
+                        if (checkReturnJson(result)) {
+                            $.messager.alert('提示', '删除成功', 'info', function() { $('#tab_List').datagrid('reload'); })
+                        }
+                        else {
+                            $.messager.alert('删除失败', result.DcMessage, 'error');
+                        }
+                    }, 'json');
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function selectDel() {
+        arrID = [];
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+
+            $.each(m_row, function(index, value) { arrID[index] = m_row[index].iCompanyID; })
+
+            return true;
+        }
+        return false;
+    }
+</script>
+

@@ -1,0 +1,659 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+    <style>
+        .YSum {
+            float: left;
+            width: 60px;
+        }
+    </style>
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display:none;">
+    <div data-options="region:'north',border:false">
+        <table id="tab_Report" class="searchTable" border="0" cellpadding="0" cellspacing="0"
+            style="height: 70px;">
+            <tr>
+                <td class="searchTd">
+                    图表名
+                </td>
+                <td class="searchTd">
+                    <input id="txt_ReportName" type="text" class="easyui-validatebox" data-options="prompt:'请输入图表名',required:true" />
+                </td>
+                <td class="searchTd">
+                    图表文件夹
+                </td>
+                <td class="searchTd">
+                    <select id="ddl_Folder" class="easyui-combobox" height="30" style="height: 30px;
+                        width: 152px;" editable="false" required="true">
+                    </select>
+                </td>
+                <td class="searchTd">
+                    图表主模块
+                </td>
+                <td class="searchTd">
+                    <select id="ddl_MainTable" class="easyui-combobox" height="30" style="height: 30px;
+                        width: 152px;" editable="false" required="true" data-options="onSelect:function(record){changeTable(record.iTableID);}">
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div data-options="region:'center',border:false">
+        <div id="div_Detail" class="easyui-tabs" data-options="fit:true,plain:true,onSelect:function(title,index){checkType(index);}"
+            style="overflow: auto;">
+            <div title="图表类型" style="padding: 10px;">
+                <table style="width: 760px;">
+                    <tr>
+                        <td style="width: 250px;">
+                            <input name="rad_ReportType" type="radio" onclick="reportTypeSelect(3);" value="3" /><b>曲线图表</b>
+                        </td>
+                        <td style="width: 250px;">
+                            <input name="rad_ReportType" type="radio" onclick="reportTypeSelect(4);" value="4" /><b>柱状图表</b>
+                        </td>
+                        <td>
+                            <input name="rad_ReportType" type="radio" onclick="reportTypeSelect(5);" value="5" /><b>饼图图表</b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <img src="../Image/line.gif" />
+                        </td>
+                        <td>
+                            <img src="../Image/ver_bar_stk.gif" />
+                        </td>
+                        <td>
+                            <img src="../Image/pie.gif" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div id="div_Columns" title="图表字段" style="padding: 10px;">
+                <div style="width: 500px;">
+                    <div style='float: left; width: 160px; height: 130px;'>
+                        <div id="div_Y" style="margin-top: 40px;">
+                            Y轴：
+                            <br />
+                            <select id="ddl_Y" class="easyui-combobox" height="30" style="height: 30px; width: 152px;"
+                                editable="false" required="true" data-options="onSelect:function(record){changeY(record);}">
+                            </select>
+                            <br />
+                            <div class="YSum">
+                                <input id="chk_YSum" type="radio" name="chk_YSum" onclick="ySumSelect(this);" />总计
+                            </div>
+                            <div class="YSum">
+                                <input id="chk_YAvg" type="radio" name="chk_YSum" onclick="ySumSelect(this);" />平均数
+                            </div>
+                            <br />
+                            <div class="YSum">
+                                <input id="chk_YMin" type="radio" name="chk_YSum" onclick="ySumSelect(this);" />最小值
+                            </div>
+                            <div class="YSum">
+                                <input id="chk_YMax" type="radio" name="chk_YSum" onclick="ySumSelect(this);" />最大值
+                            </div>
+                        </div>
+                    </div>
+                    <div id="div_Image" style="float: left; width: 150px; height: 130px; margin-left: 5px;">
+                    </div>
+                    <div style="float: left; margin-left: 5px;">
+                        <div style="margin-top: 30px;">
+                            分组：
+                            <br />
+                            <select id="ddl_GroupBy" class="easyui-combobox" height="30" style="height: 30px;
+                                width: 152px;" editable="false" required="true" validtype="groupby">
+                            </select>
+                            <br />
+                            <img src="../Image/legend.gif" style="margin-top: 5px;" />
+                        </div>
+                    </div>
+                </div>
+                <div id="div_X" style="margin-left: 160px; margin-top: 135px;">
+                    X轴：
+                    <br />
+                    <select id="ddl_X" class="easyui-combobox" height="30" style="height: 30px; width: 152px;"
+                        editable="false" required="true">
+                    </select>
+                </div>
+            </div>
+            <div title="查询条件">
+                <table id="tab_Query" class="searchTable" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td class="searchTd" align="left">
+                            <select id="ddl_Columns" class="easyui-combobox" height="30" style="height: 30px;
+                                width: 152px;" editable="false" required="true">
+                            </select>
+                        </td>
+                        <td class="searchTd">
+                            <select id="ddl_Logic" class="easyui-combobox" height="30" style="height: 30px; width: 80px;"
+                                editable="false" required="true">
+                            </select>
+                        </td>
+                        <td class="searchTd">
+                            <input id="txt_Value" type="text" class="easyui-validatebox" data-options="prompt:'请输入查询值'" />
+                        </td>
+                        <td class="searchTd">
+                            <a href="javascript:void(0)" onclick="addQuery();" class="dc-button">添加条件</a>
+                        </td>
+                    </tr>
+                </table>
+                <div style="padding: 20px;">
+                    <table id="tab_Queries" fitcolumns="true" style="width: 420px; height: auto;">
+                        <thead>
+                            <tr>
+                                <th field="cColumnName" width="120">
+                                    字段
+                                </th>
+                                <th field="cLogicTypeDesc" width="50" align="center">
+                                    比较逻辑
+                                </th>
+                                <th field="cValue" width="150">
+                                    值
+                                </th>
+                                <th field="aa" width="30" align="center" data-options="formatter:function(value,rec){return getDeleteButton(rec);}">
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div data-options="region:'south',border:false" style="height: 35px;">
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelData();">取消</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iReportID = 0;
+    var _arrDeleteQueries = new Array();
+    var _iType = 0;
+    var _bIsGroupBy = false;
+    var _objReportData = null;
+    var _bIsBinding = [false, false, false];
+    var _objReportColumns = [{ iColumnID: 0, iReportColumnID: 0, iType: 1 }, { iColumnID: 0, iReportColumnID: 0, iType: 2 }, { iColumnID: 0, iReportColumnID: 0, iType: 3}];
+
+    initReady(function() {
+        $('#tab_Queries').datagrid({
+            singleSelect: true
+        });
+
+        $.extend($.fn.validatebox.defaults.rules, {
+            groupby: {
+                validator: function(value) {
+                    return (_iType != 5 || value != "不分组");
+                },
+                message: '请选择分组字段'
+            }
+        });
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function reportTypeSelect(ci_iType) {
+        _iType = ci_iType;
+        var m_objList = $("input[name='rad_ReportType']");
+        m_objList.removeAttr("checked");
+        $("input[name='rad_ReportType'][value='" + ci_iType + "']").attr("checked", "checked");
+        var m_strUrl = "";
+        var m_strDisplay = "";
+        switch (ci_iType) {
+            case 3:
+                m_strUrl = "../Image/line.gif";
+                break;
+            case 4:
+                m_strUrl = "../Image/ver_bar_stk.gif";
+                break;
+            case 5:
+                m_strUrl = "../Image/pie.gif";
+                m_strDisplay = "none";
+                break;
+        }
+        $("#div_Columns").form("clear");
+        $("#div_Image").css("background", "url('" + m_strUrl + "')  no-repeat");
+        $("#div_X").css("display", m_strDisplay);
+        $("#ddl_X").combobox({ required: (m_strDisplay == "" ? true : false) });
+        changeY(0);
+    }
+
+    function ySumSelect(ci_obj) {
+        var m_strChecked = $(ci_obj).attr("checked");
+        var m_objList = $("input[name='chk_YSum']");
+        m_objList.removeAttr("checked");
+        if (m_strChecked != undefined) {
+            $(ci_obj).attr("checked", "checked");
+        }
+    }
+
+    function changeY(ci_objData) {
+        var m_objList = $("input[name='chk_YSum']");
+        if (ci_objData.iColumnID > 0) {
+            m_objList.removeAttr("disabled");
+        }
+        else {
+            m_objList.removeAttr("checked");
+            m_objList.attr("disabled", "disabled");
+        }
+    }
+
+    function initPage() {
+        _iReportID = getHashValue("ReportID");
+        //_iReportID = 10;
+        bindMainTable();
+        bindReportFolder();
+        getReportData(_iReportID);
+        bindLogic();
+    }
+
+    function bindMainTable() {
+        _bIsBinding[1] = false;
+        postData({
+            url: "DcCdDataTableManage",
+            params: { Action: "GetMaintable" },
+            isSys: true,
+            success: function(ci_result) {
+                _bIsBinding[1] = true;
+                $("#ddl_MainTable").combobox({
+                    data: ci_result.rows,
+                    valueField: "iTableID",
+                    textField: "cTableName"
+                });
+                bindReportData()
+            }
+        });
+    }
+
+    function bindReportFolder() {
+        _bIsBinding[0] = false;
+        postData({
+            url: "DcCdReportManage",
+            params: { Action: "GetFolderList" },
+            isSys: true,
+            success: function(ci_result) {
+                _bIsBinding[0] = true;
+                $("#ddl_Folder").combobox({
+                    data: ci_result.rows,
+                    valueField: "iFolderID",
+                    textField: "cName"
+                });
+                bindReportData()
+            }
+        });
+    }
+
+    function bindLogic() {
+        bindCodeMasterData({
+            controlID: "ddl_Logic",
+            cat: "orequ",
+            subCat: "LogicType",
+            valueField: "cCodeItem",
+            textField: "cDesc"
+        });
+    }
+
+    function resetDetail() {
+        reportTypeSelect(3);
+        ySumSelect(null);
+        try {
+            while (true) {
+                $("#tab_Queries").datagrid('deleteRow', 0);
+            }
+        }
+        catch (err) { }
+    }
+
+    function getReportData(ci_iReportID) {
+        _bIsBinding[2] = false;
+        postData({
+            url: "DcCdReportManage",
+            params: { "action": "GetReportDetail", iReportID: ci_iReportID },
+            isSys: true,
+            success: function(ci_result) {
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                    _objReportData = ci_result.rows[0];
+                    postData({
+                        url: "DcCdReportManage",
+                        params: { Action: "GetReportColumns", iReportID: _iReportID },
+                        isSys: true,
+                        success: function(ci_result) {
+                            if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                                ci_result.rows.sort(function(a, b) { return a.iType - b.iType; });
+                                for (var i = 0; i < ci_result.rows.length; i++) {
+                                    if (_objReportColumns.length > i) {
+                                        _objReportColumns[i].iColumnID = ci_result.rows[i].iColumnID;
+                                        _objReportColumns[i].iReportColumnID = ci_result.rows[i].iReportColumnID;
+                                        _objReportColumns[i].iType = ci_result.rows[i].iType;
+                                    }
+                                }
+                            }
+                            else {
+                                hiddMask();
+                            }
+                            _bIsBinding[2] = true;
+                            bindReportData();
+                        }
+                    });
+                }
+                else {
+                    _objReportData = null;
+                    $.messager.alert('提示', '该图表不存在或已删除', 'info', function() { _bIsBinding[2] = true; bindReportData(); });
+                }
+            }
+        });
+    }
+
+    function getDataTableData(ci_iTableID) {
+        resetDetail();
+        if (ci_iTableID > 0) {
+            postData({
+                url: "DcCdDataTableManage",
+                params: { "action": "getallcolumns", iTableID: ci_iTableID },
+                isSys: true,
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        bindDataTabaleData(ci_result.rows[0]);
+                        $("#ddl_X").combobox("setText", "");
+                        $("#ddl_Y").combobox("setValue", 0);
+                        $("#ddl_GroupBy").combobox("setValue", 0);
+                        changeY($("#ddl_Y").combobox("getData"));
+                    }
+                }
+            });
+        }
+    }
+
+    function bindReportData() {
+        for (var i = 0; i < _bIsBinding.length; i++) {
+            if (!_bIsBinding[i]) {
+                return;
+            }
+        }
+        if (_objReportData != null) {
+            $("#txt_ReportName").val(_objReportData.cName);
+            if (_objReportData.iTableID > 0) {
+                $("#ddl_MainTable").combobox('setValue', _objReportData.iTableID);
+            }
+            if (_objReportData.iFolderID > 0) {
+                $("#ddl_Folder").combobox('setValue', _objReportData.iFolderID);
+            }
+            reportTypeSelect(_objReportData.iType);
+        }
+        bindDataTabaleData(_objReportData);
+    }
+
+    function bindDataTabaleData(ci_objData) {
+        var m_objYColumns = [{ iColumnID: 0, cColumnName: "记录数", iOrder: 0}];
+        var m_objGroupByColumns = [{ iColumnID: 0, cColumnName: "不分组", iOrder: 0}];
+        var m_objColumns = [];
+        var m_objQueries = { total: 0, rows: [] };
+        var m_iY = 0;
+        var m_iX = "";
+        var m_iGroupBy = "";
+
+        if (ci_objData != undefined) {
+            if (ci_objData.TableList != undefined && ci_objData.TableList.length > 0) {
+                ci_objData.TableList.sort(function(a, b) { return b.bIsMain - a.bIsMain; });
+                for (var i = 0; i < ci_objData.TableList.length; i++) {
+                    if (ci_objData.TableList[i].Columns.length > 0) {
+                        for (var j = 0; j < ci_objData.TableList[i].Columns.length; j++) {
+                            var m_iIndex = m_objColumns.length;
+                            m_objColumns.push(ci_objData.TableList[i].Columns[j]);
+                            m_objGroupByColumns.push(m_objColumns[m_iIndex]);
+                            switch (m_objColumns[m_iIndex].iDataType) {
+                                case 1:
+                                    break;
+                                case 2:
+                                case 3:
+                                case 4:
+                                    m_objYColumns.push(m_objColumns[m_iIndex]);
+                                    break;
+                            }
+                            for (var k = 0; k < _objReportColumns.length; k++) {
+                                if (m_objColumns[m_iIndex].iColumnID == _objReportColumns[k].iColumnID) {
+                                    switch (_objReportColumns[k].iType) {
+                                        case 1:
+                                            m_iX = m_objColumns[m_iIndex].iColumnID;
+                                            break;
+                                        case 2:
+                                            m_iY = m_objColumns[m_iIndex].iColumnID;
+                                            if (m_objColumns[m_iIndex].bIsSum) {
+                                                $("#chk_YSum").attr("checked", "checked");
+                                            }
+                                            if (m_objColumns[m_iIndex].bIsAvg) {
+                                                $("#chk_YAvg").attr("checked", "checked");
+                                            }
+                                            if (m_objColumns[m_iIndex].bIsMin) {
+                                                $("#chk_YMin").attr("checked", "checked");
+                                            }
+                                            if (m_objColumns[m_iIndex].bIsMax) {
+                                                $("#chk_YMax").attr("checked", "checked");
+                                            }
+                                            changeY(m_objColumns[m_iIndex]);
+                                            break;
+                                        case 3:
+                                            m_iGroupBy = m_objColumns[m_iIndex].iColumnID;
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (ci_objData.QueryList != undefined && ci_objData.QueryList.length > 0) {
+                    m_objQueries.rows = ci_objData.QueryList;
+                    m_objQueries.total = ci_objData.QueryList.length;
+                }
+            }
+        }
+        $("#ddl_X").combobox({
+            data: m_objColumns,
+            valueField: "iColumnID",
+            textField: "cColumnName"
+        }).combobox("setValue", m_iX);
+        $("#ddl_GroupBy").combobox({
+            data: m_objGroupByColumns,
+            valueField: "iColumnID",
+            textField: "cColumnName"
+        }).combobox("setValue", m_iGroupBy);
+        $("#ddl_Y").combobox({
+            data: m_objYColumns,
+            valueField: "iColumnID",
+            textField: "cColumnName"
+        }).combobox("setValue", m_iY);
+
+        m_objQueries.rows.sort(function(a, b) { return a.iOrder - b.iOrder; });
+        $("#tab_Queries").datagrid('loadData', m_objQueries);
+
+        $("#ddl_Columns").combobox({
+            data: m_objColumns,
+            valueField: "iColumnID",
+            textField: "cColumnName"
+        });
+        hiddMask();
+    }
+
+    function checkType(ci_iIndex) {
+        if (ci_iIndex > 0 && (_iType == "" || _iType < 3)) {
+            $("#div_Detail").tabs("select", 0);
+            $.messager.alert('提示', '请选择图表类型', 'info');
+        }
+    }
+
+    function changeTable(ci_iTableID) {
+        loadingMask(document.body.id);
+        $("#div_Detail").tabs("select", 0);
+        getDataTableData(ci_iTableID);
+    }
+
+    function getDeleteButton(ci_objData) {
+        var m_strReturn = '<img src="../JS/EsayUI/themes/icons/cancel.png" onclick="deleteQuery(' + ci_objData.iOrder + ',' + ci_objData.iQueryID;
+        m_strReturn += ')" style="cursor: pointer;" alt="删除" title="删除" />';
+        return m_strReturn;
+    }
+
+    function deleteQuery(ci_iIndex, ci_iQueryID) {
+        var m_objGrid = $("#tab_Queries");
+        var m_objData = m_objGrid.datagrid('getData');
+        m_objData.rows.splice(ci_iIndex, 1);
+        m_objData.total = m_objData.rows.length;
+        for (var i = 0; i < m_objData.total; i++) {
+            m_objData.rows[i].iOrder = i;
+        }
+        m_objGrid.datagrid('loadData', m_objData);
+        addDeleteQueriesList(ci_iQueryID);
+    }
+
+    function addQuery() {
+        if ($("#tab_Query").form('validate')) {
+            var m_objGrid = $("#tab_Queries");
+            var m_objData = m_objGrid.datagrid('getData');
+            var m_objRow = {
+                iQueryID: 0,
+                iColumnID: $("#ddl_Columns").combobox("getValue"),
+                cColumnName: $("#ddl_Columns").combobox("getText"),
+                iLogicType: $("#ddl_Logic").combobox("getValue"),
+                cLogicTypeDesc: $("#ddl_Logic").combobox("getText"),
+                cValue: $("#txt_Value").val(),
+                iOrder: m_objData.rows.length
+            };
+            m_objData.rows.push(m_objRow);
+            m_objData.total++;
+            m_objGrid.datagrid('loadData', m_objData);
+            $("#tab_Query").form("clear");
+        }
+    }
+
+    function addDeleteQueriesList(ci_iQueryID) {
+        if (ci_iQueryID > 0) {
+            _arrDeleteQueries[_arrDeleteQueries.length] = ci_iQueryID;
+        }
+    }
+
+    function cancelData() {
+        loadingMask(document.body.id);
+        _arrDelete = new Array();
+        $("#txt_ReportName").val("");
+        $("#ddl_MainTable").combobox('setValue', "");
+        resetDetail();
+        getReportData(_iReportID);
+    }
+
+    function saveData() {
+        if ($("#tab_Report").form('validate')) {
+            if (_iType == "" || _iType < 3) {
+                $.messager.alert('提示', '请选择图表类型', 'info', function() { $("#div_Detail").tabs("select", 0); });
+                return;
+            }
+            if (!$("#div_Columns").form('validate')) {
+                $.messager.alert('提示', '请选择图表字段', 'info', function() { $("#div_Detail").tabs("select", 1); });
+                return;
+            }
+            {
+                var m_bIsSumSelect = false;
+                var m_objList = $("input[name='chk_YSum']");
+                $.each(m_objList, function(index) { if ($(m_objList[index]).attr("checked") == "checked") { m_bIsSumSelect = true; } });
+                if (!m_bIsSumSelect) {
+                    $("#chk_YSum").attr("checked", "checked");
+                }
+            }
+            var m_strQueryData = "";
+            var m_strDetailData = "";
+            var m_strSign = getSeparativeSign();
+            var m_objData = $("#tab_Queries").datagrid('getData').rows;
+            if (_arrDeleteQueries.length > 0) {
+                for (var i = 0; i < _arrDeleteQueries.length; i++) {
+                    m_objData.push({ iQueryID: _arrDeleteQueries[i] * -1 });
+                }
+            }
+            for (var i = 0; i < m_objData.length; i++) {
+                if (m_strQueryData.length > 0) {
+                    m_strQueryData += (m_strSign + ',' + m_strSign);
+                }
+                m_strQueryData += m_objData[i].iQueryID;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].iColumnID;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].iLogicType;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].cValue;
+                m_strQueryData += m_strSign;
+                m_strQueryData += m_objData[i].iOrder;
+            }
+            for (var i = 0; i < _objReportColumns.length; i++) {
+                if (m_strDetailData.length > 0) {
+                    m_strDetailData += (m_strSign + ',' + m_strSign);
+                }
+                m_strDetailData += _objReportColumns[i].iReportColumnID;
+                m_strDetailData += m_strSign;
+                switch (_objReportColumns[i].iType) {
+                    case 1:
+                        m_strDetailData += $("#ddl_X").combobox("getValue");
+                        break;
+                    case 2:
+                        m_strDetailData += $("#ddl_Y").combobox("getValue");
+                        break;
+                    case 3:
+                        m_strDetailData += $("#ddl_GroupBy").combobox("getValue");
+                        break;
+                }
+                m_strDetailData += m_strSign;
+                m_strDetailData += i;
+                if (_objReportColumns[i].iType == 2) {
+                    m_strDetailData += m_strSign;
+                    m_strDetailData += ($("#chk_YSum").attr("checked") == "checked" ? 1 : 0);
+                    m_strDetailData += m_strSign;
+                    m_strDetailData += ($("#chk_YAvg").attr("checked") == "checked" ? 1 : 0);
+                    m_strDetailData += m_strSign;
+                    m_strDetailData += ($("#chk_YMin").attr("checked") == "checked" ? 1 : 0);
+                    m_strDetailData += m_strSign;
+                    m_strDetailData += ($("#chk_YMax").attr("checked") == "checked" ? 1 : 0);
+                    m_strDetailData += m_strSign;
+                    m_strDetailData += 0;
+                }
+                else {
+                    for (var j = 0; j < 5; j++) {
+                        m_strDetailData += m_strSign;
+                        m_strDetailData += 0;
+                    }
+                }
+                m_strDetailData += m_strSign;
+                m_strDetailData += _objReportColumns[i].iType;
+            }
+            loadingMask(document.body.id, "正在保存数据...");
+            postData({
+                url: "DcCdReportManage",
+                params: {
+                    Action: "UpdateData",
+                    iReportID: _iReportID,
+                    cName: $("#txt_ReportName").val(),
+                    iTableID: $("#ddl_MainTable").combobox("getValue"),
+                    iFolderID: $("#ddl_Folder").combobox("getValue"),
+                    iType: _iType,
+                    DetailData: m_strDetailData,
+                    QueryData: m_strQueryData
+                },
+                isSys: true,
+                success: function(ci_result) {
+                    _iReportID = ci_result.DcMessage;
+                    //$("#div_Detail").tabs("select", 0);
+                    $("#ddl_Logic").combobox("setText", "");
+                    $("#txt_Value").val("");
+                    cancelData();
+                },
+                failure: function(ci_result) {
+                    hiddMask();
+                    $.messager.alert('提示', '保存失败', 'info');
+                }
+            });
+        }
+    }
+</script>
+

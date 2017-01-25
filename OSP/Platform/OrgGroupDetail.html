@@ -1,0 +1,246 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body>
+    <div id="div_Body" class="easyui-layout" data-options="fit:true,border:false" style="width: 100%;
+        height: 100%; display: none;">
+        <div data-options="region:'west',border:false,split:true" style="width: 500px;">
+            <div id="div_Data"" " class="easyui-layout" data-options="fit:true,border:false">
+                <div data-options="region:'north',border:false,split:true" style="height: 250px;">
+                    <div id="div_Detail" class="easyui-layout" data-options="fit:true,border:false">
+                        <div data-options="region:'center',border:false">
+                            <form id="form_Edit" method="post" novalidate="novalidate" action="">
+                            <table style="min-width: 300px;" class="TableCenter">
+                                <tr>
+                                    <td class="tabletext">
+                                        组织组编号：
+                                    </td>
+                                    <td class="tableinput">
+                                        <input name="cGroupCode" class="easyui-validatebox" data-options="required:true" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="tabletext">
+                                        中文名：
+                                    </td>
+                                    <td>
+                                        <input name="cGroupChiName" class="easyui-validatebox" data-options="required:true" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="tabletext">
+                                        英文名：
+                                    </td>
+                                    <td>
+                                        <input name="cGroupEngName" class="TextEdit" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="tabletext">
+                                        角色可用文件空间：
+                                    </td>
+                                    <td class="tableinput">
+                                        <input name="iStorageSpace" type="text" class="easyui-numberbox TextEdit" data-options="min:0,precision:0"></input>
+                                        MB
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="tabletext">
+                                        角色邮箱可用空间：
+                                    </td>
+                                    <td class="tableinput">
+                                        <input name="iMailboxCapacity" type="text" class="easyui-numberbox TextEdit" data-options="min:0,precision:0"></input>
+                                        MB
+                                    </td>
+                                </tr>
+                            </table>
+                            </form>
+                        </div>
+                        <div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+                            <div class="ButtonBar" style="position: inherit; min-width: 150px;">
+                                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+                                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDetail();">取消</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div data-options="region:'center',border:false,title:'组织列表'">
+                    <table id="tab_Org_List" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th data-options="field:'ck',checkbox:true">
+                                </th>
+                                <th data-options="field:'cOrgCode',width:100,sortable:true">
+                                    组织编号
+                                </th>
+                                <th data-options="field:'cOrgName',width:100,sortable:true">
+                                    组织名
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                    <div id="div_Org_Toolbar" class="GridButtonBar" style="display: none;">
+                        <span class="GridButtonBarIco"></span><a href="javascript:void(0)" class="easyui-linkbutton"
+                            iconcls="dc-icon-pencil" plain="true" onclick="openSearchOrg()">添加</a> <a href="javascript:void(0)"
+                                class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="deleteOrgData()">
+                                删除</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="div_Power" data-options="region:'center',border:false,title:'授权设置'">
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iID = 0;
+    var _strAction = "";
+
+    checkPagePower({ onload: function() { initPage(); }, showMask: false });
+
+    function initPage() {
+        _strAction = getHashValue("Action");
+        if (_strAction == "new") {
+            newData();
+        }
+        else {
+            _iID = getHashValue("OrgGroupID");
+            if (_iID > 0) {
+                editData();
+            }
+        }
+    }
+
+    function closeDetail() {
+        parent.closeDetail();
+    }
+
+    function newData() {
+        _strAction = "add";
+        $("#div_Detail").appendTo("body")
+        $("#div_Body").remove();
+        $.parser.parse();
+    }
+
+    function editData() {
+        _strAction = "update";
+        if (_iID > 0) {
+            postData({
+                url: "DcCdOrgGroupManage",
+                params: { Action: "GetList", iOrgGroupID: _iID },
+                success: function(ci_result) {
+                    $('#form_Edit').form('load', ci_result.rows[0]);
+                    $("#div_Body").css("display", "");
+                    getOrgData(_iID);
+                    $("#div_Power").html("<iframe id='ifr_Power' scrolling='yes' frameborder='0' style='width:100%;height:98%;' src='OrgGroupPowerManage.html#OrgGroupID=" + _iID + "'></iframe>");
+                }
+            });
+        }
+    }
+
+    function saveData() {
+        $('#form_Edit').form('submit', {
+            url: getInterfaceName("DcCdOrgGroupManage") + "?action=" + _strAction + "&iOrgGroupID=" + _iID,
+            onSubmit: function() {
+                return $(this).form('validate');
+            },
+            success: function(result) {
+                result = convertToJson(result);
+                if (checkReturnJson(result)) {
+                    parent.$('#tab_List').datagrid('reload');
+                    $.messager.alert('提示', '保存成功', 'info', function() {
+                        if (_strAction == 'add') {
+                            if (result.rows != undefined && result.rows.length > 0) {
+                                parent.opendDetail(result.rows[0].iOrgGroupID);
+                            }
+                            closeDetail();
+                        }
+                    })
+                }
+                else {
+                    $.messager.alert('保存失败', result.DcMessage, 'error');
+                }
+            }
+        }).error(function(err) { alert(err.responseText); }); ;
+    }
+
+    function getOrgData(ci_iOrgGroupID) {
+        setDataGrid('tab_Org_List', 'div_Org_Toolbar', 'DcCdOrgGroupManage', { Action: "GetOrgList", "iOrgGroupID": ci_iOrgGroupID }, "iID", "cOrgCode", '', {
+            onLoadSuccess: function(data) { setTimeout("$('#div_Data').layout('resize');", 50); },
+            singleSelect: false,
+            checkOnSelect: true,
+            selectOnCheck: true,
+            pagination: false
+        });
+    }
+
+    function openSearchOrg() {
+        popupDialog("SearchOrg.html", 'parent.readOrgData', "组织查询", false, 750, 500);
+    }
+
+    function readOrgData(ci_strData) {
+        closedPopupDialog();
+        if (ci_strData != '') {
+            var m_strSign = getSeparativeSign();
+            var m_objOrgID = [];
+            var m_objList = $('#tab_Org_List').datagrid('getData');
+            $.each(ci_strData.split(','), function(index, value) {
+                var m_iOrgID = parseInt(value);
+                if (m_iOrgID > 0) {
+                    if (m_objList.rows.length > 0) {
+                        for (var i = 0; i < m_objList.rows.length; i++) {
+                            if (m_iOrgID == parseInt(m_objList.rows[i].iOrgID)) {
+                                return true;
+                            }
+                        }
+                    }
+                    m_objOrgID.push(_iID + m_strSign + m_iOrgID);
+                }
+            });
+            if (m_objOrgID.length > 0) {
+                postData({
+                    url: "DcCdOrgGroupManage",
+                    params: { Action: "AddOrg", DetailData: m_objOrgID.join(m_strSign + ',' + m_strSign) },
+                    success: function(ci_result) {
+                        $('#tab_Org_List').datagrid('reload');
+                    }
+                });
+            }
+        }
+    }
+
+    function deleteOrgData() {
+        var m_row = $('#tab_Org_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            $.messager.confirm('提示', '确定要删除所选' + m_row.length + '条记录吗？', function(r) {
+                if (r) {
+                    var m_arrID = [];
+                    $.each(m_row, function(index, value) { m_arrID[index] = value.iID; });
+                    postData({
+                        url: "DcCdOrgGroupManage",
+                        params: { iID: m_arrID.join(","), Action: "DeleteOrg" },
+                        success: function(ci_result) {
+                            $('#tab_Org_List').datagrid('reload');
+                            $.messager.alert('提示', '删除成功', 'info');
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+</script>
+

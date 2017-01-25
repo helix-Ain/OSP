@@ -1,0 +1,52 @@
+.icon-blank { background: url('icons/blank.gif') no-repeat; }
+.icon-add { background: url('icons/edit_add.png') no-repeat; }
+.icon-edit { background: url('icons/pencil.png') no-repeat; }
+.icon-remove { background: url('icons/edit_remove.png') no-repeat; }
+.icon-save { background: url('icons/filesave.png') no-repeat; }
+.icon-cut { background: url('icons/cut.png') no-repeat; }
+.icon-ok { background: url('icons/ok.png') no-repeat; }
+.icon-no { background: url('icons/no.png') no-repeat; }
+.icon-cancel { background: url('icons/cancel.png') no-repeat; }
+.icon-reload { background: url('icons/reload.png') no-repeat; }
+.icon-search { background: url('icons/search.png') no-repeat; }
+.icon-print { background: url('icons/print.png') no-repeat; }
+.icon-help { background: url('icons/help.png') no-repeat; }
+.icon-undo { background: url('icons/undo.png') no-repeat; }
+.icon-redo { background: url('icons/redo.png') no-repeat; }
+.icon-back { background: url('icons/back.png') no-repeat; }
+.icon-sum { background: url('icons/sum.png') no-repeat; }
+.icon-tip { background: url('icons/tip.png') no-repeat; }
+
+.icon-mini-add { background: url('icons/mini_add.png') no-repeat 2px 2px; }
+.icon-mini-edit { background: url('icons/mini_edit.png') no-repeat 2px 2px; }
+.icon-mini-refresh { background: url('icons/mini_refresh.png') no-repeat 3px 2px; }
+.icon-blank { background-image: none; width: 0px; }
+
+.icon-clear { background: url(../../../Image/b4_1.png) no-repeat; }
+.dc-icon-cancel { background: url('icons/dc_cancel.png') no-repeat; }
+
+.dc-icon-edit { background: url('icons/dc_edit.png') no-repeat; }
+
+.dc-icon-editadd { background: url('icons/dc_edit_add.png') no-repeat; }
+
+.dc-icon-pencil { background: url('icons/dc_pencil.png') no-repeat; }
+
+.dc-icon-dialog-title { background: url('icons/dc_dialog_title.jpg') no-repeat; }
+
+.dc-icon-panel-title { background: url('icons/dc_panel_title.png') no-repeat; }
+
+.dc-icon-search { background: url('icons/dc_search.png') no-repeat; }
+
+.dc-tabmenu-title { background: url('icons/dc_tabmenu_title.png') no-repeat; }
+
+.dc-icon-close { background: url('icons/dc_icon_close.png') no-repeat; }
+
+.dc-icon-upload { background: url('icons/dc_upload.png') no-repeat; }
+
+.dc-icon-move { background: url(../../../Image/view-icons.png) -307px -55px no-repeat; }
+.dc-icon-rename { background: url(../../../Image/view-icons.png) -117px -55px no-repeat; }
+.dc-icon-delete { background: url(../../../Image/view-icons.png) -284px -55px no-repeat; }
+
+.dc-mail-account { background: url('icons/dc_mail_account.png') no-repeat; width: 22px; }
+
+.dc-mail-paper { background: url('icons/dc_mail_paper.png') no-repeat; }

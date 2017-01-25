@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html ng-app='app'>
+
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<link rel='stylesheet' href='CSS/Ionic/ionic.min.css' />
+		<link rel='stylesheet' href='CSS/Common.css' />
+		<script src="JS/Ionic/ionic.bundle.min.js"></script>
+		<script src="JS/Constants.js"></script>
+		<script src="JS/Common.js?v=1.0"></script>
+		<script src='JS/krpano.js'></script>
+		<script src='http://api.map.baidu.com/api?v=2.0&ak=D85e9f5f1c47381984bbce6eaffcff42'></script>
+		<style>
+			html,
+			body,
+			ion-modal-view div {
+				margin: 0;
+				height: 100%;
+			}
+			
+			div.backdrop {
+				z-index: 9999;
+			}
+			
+			#menu {
+				position: absolute;
+				z-index: 9999;
+				top: 40px;
+				right: 50px;
+				background-color: rgba(0, 0, 0, 0.5);
+				padding: 3px 10px 3px 10px;
+				border-radius: 3px;
+			}
+			
+			#menu div {
+				width: 105px;
+				height: 35px;
+				padding: 10px;
+				color: #FFFFFF;
+				border-bottom: 1px solid #FFFFFF;
+				cursor: pointer;
+			}
+			
+			div.modal-backdrop {
+				z-index: 5000;
+			}
+			
+			img.image-img {
+				width: 100%;
+			}
+			
+			div.popup-container {
+				z-index: 9999;
+			}
+			
+			p.article {
+				text-indent: 2em;
+				font-size: 13px;
+			}
+			
+			p.article img {
+				width: 100%;
+				height: auto;
+			}
+			
+			span.articleTitle {
+				color: #FFFFFF;
+				font-size: 14px;
+			}
+			
+			.anchorBL {
+				display: none;
+			}
+			
+			#markPointContent img {
+				width: 100%;
+				height: auto;
+			}
+			
+			.modal-backdrop,
+			.modal-backdrop-bg {
+				position: absolute !important;
+			}
+		</style>
+	</head>
+
+	<body ng-controller='app' ng-init='init()' ng-click='closeAll()' ng-cloak>
+		<div id='pano' style='height:100%;width:100%;'></div>
+		<div id='menu' ng-show='showMenu'>
+			<div ng-click='openUserMessage(1)' style='display: inline-block;'><img src='/OSP/Mobile/Images/menu-pinglun.png' style='width:17px;height: 17px;' /><span style='position:relative;top:-3.5px;left:7px;'>留言({{usermessage}})</span></div>
+			<span style='position: absolute;margin-left:115px;margin-top:-26px;width: 0;height: 0;border-top: 7px solid transparent;border-left: 7px solid rgba(0, 0, 0, 0.5);border-bottom: 7px solid transparent;'></span>
+			<div ng-click='openBusinessDetail()'><img src='/OSP/Mobile/Images/menu-info.png' style='width:17px;height: 17px;' /><span style='position: relative;top:-3.5px;left:7px;'>商家信息</span></div>
+			<div ng-click='goParent()' ng-show='goParentMenu'><img src='/OSP/Mobile/Images/menu-backlast.png' style='width:17px;height:17px;' /><span style='position:relative;top:-3.5px;left:7px;'>上移一层</span></div>
+			<div ng-click='goTop()' ng-show='goTopMenu'><img src='/OSP/Mobile/Images/menu-backtop.png' style='width:17px;height:17px;' /><span style='position:relative;top:-3.5px;left:7px;'>回到顶层</span></div>
+			<div ng-click='openSetting()' style='border-bottom: none;'><img src='/OSP/Mobile/Images/menu-setting.png' style='width:17px;height:17px;' /><span style='position:relative;top:-3.5px;left:7px;'>设置</span></div>
+		</div>
+		<div style='position:absolute;left:10px;top:10px;color: #FFFFFF;font-size: 17px;font-weight: 400;'>
+			{{pageview}}
+		</div>
+		<div id='shareMask' style='text-align: right;background-color: rgba(0,0,0,0.7);' class='backdrop visible active' ng-click='closeShareMask()' ng-show='showShareMask'>
+			<img src='/OSP/Mobile/Images/guide.png' style='width:231px;height: 159.6px;' />
+		</div>
+		<script>
+			var _krpano;
+			var _iSceneID = getQueryStringValue('iSceneID');
+			var _iGroupID = 0;
+			var _flag = getQueryStringValue('flag');
+			var _bgMusic;
+			var _explain;
+			var _firstLoad = true;
+			var _audioFirstLoad = true;
+			var _iToScenes = [];
+			var _orientation;
+			var _Angle;
+			var _iParentID = []; //上一层场景ID列表	
+			var _iTopID = 0; //顶层场景ID
+			var initData;
+			var sceneTransition;
+			var openMap;
+			var shareScene;
+			var showMarkPointContent;
+			var switchMenu;
+			var isTransition = false; //为true表从漫游点跳转场景,否则从浓缩图
+			if(window.orientation == 180 || window.orientation == 0) {
+				_orientation = 0;
+			} else {
+				_orientation = 1;
+			}
+			window.addEventListener('orientationchange', function(event) {
+				if(window.orientation == 180 || window.orientation == 0) {
+					_orientation = 0;
+				} else {
+					_orientation = 1;
+				}
+			});
+			app.controller('app', function($scope, $timeout, $window, commonService) {
+				$scope.videoPath = '';
+				$scope.showShareMask = false;
+				$scope.showMenu = false;
+				$scope.goParentMenu = false;
+				$scope.goTopMenu = false;
+				$scope.productSlideFlag = 0;
+				$scope.pMusicSwitch = true;
+				$scope.pExplainSwitch = true;
+				$scope.modalInfo = {
+					cSceneName: '',
+					cAddress: '',
+					cTel: '',
+					fDistance: '',
+					fLongitude: '',
+					fLatitude: '',
+					iVisited: '',
+					iUserMessage: '',
+					userMessage: [],
+					level: '',
+					messageInfo: {
+						cTitle: '',
+						cUsername: '',
+						cQQ: '',
+						cEmail: '',
+						cMobile: '',
+						cContent: ''
+					}
+				};
+				$scope.setting = {
+					gravity: false,
+					autorotate: true
+				};
+				$scope.consult = {
+					cTitle: '',
+					cUserName: '',
+					cTel: '',
+					cEmail: '',
+					cDemand: ''
+				};
+				$scope.init = function() {
+					initPage();
+				}
+
+				$scope.goParent = function() {
+					var target = _iParentID[_iParentID.length - 2];
+					_iParentID.pop();
+					_iParentID.pop();
+					sceneTransition(target, 3, 'F');
+				}
+
+				$scope.goTop = function() {
+					if(_iTopID == 0) {
+						var target = _iParentID[0];
+						_iParentID = [];
+						sceneTransition(target, 3, 'F');
+					} else {
+						_iParentID = [];
+						sceneTransition(_iTopID, 3, 'F');
+					}
+				}
+
+				$scope.openBusinessDetail = function() {
+					commonService.fromTemplateUrl('BusinessDetailModal.html', $scope, 'slide-in-up', $scope.initMap, false);
+				}
+
+				$scope.openUserMessage = function(level) {
+					$scope.modalInfo.level = level;
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'SceneUserMessageList',
+							iSceneID: _iSceneID,
+							page: 1,
+							rows: 9999,
+							sort: 'dCreationDt',
+							order: 'desc'
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								$scope.modalInfo.userMessage = ci_result.rows;
+							}
+							if(level == 1) {
+								//弹出第一层模态框
+								commonService.fromTemplateUrl('UserMessageModal.html', $scope);
+							} else {
+								//弹出第二层模态框
+								commonService.fromTemplateUrl2('UserMessageModal.html', $scope);
+							}
+						}
+					});
+				}
+
+				$scope.openWriteMessage = function(level) {
+					if(level == 2) {
+						commonService.fromTemplateUrl2('WriteMessageModal.html', $scope);
+					} else {
+						commonService.fromTemplateUrl3('WriteMessageModal.html', $scope);
+					}
+				}
+
+				$scope.writeMessage = function(level) {
+					if($scope.modalInfo.messageInfo.cTitle != '' && $scope.modalInfo.messageInfo.cUsername != '' && $scope.modalInfo.messageInfo.cContent) {
+						commonService.postData({
+							url: 'DcCdAppInterface',
+							params: {
+								Action: 'SceneUserMessageAdd',
+								iGroupID: _iGroupID,
+								iSceneID: _iSceneID,
+								cTitle: $scope.modalInfo.messageInfo.cTitle,
+								cUsername: $scope.modalInfo.messageInfo.cUsername,
+								cQQ: $scope.modalInfo.messageInfo.cQQ,
+								cEmail: $scope.modalInfo.messageInfo.cEmail,
+								cMobile: $scope.modalInfo.messageInfo.cMobile,
+								cContent: $scope.modalInfo.messageInfo.cContent
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									commonService.postData({
+										url: 'DcCdAppInterface',
+										params: {
+											Action: 'SceneUserMessageList',
+											iSceneID: _iSceneID,
+											page: 1,
+											rows: 9999,
+											sort: 'dCreationDt',
+											order: 'desc'
+										},
+										success: function(ci_result) {
+											if(existData(ci_result)) {
+												$scope.usermessage++;
+												$scope.modalInfo.iUserMessage++;
+												$scope.modalInfo.userMessage = ci_result.rows;
+											}
+										}
+									});
+									$scope.hideModal(level);
+									$scope.modalInfo.messageInfo.cTitle = '';
+									$scope.modalInfo.messageInfo.cUsername = '';
+									$scope.modalInfo.messageInfo.cQQ = '';
+									$scope.modalInfo.messageInfo.cEmail = '';
+									$scope.modalInfo.messageInfo.cMobile = '';
+									$scope.modalInfo.messageInfo.cContent = '';
+								} else {
+									commonService.showAlert('提交失败');
+								}
+							}
+						});
+					} else if($scope.modalInfo.messageInfo.cTitle != '' && $scope.modalInfo.messageInfo.cUsername) {
+						commonService.showAlert('请填写留言内容！');
+					} else {
+						commonService.showAlert('请完善必填信息！');
+					}
+				}
+
+				$scope.openSetting = function() {
+					commonService.fromTemplateUrl('SceneSetting.html', $scope);
+				}
+
+				function openRichText() {
+					commonService.fromTemplateUrl('RichTextView.html', $scope);
+				}
+
+				function openVideo() {
+					commonService.fromTemplateUrl('VideoView.html', $scope);
+				}
+
+				function openManual(iID) {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'MarkPointList',
+							iID: iID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								var m_rRecord = m_objData.rRecords[0];
+								$scope.manualFilePath = m_rRecord.cFilePath;
+								if(_orientation == 0) {
+									$scope.manual = m_rRecord.cMSImages.split(',');
+								} else {
+									$scope.manual = m_rRecord.cMHImages.split(',');
+								}
+								if($scope.manual[0] == '') {
+									$scope.manual = [];
+								}
+							}
+						}
+					});
+					commonService.fromTemplateUrl('ManualView.html', $scope);
+				}
+
+				function openProduct(iID) {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'MarkPointList',
+							iID: iID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								var m_rRecord = m_objData.rRecords[0];
+								$scope.productFilePath = m_rRecord.cFilePath;
+								$scope.product = m_rRecord.cImages.split(',');
+								//获取产品音频
+								commonService.postData({
+									url: 'DcCdAppInterface',
+									params: {
+										Action: 'ProductDataList',
+										iProductID: m_rRecord.iProductID,
+										iType: 1
+									},
+									success: function(ci_result) {
+										if(existData(ci_result)) {
+											var m_objData = ci_result.rows;
+											if(m_objData[0].rRecords.length != 0) {
+												//播放产品背景音乐
+												var pbgMusic = '/' + m_objData[0].rRecords[0].cFilePath + '/' + m_objData[0].rRecords[0].cFilename;
+												_krpano.call('playsound(pbgsnd,' + pbgMusic + ',0)');
+											}
+											if(m_objData[1].rRecords.length != 0) {
+												//播放产品解说
+												var pexplain = '/' + m_objData[1].rRecords[0].cFilePath + '/' + m_objData[1].rRecords[0].cFilename;
+												_krpano.call('playsound(pepsnd,' + pexplain + ',0)');
+											}
+										}
+									}
+								});
+								commonService.postData({
+									url: 'DcCdAppInterface',
+									params: {
+										Action: 'ProductPropertyList',
+										iProductID: m_rRecord.iProductID
+									},
+									success: function(ci_result) {
+										if(existData(ci_result)) {
+											var m_objData = ci_result.rows;
+											angular.forEach(m_objData, function(value, item) {
+												value.cContent = value.cContent.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+											});
+											$scope.productProperty = m_objData;
+										}
+									}
+								});
+							}
+						}
+					});
+					commonService.fromTemplateUrl('ProductView.html', $scope);
+				}
+
+				$scope.switchProductProperty = function() {
+					if($scope.productFilePath != 2) {
+						$scope.productSlideFlag = 2;
+					}
+				}
+
+				$scope.switchProductMusic = function() {
+					_krpano.call('pausesoundtoggle(pbgsnd)');
+					$scope.pMusicSwitch = !$scope.pMusicSwitch;
+				}
+
+				$scope.switchProductExplain = function() {
+					_krpano.call('pausesoundtoggle(pepsnd)');
+					$scope.pExplainSwitch = !$scope.pExplainSwitch;
+				}
+
+				$scope.switchProductSlide = function(iID) {
+					if($scope.productSlideFlag == 0) {
+						$scope.productSlideFlag = 1;
+					} else {
+						$scope.productSlideFlag = 0;
+					}
+				}
+
+				$scope.hideModal = function(level) {
+					if(level != undefined) {
+						if(level == 1) {
+							commonService.closeModal($scope);
+						} else if(level == 2) {
+							commonService.closeModal2($scope);
+						} else {
+							commonService.closeModal3($scope);
+						}
+					} else {
+						_krpano.call('stopsound(pbgsnd)');
+						_krpano.call('stopsound(pepsnd)');
+						$timeout(function() {
+							$scope.productSlideFlag = 0;
+							$scope.pMusicSwitch = true;
+							$scope.pExplainSwitch = true;
+						}, 1000);
+						commonService.closeModal($scope);
+					}
+				}
+
+				$scope.closeAll = function() {
+					$scope.showShareMask = false;
+					$scope.showMenu = false;
+				}
+
+				$scope.closeShareMask = function() {
+					$scope.showShareMask = false;
+				}
+
+				$scope.submitConsult = function() {
+					if($scope.consult.cTitle != '' && $scope.consult.cUsername != '' && $scope.consult.cTel != '' && $scope.consult.cEmail != '' && $scope.consult.cDemand != '') {
+						commonService.postData({
+							url: 'DcCdProductUserMessageManage',
+							params: {
+								Action: 'Add',
+								iProductID: $scope.curriProductID,
+								cTitle: $scope.consult.cTitle,
+								cUsername: $scope.consult.cUsername,
+								cTel: $scope.consult.cTel,
+								cEmail: $scope.consult.cEmail,
+								cDemand: $scope.consult.cDemand
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$scope.hideModal();
+									commonService.showAlert('提交成功');
+								} else {
+									commonService.showAlert(ci_result.DcMessage);
+								}
+							}
+						});
+					} else if($scope.consult.cTitle != '' && $scope.consult.cUsername != '' && $scope.consult.cTel != '' && $scope.consult.cEmail != '') {
+						commonService.showAlert('请填写留言内容！');
+					} else {
+						commonService.showAlert('请完善必填信息！');
+					}
+				}
+
+				$scope.gravitySwitch = function() {
+					_krpano.call('gravitySwitch(' + $scope.setting.gravity + ')');
+				}
+
+				$scope.autorotateSwitch = function() {
+					_krpano.call('autorotateSwitch(' + $scope.setting.autorotate + ')');
+				}
+
+				function initPage() {
+					var swf = '/Attachment/VR/' + _iSceneID + '/vtour/tour.swf';
+					var xml = '/krpano/templates/xml/main.xml';
+					embedpano({
+						swf: swf,
+						xml: xml,
+						target: 'pano',
+						html5: 'html5',
+						mobilescale: 1.0,
+						passQueryParameters: true,
+						onready: panoReady
+					});
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'SceneVisitedAdd',
+							iSceneID: _iSceneID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							console.log(ci_result.DcCode + ':' + ci_result.DcMessage);
+						}
+					});
+				}
+
+				function panoReady(krpanoObj) {
+					_krpano = krpanoObj;
+					_iToScenes.push(parseInt(_iSceneID));
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'SceneList',
+							VRID: _iSceneID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								_Angle = m_objData.cAngle;
+								_krpano.call('loadpano("/Attachment/VR/' + _iSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+								commonService.postData({
+									url: 'DcCdAppInterface',
+									params: {
+										Action: 'SceneList',
+										ListID: _iSceneID
+									},
+									showMask: false,
+									success: function(ci_result) {
+										if(existData(ci_result)) {
+											var m_objData = ci_result.rows;
+											angular.forEach(m_objData, function(item, i) {
+												_krpano.call('loadpano("/Attachment/VR/' + item.iSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+												_iToScenes.push(parseInt(item.iSceneID));
+											});
+										}
+										_krpano.call('startup()');
+										_krpano.call('skin_setup_littleplanetintro()');
+									}
+								});
+							}
+						}
+					});
+				}
+
+				initData = function(iSceneID) {
+					if(_firstLoad) {
+						_firstLoad = false;
+						return;
+					}
+					if(iSceneID != undefined) {
+						_iSceneID = iSceneID;
+					}
+					setTimeout(function() {
+						initSpecialEfficiency();
+						initRoamingPoint();
+						initMarkPoint();
+						initAudio();
+						initSceneData();
+					}, 100);
+					_krpano.set('layer["mobileGroup"].visible', 'true');
+				}
+
+				function initSceneData() {
+					var geolocation = new BMap.Geolocation();
+					//使用百度地址定位当前位置经纬度
+					geolocation.getCurrentPosition(function(r) {
+						if(this.getStatus() == BMAP_STATUS_SUCCESS) {
+							commonService.postData({
+								url: 'DcCdAppInterface',
+								params: {
+									Action: 'SceneList',
+									VRID: _iSceneID,
+									Longitude: r.point.lng,
+									Latitude: r.point.lat
+								},
+								showMask: false,
+								success: function(ci_result) {
+									if(existData(ci_result)) {
+										var m_objData = ci_result.rows[0];
+										_iGroupID = m_objData.iGroupID;
+										_Angle = m_objData.cAngle;
+										if(!isTransition) {
+											looktoBycAngle();
+										} else {
+											isTransition = false;
+										}
+										document.title = m_objData.cSceneName;
+										$scope.pageview = '访问量:' + m_objData.iVisited;
+										$scope.usermessage = m_objData.iUserMessage;
+										$scope.modalInfo.cSceneName = m_objData.cSceneName;
+										$scope.modalInfo.cAddress = m_objData.cAddress;
+										$scope.modalInfo.cTel = m_objData.cTel;
+										$scope.modalInfo.fLongitude = m_objData.fLongitude;
+										$scope.modalInfo.fLatitude = m_objData.fLatitude;
+										$scope.modalInfo.iVisited = m_objData.iVisited;
+										$scope.modalInfo.iUserMessage = m_objData.iUserMessage;
+										if($scope.fDistance != -1) {
+											$scope.modalInfo.fDistance = parseInt(m_objData.fDistance) + '米';
+										} else {
+											$scope.modalInfo.fDistance = '距离无法计算';
+										}
+										if(_flag == 1) {
+											if(_iParentID.length == 0) {
+												if(m_objData.iParentID == 0) {
+													$scope.goParentMenu = false;
+												} else {
+													_iParentID.push(m_objData.iParentID);
+													$scope.goParentMenu = true;
+												}
+												if(m_objData.iTopID == 0) {
+													$scope.goTopMenu = false;
+												} else {
+													_iTopID = m_objData.iTopID;
+													$scope.goTopMenu = true;
+												}
+											} else {
+												$scope.goParentMenu = true;
+												$scope.goTopMenu = true;
+											}
+											_iParentID.push(_iSceneID);
+										} else {
+											if(_iParentID.length == 0) {
+												$scope.goParentMenu = false;
+												$scope.goTopMenu = false;
+											} else {
+												$scope.goParentMenu = true;
+												$scope.goTopMenu = true;
+											}
+											_iParentID.push(_iSceneID);
+										}
+									}
+								}
+							});
+						} else {
+							commonService.showAlert('failed' + this.getStatus());
+						}
+					}, {
+						enableHighAccuracy: true
+					});
+				}
+
+				function initSpecialEfficiency() {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'SceneEffectsList',
+							iSceneID: _iSceneID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								setSpecialEfficiency(m_objData.iEffects);
+							}
+						}
+					});
+				}
+
+				function initRoamingPoint() {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'RoamingPointList',
+							iSceneID: _iSceneID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows;
+								angular.forEach(m_objData, function(item, i) {
+									if(item.iAttribute == 2) {
+										item.iDirection = item.iDirection + 8;
+									}
+									if(item.iType == 1) {
+										_krpano.call('initHotspotFun(3,' + item.iPointID + ',' + item.iToSceneID + ',' + item.cToSceneName + ',' + item.iDirection + ',' + item.iAttribute + ',' + item.iEffect + ',' + item.bIsPreview + ',' + item.fImageY + ',' + item.fImageX + ',' + item.cToImage + ')');
+									} else {
+										_krpano.call('initHotspotFun(4,' + item.iPointID + ',' + item.iDirection + ',' + item.iAttribute + ',' + item.cUrl + ',' + item.bIsPreview + ',' + item.fImageY + ',' + item.fImageX + ')');
+									}
+								});
+							}
+						}
+					});
+				}
+
+				function initMarkPoint() {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'MarkPointList',
+							iSceneID: _iSceneID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows;
+								angular.forEach(m_objData, function(item, i) {
+									if(item.iRecordID != 0) {
+										var tooltip;
+										if([1, 2, 3, 4].indexOf(parseInt(item.iObjectID)) != -1) {
+											tooltip = item.rRecords[0].cName;
+										} else if(item.iObjectID == 8) {
+											tooltip = item.cExt3;
+											if(tooltip.length > 25) {
+												tooltip = tooltip.substr(0, 25) + '...';
+											}
+										} else if(item.iObjectID == 10) {
+											tooltip = item.rRecords[0].cProductName;
+										}
+										if(item.iStyle == 1 || item.iExt1 == 1 || item.iExt1 == 2) {
+											var type = getTypeFromObjectID(item.iObjectID);
+											_krpano.call('initMarkPointFun(' + item.iID + ',' + type + ',' + tooltip + ',' + item.fImageY + ',' + item.fImageX + ',' + 1 + ')');
+										} else if(item.iStyle == 2) {
+											var pointname = 'E' + item.iID;
+											var points = item.cArea.split(';');
+											_krpano.call('addhotspot(\'' + pointname + '\')');
+											_krpano.call('hotspot[\'' + pointname + '\'].loadstyle(drawhotspotReleaseStyle)');
+											_krpano.set('hotspot[\'' + pointname + '\'].tooltip', tooltip);
+											for(var i = 0; i < points.length; i++) {
+												if(points[i] != '') {
+													_krpano.set('hotspot[\'' + pointname + '\'].point[' + i + '].ath', points[i].split(',')[1]);
+													_krpano.set('hotspot[\'' + pointname + '\'].point[' + i + '].atv', points[i].split(',')[0]);
+												}
+											}
+											_krpano.set('hotspot[\'' + pointname + '\'].onclick', 'js(showMarkPointContent(' + item.iID + '))');
+										}
+									}
+								});
+							}
+						}
+					});
+				}
+
+				function initAudio() {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'ScenedDataList',
+							iSceneID: _iSceneID,
+							iType: 1
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows;
+								if(m_objData[0] != undefined && m_objData[0].rRecords.length != 0) {
+									_bgMusic = '/' + m_objData[0].rRecords[0].cFilePath + '/' + m_objData[0].rRecords[0].cFilename;
+									if(_audioFirstLoad) {
+										_krpano.call('playsound(bgsnd,' + _bgMusic + ',0)');
+										_audioFirstLoad = false;
+									}
+								}
+								if(m_objData[1] != undefined && m_objData[1].rRecords.length != 0) {
+									_explain = '/' + m_objData[1].rRecords[0].cFilePath + '/' + m_objData[1].rRecords[0].cFilename;
+									_krpano.call('playsound(epsnd,' + _explain + ',0)');
+								}
+							}
+						}
+					});
+				}
+
+				showMarkPointContent = function(iID) {
+					commonService.postData({
+						url: 'DcCdAppInterface',
+						params: {
+							Action: 'MarkPointList',
+							iID: iID
+						},
+						showMask: false,
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								var m_rRecord = m_objData.rRecords[0];
+								switch(m_objData.iObjectID) {
+									case 1:
+										$scope.markPointContent = '<img class="image-img" src="/' + m_rRecord.cFilePath + '/' + m_rRecord.cFilename + '"/>';
+										break;
+									case 2:
+										$scope.videoPath = '/' + m_rRecord.cFilePath + '/' + m_rRecord.cFilename;
+										break;
+									case 4:
+										$scope.markPointContent = '<span class="articleTitle">' + m_rRecord.cName + '</span><p class="article">' + m_rRecord.cContent.replace(/&lt;/g, "<").replace(/&gt;/g, ">") + '</p>';
+										break;
+								}
+								if(m_objData.iObjectID != 3 && m_objData.iObjectID != 2 && m_objData.iObjectID != 8 && m_objData.iObjectID != 10) {
+									openRichText(iID);
+								} else if(m_objData.iObjectID == 2) {
+									openVideo(iID);
+								} else if(m_objData.iObjectID == 3) {
+									openManual(iID);
+								} else if(m_objData.iObjectID == 10) {
+									$scope.curriProductID = m_rRecord.iProductID;
+									openProduct(iID);
+								} else {
+									$window.location = m_objData.cExt3;
+								}
+							}
+						}
+					});
+				}
+
+				sceneTransition = function(iToSceneID, iEffect, cAngle) {
+					_Angle = cAngle;
+					$scope.closeAll();
+					if(_iToScenes.indexOf(parseInt(iToSceneID)) == -1) {
+						_krpano.call('loadpano("/Attachment/VR/' + iToSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+						_iToScenes.push(parseInt(iToSceneID));
+					}
+					isTransition = true;
+					_krpano.call('loadscene(scene_' + iToSceneID + ',null,MEGER,get(blendmodes[' + iEffect + '].blend))');
+					looktoBycAngle();
+				}
+
+				switchMenu = function() {
+					$timeout(function() {
+						$scope.showMenu = !$scope.showMenu;
+					});
+				}
+
+				openMap = function() {
+					commonService.fromTemplateUrl('MapDisplayModal.html', $scope, 'slide-in-up', $scope.initMap, true);
+				}
+
+				$scope.initMap = function(isVr) {
+					var Map = new BMap.Map('allmap');
+					var point = new BMap.Point($scope.modalInfo.fLongitude, $scope.modalInfo.fLatitude);
+					if(isVr) {
+						var myIcon = new BMap.Icon('./Images/map_bIsVR.png', new BMap.Size(31, 50));
+						var Marker = new BMap.Marker(point, {
+							icon: myIcon
+						});
+						Map.centerAndZoom(point, 16);
+						Map.addOverlay(Marker);
+						var bottom_right_navigation = new BMap.NavigationControl({
+							anchor: BMAP_ANCHOR_BOTTOM_RIGHT,
+							type: BMAP_NAVIGATION_CONTROL_SMALL
+						});
+						Map.addControl(bottom_right_navigation);
+						var sContent = "<img style='float:left;border-radius:3px;width:100px;height:100px;margin-right:5px;' src='/Attachment/VR/" + _iSceneID + "/vtour/panos/" + _iSceneID + ".tiles/thumb.jpg'/>";
+						sContent += '<p style="font-size:13.5px;">' + $scope.modalInfo.cSceneName + '</p>';
+						var infoWindow = new BMap.InfoWindow(sContent);
+						Marker.openInfoWindow(infoWindow);
+					} else {
+						var Marker = new BMap.Marker(point);
+						Map.centerAndZoom(point, 16);
+						Map.addOverlay(Marker);
+					}
+				}
+
+				$scope.closeMap = function() {
+					commonService.closeModal($scope);
+				}
+
+				shareScene = function() {
+					$timeout(function() {
+						$scope.showShareMask = true;
+					});
+				}
+
+				function setSpecialEfficiency(iEffects) {
+					iEffects = parseInt(iEffects);
+					switch(iEffects) {
+						case 1:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('defaultsnow()');
+							break;
+						case 2:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('snowballs()');
+							break;
+						case 3:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('snowflakes()');
+							break;
+						case 4:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('silverstars()');
+							break;
+						case 5:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('hearts()');
+							break;
+						case 6:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('rain()');
+							break;
+						case 7:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('heavyrain()');
+							break;
+						case 8:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('leaves()');
+							break;
+						case 9:
+							_krpano.set('plugin[snow].visible', 'true');
+							_krpano.call('treeleaf()');
+							break;
+						default:
+							_krpano.set('plugin[snow].visible', 'false');
+					}
+				}
+
+				looktoBycAngle = function() {
+					var angle = _Angle;
+					switch(angle) {
+						case 'R':
+							angle = 90;
+							break;
+						case 'F':
+							angle = 0;
+							break;
+						case 'L':
+							angle = -90;
+							break;
+						case 'A':
+							angle = -180;
+							break;
+						default:
+							angle = 0;
+					};
+					_krpano.call('lookto(' + angle + ',0)');
+				}
+
+				function getTypeFromObjectID(iObjectID) {
+					var type;
+					switch(parseInt(iObjectID)) {
+						case 1:
+							type = 'pic';
+							break;
+						case 2:
+							type = 'video';
+							break;
+						case 3:
+							type = 'book';
+							break;
+						case 4:
+							type = 'info';
+							break;
+						case 8:
+							type = 'link';
+							break;
+						case 10:
+							type = 'product';
+							break;
+					}
+					return type;
+				}
+			});
+
+			function stopBubble(e) {
+				if(e && e.stopPropagation) {
+					e.stopPropagation();
+				} else {
+					window.event.cancelBubble = true;
+				}
+			}
+		</script>
+	</body>
+
+</html>

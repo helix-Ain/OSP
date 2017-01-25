@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 550px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							当前场景组：
+						</td>
+						<td>
+							<span id='cGroupName'></span>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							效果类型：
+						</td>
+						<td>
+							<input id="iEffects" class="easyui-combobox" data-options="width:150,valueField:'id', textField:'text',editable:false" />
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = '';
+			var _iID = 0;
+			var _iDDLCount = 0;
+			var _strFun = getHashValue('Fun');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _iGroupID = getHashValue('iGroupID');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				postData({
+					url: 'DcCdSceneGroupManage',
+					params: {
+						Action: 'GetList',
+						iGroupID: _iGroupID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#cGroupName').html(m_objData.cGroupName);
+							_iDDLCount++;
+							initData();
+						}
+					}
+				});
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Scene',
+						cSubCat: 'Effects'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								data.push({
+									'id': item.cCodeItem,
+									'text': item.cDesc
+								});
+							});
+							$('#iEffects').combobox('loadData', data);
+							_iDDLCount++;
+							initData();
+						}
+					}
+				});
+			}
+
+			function initData() {
+				if(_iDDLCount != 2) {
+					return;
+				}
+				postData({
+					url: 'DcCdSceneEffectsManage',
+					params: {
+						Action: 'GetList',
+						iGoupID: _iGroupID,
+						iSceneID:0
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#iEffects').combobox('setValue', m_objData.iEffects);
+							_iID = m_objData.iID;
+							_Action = 'Update';
+						} else {
+							_Action = 'Add';
+						}
+					}
+				});
+			}
+
+			function saveData() {
+				var iEffects = $('#iEffects').combobox('getValue');
+				if(iEffects != '') {
+					if(_Action == 'Update') {
+						postData({
+							url: 'DcCdSceneEffectsManage',
+							params: {
+								Action: 'Update',
+								iID: _iID,
+								iGroupID: _iGroupID,
+								iEffects: iEffects
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$.messager.alert('提示', '保存成功', 'info');
+								} else {
+									$.messager.alert('提示', '保存失败', 'info');
+								}
+							}
+						});
+					} else if(_Action == 'Add') {
+						postData({
+							url: 'DcCdSceneEffectsManage',
+							params: {
+								Action: 'Add',
+								iGroupID: _iGroupID,
+								iSceneID:0,
+								iEffects: iEffects
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$.messager.alert('提示', '保存成功', 'info');
+								} else {
+									$.messager.alert('提示', '保存失败', 'info');
+								}
+							}
+						});
+					}
+				} else {
+					if(_Action == 'Update') {
+						postData({
+							url: 'DcCdSceneEffectsManage',
+							params: {
+								Action: 'Delete',
+								cIDList: _iID
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$.messager.alert('提示', '保存成功', 'info');
+								} else {
+									$.messager.alert('提示', '保存失败', 'info');
+								}
+							}
+						});
+					} else {
+						$.messager.alert('提示', '保存成功');
+					}
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

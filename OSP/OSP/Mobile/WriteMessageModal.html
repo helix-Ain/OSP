@@ -1,0 +1,48 @@
+<ion-modal-view ng-cloak>
+	<ion-header-bar align-title='center' style='background: #A4684B;'>
+		<button ng-click='hideModal({{modalInfo.level+1}})' class='button button-icon icon ion-ios-arrow-left' style='color:#FFFFFF;'>返回</button>
+		<h1 class='title' style='color:#FFFFFF;'>发表留言</h1>
+	</ion-header-bar>
+	<ion-content style='background-color:#F3F4F6;padding-bottom: 15px;'>
+		<div class="list list-inset">
+			<label class="item item-input">
+              <div class="input-label">
+              	标题<span style='color:red;'>*</span>
+              </div>
+              <input ng-model="modalInfo.messageInfo.cTitle" required type="text">
+            </label>
+			<label class="item item-input">
+              <div class="input-label">
+              	姓名<span style='color:red;'>*</span>
+              </div>
+              <input ng-model="modalInfo.messageInfo.cUsername" required type="text">
+            </label>
+			<label class="item item-input">
+              <div class="input-label">
+              	QQ
+              </div>
+              <input ng-model="modalInfo.messageInfo.cQQ" type="number">
+            </label>
+			<label class="item item-input">
+              <div class="input-label">
+              	邮箱
+              </div>
+              <input ng-model="modalInfo.messageInfo.cEmail" type="email">
+            </label>
+			<label class="item item-input">
+              <div class="input-label">
+              	手机
+              </div>
+              <input ng-model="modalInfo.messageInfo.cMobile" type="tel">
+            </label>
+			<label class='item item-input'>
+            	<textarea required rows='7' ng-model='modalInfo.messageInfo.cContent' placeholder="在这里输入留言..." style='resize: none;'></textarea>
+            </label>
+		</div>
+	</ion-content>
+	<ion-footer-bar align-title='center'>
+		<h1 class='title'>
+			<button ng-click='writeMessage({{modalInfo.level+1}})' class='button button-brown' style='width:85%;height:35px;font-size:17px;line-height:35px;margin-top:7px;'>提交</button>
+		</h1>
+	</ion-footer-bar>
+</ion-modal-view>

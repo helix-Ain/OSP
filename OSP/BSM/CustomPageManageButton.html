@@ -1,0 +1,467 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <style type="text/css">
+        .indicator { position: absolute; font-size: 9px; width: 20px; height: 10px; display: none; color: red; }
+        .datagrid-dnd { width: 100%; height: 100%; display: block; }
+    </style>
+    <div id="div_Button_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a class="easyui-linkbutton" iconcls="dc-icon-editadd"
+            plain="true" onclick="button_newData(null)">添加</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                iconcls="dc-icon-cancel" plain="true" onclick="button_deleteData()">删除</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dc-icon-cancel"
+            onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_Button_List" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true">
+                </th>
+                <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iButtonID, 'button_editData');}">
+                    <div style="width: 50px; height: 5px; display: block;">
+                    </div>
+                </th>
+                <th data-options="field:'cButtonName',width:80,sortable:true,formatter:function(value){return button_setButtonName(value);}">
+                    按钮名
+                </th>
+                <th data-options="field:'cTypeDesc',width:100,sortable:true">
+                    类型
+                </th>
+                <th data-options="field:'cText',width:80,sortable:true">
+                    文本
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_Button_Detail" class="easyui-dialog" title="按钮详细资料" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form action="" id="form_Button_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 550px;" class="TableCenter">
+            <tr group="button_Type1">
+                <td class="tabletext">
+                    <span class="require_sign">*</span>按钮名：
+                </td>
+                <td colspan="3">
+                    <input id="txt_Button_ButtonName" name="cButtonName" class="easyui-validatebox" data-options="required:true"
+                        style="width: 380px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext" style="width: 100px;">
+                    <span class="require_sign">*</span>按钮类型：
+                </td>
+                <td colspan="3">
+                    <div id="div_Button_Type" name="iType">
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext" style="width: 20%;">
+                    图标样式：
+                </td>
+                <td style="width: 35%;">
+                    <input name="cIconCls" class="TextEdit" />
+                </td>
+                <td class="tabletext" style="width: 20%;">
+                    按钮文本：
+                </td>
+                <td style="width: 25%;">
+                    <input name="cText" class="TextEdit" />
+                </td>
+            </tr>
+            <!--<tr group="Button_define">
+                <td class="tabletext">
+                    按钮设置：
+                </td>
+                <td colspan="3">
+                    <textarea rows="5" name="cOptions" class="TextEdit" style="width: 380px;"></textarea>
+                </td>
+            </tr>-->
+            <tr group="Button_define">
+                <td class="tabletext">
+                    点击事件：
+                </td>
+                <td colspan="3">
+                    <input name="cOnClick" class="TextEdit" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr group="Button_define">
+                <td class="tabletext">
+                    JS Function：
+                </td>
+                <td colspan="3">
+                    <textarea rows="5" name="cFunction" class="TextEdit" style="width: 380px;"></textarea>
+                </td>
+            </tr>
+            <tr group="Button_define">
+                <td class="tabletext">
+                    引用文件：
+                </td>
+                <td colspan="3">
+                    <textarea rows="5" name="cFiles" class="TextEdit" style="width: 380px;"></textarea>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="button_saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="button_cancel()">关闭</a>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var _Button_iID = 0;
+        var _Button_iDDLCount = 0;
+        var _Button_iSearchType = 0;
+        var _Button_strAction = '';
+        var _Button_objIn = $('<div class="indicator">>>></div>').appendTo('body');
+
+        checkPagePower({ onload: function() { button_initPage(); }, showMask: false, parse: false, check: false });
+
+        function button_initPage() {
+            $('.TextReadOnly').attr("readonly", "readonly");
+            $.parser.parse('#div_Button_Detail');
+            $('#div_Button_Detail').dialog({ onClose: function() { $(".tooltip").remove(); } });
+
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'cuspb', subCat: 'Type' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Button_Type').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            required: true,
+                            data: ci_result.rows,
+                            onChange: function(newValue, oldValue) {
+                                if (newValue != oldValue) {
+                                    button_setDefine(parseInt(newValue));
+                                }
+                            }
+                        });
+                    }
+                    _Button_iDDLCount++;
+                    _init();
+                }
+            });
+
+            function _init() {
+                if (_Button_iDDLCount == 1) {
+                    _Button_iDDLCount = 0;
+                    button_getColumnList();
+                }
+            }
+        }
+
+        function button_getColumnList() {
+            setDataGrid("tab_Button_List", "div_Button_Toolbar", "DcCdCustomPageManage", { Action: "btngetlist", iCustomPageID: _iID }, "iButtonID", "iIndex", "", {
+                onDblClickRow: function(rowIndex, rowData) { $("#tab_Button_List").datagrid("selectRow", rowIndex); button_editData(rowData.iButtonID); },
+                onClickRow: function(rowIndex, rowData) { $("#tab_Button_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                pagination: false,
+                loadFilter: function(data) {
+                    data.rows.sort(function(a, b) { return a.iIndex - b.iIndex; });
+                    return data;
+                },
+                onLoadSuccess: function() {
+                    try {
+                        setDnd();
+                    } catch (ex) { }
+                }
+            });
+        }
+
+        function button_setButtonName(ci_strValue) {
+            return '<span class="datagrid-dnd">' + ci_strValue + '</span>';
+        }
+
+        function button_setDefine(ci_iType) {
+            switch (ci_iType) {
+                case 1:
+                case 2:
+                    $('[group="Button_define"]').css('display', 'none').find('input,textarea').val('');
+                    break;
+                case 3:
+                    $('[group="Button_define"]').css('display', '');
+                    break;
+            }
+        }
+
+        function button_openDialog(ci_strTitle) {
+            $('#div_Button_Detail').dialog({ width: 570, height: 480, title: ci_strTitle }).dialog('open');
+        }
+
+        function button_cancel() {
+            $('#div_Button_Detail').dialog('close')
+        }
+
+        function button_newData() {
+            _Button_iID = 0;
+            _Button_strAction = 'btnadd';
+            $('#div_Button_Detail').form('clear');
+            $('#div_Button_Type').combolist('selectFirst');
+            $('input[id^="chk_Button_Is"]').attr('checked', 'checked');
+            button_openDialog("添加按钮");
+        }
+
+        function button_editData(ci_iID) {
+            _Button_iID = ci_iID;
+            if (_Button_iID > 0) {
+                setTimeout(function() {
+                    var m_objData = $("#tab_Button_List").datagrid("getSelected");
+                    if (m_objData != null) {
+                        $('#div_Button_Detail').form('load', m_objData);
+                        $('#txt_Button_Options').val(m_objData.cOptions.replace('&lt;', '\&lt;'));
+                        $('#div_Button_Type').combolist('select', m_objData.iType);
+                        _Button_iID = m_objData.iButtonID;
+                        _Button_strAction = "btnupdate";
+                        $('#ddl_Button_DataType').combobox('selectEx', m_objData.iDataType);
+                        button_setDefine(m_objData.iType);
+                        button_openDialog("按钮详细资料");
+                    }
+                    else {
+                        $.messager.alert('提示', '请选择记录', 'info');
+                    }
+                }, 100);
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function button_saveData() {
+            postData({
+                url: 'DcCdCustomPageManage',
+                params: { Action: _Button_strAction, iButtonID: _Button_iID, iCustomPageID: _iID },
+                validate: true,
+                form: 'form_Button_Edit',
+                onPost: function() {
+                    if (this.params.iType == 2) {
+                        this.params.iViewColumnID = 0;
+                    }
+                    return true;
+                },
+                success: function(ci_result) {
+                    $('#tab_Button_List').datagrid('reload');
+                    button_cancel();
+                }
+            });
+        }
+
+        function button_deleteData() {
+            var m_objData = $("#tab_Button_List").datagrid("getChecked");
+            if (m_objData.length > 0) {
+                $.messager.confirm('提示', '确定要删除所选' + m_objData.length + '条记录吗？', function(r) {
+                    if (r) {
+                        var m_strIDList = "";
+                        for (var i = 0; i < m_objData.length; i++) {
+                            if (m_strIDList.length > 0) {
+                                m_strIDList += ",";
+                            }
+                            m_strIDList += m_objData[i].iButtonID;
+                        }
+                        if (m_strIDList != "") {
+                            postData({
+                                url: "DcCdCustomPageManage",
+                                params: { Action: "btndelete", iButtonID: m_strIDList },
+                                success: function(ci_result) {
+                                    $('#tab_Button_List').datagrid('reload');
+                                    $.messager.alert('提示', '删除成功', 'info');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function button_setTypeDisplay(ci_iType) {
+            $('tr[group^="button_Type"]').css('display', 'none');
+            $('tr[group="button_Type' + ci_iType + '"]').css('display', '');
+
+            ci_iType = parseInt(ci_iType);
+            switch (ci_iType) {
+                case 1:
+                    $('#txt_Button_ButtonName').validatebox({ required: true });
+                    break;
+                default:
+                    $('#txt_Button_ButtonName').validatebox({ required: false });
+                    break;
+            }
+        }
+
+        function button_openSearch(ci_iType) {
+            var m_iViewID = parseInt($('#hidd_ViewID').val());
+            if (m_iViewID > 0) {
+                if (ci_iType == undefined) {
+                    ci_iType = 1;
+                }
+                _Button_iSearchType = ci_iType;
+                popupDialog('SearchViewColumn.html#iViewID=' + m_iViewID + '&Type=' + ci_iType, 'parent.button_readDBColumn', '按钮查询', true);
+            }
+            else {
+                $.messager.alert('提示', '请选择视图', 'info');
+            }
+        }
+
+        function button_readDBColumn(ci_objData) {
+            closedPopupDialog();
+            if (ci_objData != undefined && ci_objData.length > 0) {
+                var m_objData = $('#tab_Button_List').datagrid('getData');
+                switch (_Button_iSearchType) {
+                    case 0:
+                        if (existData(m_objData)) {
+                            for (var i = 0; i < m_objData.rows.length; i++) {
+                                if (m_objData.rows[i].iViewColumnID == ci_objData[0].iViewColumnID) {
+                                    $.messager.alert('提示', '该按钮已添加', 'info');
+                                    return;
+                                }
+                            }
+                        }
+                        $('#txt_Button_ButtonName').val(ci_objData[0].cMButtonName);
+                        $('#hidd_Button_ViewColumnID').val(ci_objData[0].iViewColumnID);
+                        $('[name="cColumnDesc"]').val(ci_objData[0].cMColumnDesc);
+                        $('[name="cDataTypeDesc"]').val(ci_objData[0].cMDataTypeDesc);
+                        $('[name="bIsEx"]').attr('checked', (ci_objData[0].bIsEx ? 'checked' : false));
+
+                        $('[name="cField"]').val(ci_objData[0].cMButtonName);
+                        $('[name="cTitle"]').val(ci_objData[0].cMColumnDesc);
+                        break;
+                    case 1:
+                        if (existData(m_objData)) {
+                            for (var i = 0; i < m_objData.rows.length; i++) {
+                                for (var j = 0; j < ci_objData.length; j++) {
+                                    if (ci_objData[j].iViewColumnID == m_objData.rows[i].iViewColumnID) {
+                                        ci_objData.splice(j, 1);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (ci_objData.length > 0) {
+                            var m_objIDList = [];
+                            for (var i = 0; i < ci_objData.length; i++) {
+                                m_objIDList.push(ci_objData[i].iViewColumnID);
+                            }
+                            postData({
+                                url: 'DcCdCustomPageManage',
+                                params: { Action: 'ColInput', iCustomPageID: _iID, iViewColumnID: m_objIDList.join(',') },
+                                success: function(ci_result) {
+                                    $('#tab_Button_List').datagrid('reload');
+                                }
+                            });
+                        }
+                        break;
+                }
+            }
+        }
+
+
+
+        function setDnd() {
+            $('.datagrid-dnd').draggable({
+                revert: true,
+                cursor: 'move',
+                edge: 5,
+                proxy: function(source) {
+                    var p = $('<div class="tree-node-proxy tree-dnd-no" style="position:absolute;border:1px solid #ccc;"/>').appendTo('body');
+                    p.html($(source).html());
+                    p.hide();
+                    return p;
+                },
+                onBeforeDrag: function(e) {
+                    e.data.startLeft = $(this).offset().left;
+                    e.data.startTop = $(this).offset().top;
+                },
+                onStartDrag: function() {
+                    $(this).draggable('proxy').css({
+                        left: -10000,
+                        top: -10000
+                    });
+                },
+                onDrag: function(e) {
+                    $(this).draggable('proxy').show().css({
+                        left: e.pageX + 15,
+                        top: e.pageY + 15
+                    });
+                    this.pageY = e.pageY;
+                    return false;
+                }
+            }).droppable({
+                accept: '.datagrid-dnd',
+                onDragOver: function(e, source) {
+                    $(source).draggable('proxy').removeClass('tree-dnd-no').addClass('tree-dnd-yes');
+
+                    var pageY = source.pageY;
+                    var top = $(e.target).offset().top;
+                    var bottom = top + $(e.target).outerHeight();
+                    
+                    if (pageY > top + (bottom - top) / 2) {
+                        _Button_objIn.css({
+                            display: 'block',
+                            top: bottom - 5,
+                            left: $(e.target).offset().left - 18
+                        });
+                        source.position = 'bottom';
+                    } else {
+                        _Button_objIn.css({
+                            display: 'block',
+                            top: top - 5,
+                            left: $(e.target).offset().left - 18
+                        });
+                        source.position = 'top';
+                    }
+                },
+                onDragLeave: function(e, source) {
+                    $(source).draggable('proxy').removeClass('tree-dnd-yes').addClass('tree-dnd-no');
+                    _Button_objIn.hide();
+                },
+                onDrop: function(e, source) {
+                    _Button_objIn.hide();
+                    $.messager.confirm('提示', '您确定要改变排序吗？', function(r) {
+                        if (r) {
+                            var m_objData = $('#tab_Button_List').datagrid('getData');
+                            var m_iSource = parseInt($(source).parent().parent().parent().attr('datagrid-row-index'));
+                            var m_iTarget = parseInt($(e.target).parent().parent().parent().attr('datagrid-row-index'));
+                            var m_iStart = 0;
+                            var m_objDataDetail = [];
+                            if (source.position == 'bottom') {
+                                m_iTarget++;
+                            }
+                            m_objData.rows.splice(m_iTarget, 0, m_objData.rows[m_iSource]);
+                            if (m_iSource > m_iTarget) {
+                                m_iStart = m_iTarget;
+                                m_objData.rows.splice(m_iSource + 1, 1);
+                            }
+                            else {
+                                m_iStart = m_iSource;
+                                m_objData.rows.splice(m_iSource, 1);
+                            }
+                            for (var i = m_iStart; i < m_objData.rows.length; i++) {
+                                m_objDataDetail.push(m_objData.rows[i].iButtonID + ',' + i);
+                            }
+                            postData({
+                                url: 'DcCdCustomPageManage',
+                                params: { Action: 'btnupdateindex', DataDetail: m_objDataDetail.join(';') },
+                                success: function(ci_result) {
+                                    $('#tab_Button_List').datagrid('reload');
+                                    $.messager.alert('提示', '修改成功', 'info');
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        } 
+    </script>
+
+</body>
+</html>

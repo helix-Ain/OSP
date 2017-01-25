@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<style>
+			input.radio-cAngle{
+				position: absolute;
+				margin-left: -27px;
+				margin-top:127px;
+				height: 17px;
+				width:17px;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>场景名称：
+						</td>
+						<td>
+							<span id='cSceneName'></span>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>场景图：
+						</td>
+						<td>
+							<span style='color: #666666;'>提示：设置自动演示或点击浓缩图跳转至该场景时的第一视角</span>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'></td>
+						<td>
+							<div>
+								<img id='front' style='width:150px;height: 150px;' />
+								<input type='radio' id='radio-front' class='radio-cAngle' name='cAngle' value='F' checked="checked"/>
+								<img id='right' style='width:150px;height:150px' />
+								<input type='radio' id='radio-right' class='radio-cAngle' name='cAngle' value='R' />
+								<img id='back' style='width:150px;height:150px;' />
+								<input type='radio' id='radio-back' class='radio-cAngle' name='cAngle' value='A' />
+								<img id='left' style='width:150px;height: 150px;' />
+								<input type='radio' id='radio-left' class='radio-cAngle' name='cAngle' value='L' />
+							</div>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = '';
+			var _strFun = getHashValue('Fun');
+			var _iSceneID = getHashValue('iSceneID');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				postData({
+					url: 'DcCdSceneManage',
+					params: {
+						Action: 'GetData',
+						iSceneID: _iSceneID
+					},
+					success: function(ci_reuslt) {
+						if(existData(ci_reuslt)) {
+							var m_objData = ci_reuslt.rows[0];
+							$('#cSceneName').html(m_objData.cSceneName);
+							$('#right').attr('src', '/' + m_objData.cFilePath + '/150/' + m_objData.cRFilename);
+							$('#front').attr('src', '/' + m_objData.cFilePath + '/150/' + m_objData.cFFilename);
+							$('#left').attr('src', '/' + m_objData.cFilePath + '/150/' + m_objData.cLFilename);
+							$('#back').attr('src', '/' + m_objData.cFilePath + '/150/' + m_objData.cAFilename);
+							switch(m_objData.cAngle){
+								case 'R':$('#radio-right').prop('checked',true);break;
+								case 'F':$('#radio-front').prop('checked',true);break;
+								case 'L':$('#radio-left').prop('checked',true);break;
+								case 'A':$('#radio-back').prop('checked',true);break;
+							}
+						}
+					}
+				});
+			}
+
+			function saveData() {
+				postData({
+					url:'DcCdSceneManage',
+					params:{
+						Action:'Update',
+						iSceneID:_iSceneID,
+					},
+					form:'form_Edit',
+					validate:true,
+					onPost:function(){
+						this.params.cAngle = $('input[name=cAngle]:checked').val();
+						return true;
+					},
+					success:function(ci_result){
+						if(ci_result.DcCode==0){
+							$.messager.alert('提示','保存成功','info');
+						}else{
+							$.messager.alert('提示',ci_result.DcMessage,'info');
+						}
+					}
+				});
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog();
+			}
+		</script>
+	</body>
+
+</html>

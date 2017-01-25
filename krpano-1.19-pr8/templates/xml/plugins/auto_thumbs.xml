@@ -1,0 +1,825 @@
+<krpano>
+
+   <cmx memo="全局设定" hotspot="" helpLoaded="false" uSkinClose="false" shared="false"
+
+		scene1="lyd2" group="null" thumbTextLength="9" shareText="" waittime="8.0"
+
+		help="false" direction="true" autorotate="false" gyro="false" bgsoundstate="true" demo="false"
+
+		planet="true" planetText="false" shla="-90" cover="false"
+
+		nadir="%FIRSTXML%/skin/nadir.png" nadirscale="0.55"
+
+		own="true" owntext="crack By : Pano" ownlink="http://863663738.qzone.qq.com"
+
+		company="true" companylink="http://www.baidu.cn"
+
+		bgsound="%FIRSTXML%/files/bgsound.mp3"
+
+		/>      
+
+  <settings name="auto_thumbs"
+
+    thumb_size="120"
+
+    thumb_background_size="156"
+
+    thumb_spacing="0"
+
+    left="-235"   
+
+    right="0" 
+
+    bottom="80"  
+
+    albums_right="0"
+
+  />
+
+  
+
+  <events name="auto_thumbs" keep="true" 
+
+    onresize="resize_auto_thumbs(); if(settings[auto_thumbs].onresize, settings[auto_thumbs].onresize());"
+
+    onnewscene="update_active_thumb();"
+
+    onxmlcomplete="ifnot(thumbs_intitialized, create_auto_thumbs(); set(thumbs_intitialized, true););"
+
+    onmousedown="hide_container(get(layer[albums].current_container)); fadein_children(albums_scrollarea); set(layer[new_thumbs].visible, false); set(layer[albums].current_container, null);"
+
+  />
+
+  
+
+  
+
+  <layer name="auto_thumbs" type="container" keep="true" preload="true" scalechildren="true" scale="1" align="leftbottom" x="0" y="0" width="100%" height="320" maskchildren="false" bgcolor="0x000000" bgalpha="0.0">
+
+
+
+    <layer name="albums" scalechildren="true" scale="1" type="container" align="leftbottom" x="0" y="0" width="100%" height="160" maskchildren="false"  bgcolor="0x000000" bgalpha="0.3"
+
+      onout="delayedcall(disable_thumbs, .25, set(layer[new_thumbs].visible, false));">
+
+      <layer name="albums_left_shadow" style="scroll_shadow" align="left" ox="-100%" rotate="180"/>
+
+      <layer name="albums_right_shadow" style="scroll_shadow" align="right" />
+
+      <layer name="albums_scrollarea" style="scrollarea" width="0" onscroll="move_thumbs(); show_or_hide_shadows();" onout="delayedcall(fadein, .25, fadein_children(name))">
+
+      </layer>
+
+    </layer>
+
+    
+
+    <layer name="new_thumbs" scalechildren="true" scale="1" type="container" align="leftbottom" x="0" oy="0" width="100%" height="160" visible="false" maskchildren="false" bgcolor="0x000000" bgalpha="0.0"
+
+      onover="stopdelayedcall(fadein); stopdelayedcall(disable_thumbs); set(visible, true);" 
+
+      onout="delayedcall(disable_thumbs, .25, set(layer[new_thumbs].visible, false));"
+
+      >
+
+      <layer name="thumbs_left_shadow" style="scroll_shadow" align="left" ox="-100%" rotate="180"/>
+
+      <layer name="thumbs_right_shadow" style="scroll_shadow" align="right" />
+
+
+
+      <layer name="thumbs_scrollarea" width="100%" style="scrollarea" maskchildren="false" onscroll="show_or_hide_shadows();">
+
+      </layer> 
+
+    </layer>
+
+  </layer>
+
+
+
+  <style name="album" url="/OSP/Images/auto_thumbs.png" align="leftbottom" keep="true" oy="0" alpha="1" blendmode="layer" as="album"
+
+    onover="show_thumbs(); fadeout_siblings(name); stopdelayedcall(get(name)); stopdelayedcall(get(scene)); delayedcall(.05, layer[thumbs_scrollarea].scrolltocenter(0,0););" 
+
+    onclick="if (device.touchdevice,
+
+                if(layer[albums].current_container == container, 
+
+                  fadein_children(albums_scrollarea); hide_thumbs(); set(layer[albums].current_container, null); 
+
+                ,
+
+                  hide_container(get(layer[albums].current_container)); show_thumbs(); fadeout_siblings(name);
+
+                );
+
+              ,
+
+                loadscene(get(scene), null, MERGE, BLEND(1));
+
+              )" 
+
+    onout="hide_thumbs(); delayedcall(disable_thumbs, .25, set(layer[new_thumbs].visible, false););  fadein_children(albums_scrollarea);" 
+
+    ondown="layer[thumbs_scrollarea].scrolltocenter(0,0); "
+
+    />
+
+  <style name="thumb" url="/OSP/Images/auto_thumbs.png" align="center" keep="true" onover="fadeout_siblings(name); fadeout_siblings(album);" blendmode="layer"
+
+    onclick="loadscene(get(scene), null, MERGE, BLEND(1));
+
+            if(parent == albums_scrollarea, hide_container(get(layer[albums].current_container)); )"/>
+
+                                                                                                   
+
+  <style name="thumb_image" ox="0" oy="0" width="0" height="0" keep="true" enabled="false"/>
+
+  <style name="thumbs_container" type="container" keep="true" align="lefttop" x="0" y="0" height="100%" width="0" alpha="0" visible="false"  zorder="0"
+
+    onout="fadein_children(get(name));
+
+           delayedcall(get(layer[get(album)].scene), .1, 
+
+            layer[thumbs_scrollarea].scrolltocenter(0,0); 
+
+            delayedcall(get(album), 0, hide_container(get(name))); 
+
+
+
+              fadein_children(albums_scrollarea));"
+
+    />
+
+  <style name="scrollarea" align="center" height="100" url="%SWFPATH%/plugins/scrollarea.swf" keep="true" alturl="%SWFPATH%/plugins/scrollarea.js" direction="h" onloaded="setcenter(0,0);" onhover_autoscrolling="true" />
+
+                                      
+
+  <style name="thumbs_count" url="%SWFPATH%/plugins/textfield.swf" keep="true" scale="2" align="leftbottom" x="24" y="24" html="1" zorder="999999999" width="18" height="15" padding="0 4" roundedge="3" alpha=".95" shadow="0.01" shadowalpha=".3" enabled="false"
+
+    onloaded="if(device.html5, 
+
+                if(stagescale == 1, 
+
+                    txtadd(css, 'font-size: 11px; line-height: 15px;');
+
+                  )
+
+              ,
+
+                set(padding, '3 4 0')
+
+              )"
+
+    css="color: #777777; 
+
+        font-family: sans-serif;
+
+        font-size: 22px; 
+
+        line-height: 30px;
+
+        font-weight:400; 
+
+        text-align: center;
+
+        "/>
+
+
+
+  <style name="scroll_shadow" url="/OSP/Images/shadow.png" keep="true" x="0" y="0" zorder="99"/>
+
+
+
+
+
+  <action name="create_auto_thumbs">
+
+    if (scene.count GT 0,
+
+                                        
+
+      copy(thumb_size, settings[auto_thumbs].thumb_background_size);
+
+      copy(thumb_image_size, settings[auto_thumbs].thumb_size);    
+
+      
+
+      txtadd(thumb_crop, get(thumb_size), |0|, get(thumb_size), |, get(thumb_size));
+
+      txtadd(active_thumb_crop, get(thumb_size), |, get(thumb_size), |, get(thumb_size), |, get(thumb_size));
+
+      txtadd(album_crop, 0|0|, get(thumb_size), |, get(thumb_size));
+
+      txtadd(active_album_crop, 0|, get(thumb_size), |, get(thumb_size), |, get(thumb_size));
+
+      copy(style[album].crop, album_crop);
+
+      copy(style[thumb].crop, thumb_crop);
+
+      
+
+      copy(style[thumb_image].width, thumb_image_size);
+
+      copy(style[thumb_image].height, thumb_image_size);
+
+      copy(style[thumb_image].oy, thumb_size);
+
+      sub(style[thumb_image].oy, thumb_image_size);
+
+      div(style[thumb_image].oy, 2);
+
+      copy(style[thumb_image].ox, style[thumb_image].oy);
+
+
+
+      copy(layer[thumbs_scrollarea].height, thumb_size);
+
+      copy(layer[albums_scrollarea].height, thumb_size);
+
+      copy(layer[albums].height, thumb_size);
+
+      copy(layer[new_thumbs].height, thumb_size);
+
+      copy(layer[new_thumbs].y, thumb_size);
+
+     
+
+      add(thumb_width, thumb_size, settings[auto_thumbs].thumb_spacing);
+
+      
+
+      set(album_index, 0);
+
+      set(thumb_index, 0);
+
+      for(set(i,0), i LT scene.count, inc(i),
+
+        txtadd(album_image_name,'album_image_',get(i));
+
+        if (scene[0].album,
+
+          if (scene[get(i)].album !== null,
+
+                                 
+
+            txtadd(album_name,'album_',get(i));
+
+            addlayer(get(album_name));
+
+            add(j, i, 1);
+
+            if(scene[get(j)].name,
+
+              if(scene[get(j)].album !== null,
+
+                layer[get(album_name)].loadstyle(thumb|tooltip);
+
+              ,
+
+                layer[get(album_name)].loadstyle(album|tooltip);
+
+              );
+
+            ,
+
+              layer[get(album_name)].loadstyle(thumb|tooltip);
+
+            );
+
+            set(layer[get(album_name)].parent, albums_scrollarea);
+
+            set(layer[get(album_name)].album_index, get(album_index));
+
+            mul(layer[get(album_name)].x, get(album_index), get(thumb_width));
+
+            add(layer[albums_scrollarea].width, get(thumb_width)); 
+
+            txtadd(container_name, get(album_name), '_container');
+
+            set(layer[get(album_name)].container, get(container_name));
+
+            copy(layer[get(album_name)].scene, scene[get(i)].name);
+
+            if (scene[get(i)].album,
+
+              copy(layer[get(album_name)].tooltip, scene[get(i)].album);
+
+            ,
+
+              copy(layer[get(album_name)].tooltip, scene[get(i)].title);
+
+            );
+
+            set(layer[get(album_name)].tooltip_oy, 2);
+
+                                       
+
+            addlayer(get(album_image_name));
+
+            copy(layer[get(album_image_name)].url, scene[get(i)].thumburl);
+
+            layer[get(album_image_name)].loadstyle(thumb_image);
+
+            set(layer[get(album_image_name)].parent, get(album_name));
+
+                                        
+
+            if(layer[get(album_name)].as == album,
+
+              set(layer[get(album_name)].thumbs_count, 1);
+
+              txtadd(thumbs_count_name,'thumbs_count_', get(i));
+
+              addlayer(get(thumbs_count_name));
+
+              layer[get(thumbs_count_name)].loadstyle(thumbs_count);
+
+              set(layer[get(thumbs_count_name)].parent, get(album_name));
+
+            );
+
+                                                  
+
+            txtadd(container_name, get(album_name), '_container');
+
+            addlayer(get(container_name));
+
+            layer[get(container_name)].loadstyle(thumbs_container);
+
+            set(layer[get(container_name)].parent, thumbs_scrollarea);
+
+            set(layer[get(container_name)].album, get(album_name));
+
+            txtadd(onover_actions, 
+
+             'stopdelayedcall(get(name)); stopdelayedcall(' , get(scene[get(i)].name) , ');
+
+              stoptween(layer[', get(container_name), '].alpha); tween(alpha, 1, .25);
+
+              stopdelayedcall(disable_thumbs);
+
+            ');
+
+            set(layer[get(container_name)].onover, get(onover_actions));
+
+
+
+            inc(album_index);
+
+            set(thumb_index, 0);
+
+            
+
+            create_thumb();
+
+          ,
+
+            create_thumb();
+
+            inc(layer[get(thumbs_count_name)].html);
+
+            inc(layer[get(album_name)].thumbs_count);
+
+          );
+
+        ,
+
+          create_thumb();
+
+
+
+          set(layer[get(thumb_name)].parent, albums_scrollarea);
+
+          add(layer[albums_scrollarea].width, get(thumb_width)); 
+
+
+
+        );
+
+      );
+
+
+
+      if (stagescale == 1,
+
+        set(layer[auto_thumbs].scale, .5);
+
+        if(device.html5, 
+
+          mul(layer[albums_scrollarea].width, 2); 
+
+        );
+
+      );
+
+      
+
+    );
+
+    if(settings[auto_thumbs].onstart,
+
+      settings[auto_thumbs].onstart();
+
+    );
+
+  </action>
+
+  <action name="create_thumb">
+
+    txtadd(thumb_name,'thumb_', get(i));
+
+    addlayer(get(thumb_name));
+
+    layer[get(thumb_name)].loadstyle(thumb);
+
+    set(layer[get(thumb_name)].parent, get(container_name));
+
+    copy(layer[get(thumb_name)].scene, scene[get(i)].name);
+
+    copy(layer[get(thumb_name)].album, album_name);
+
+    set(layer[get(thumb_name)].thumb_index, get(thumb_index));
+
+    mul(layer[get(thumb_name)].x, get(thumb_index), get(thumb_width));
+
+    if(container_name,
+
+      add(layer[get(container_name)].width, get(thumb_width));
+
+    );
+
+    copy(layer[get(thumb_name)].tooltip, scene[get(i)].title);
+
+    copy(layer[get(thumb_name)].tooltip_oy, layer[get(album_name)].tooltip_oy);
+
+                               
+
+    txtadd(thumb_image_name,'thumb_image_',get(i));
+
+    addlayer(get(thumb_image_name));
+
+    copy(layer[get(thumb_image_name)].url, scene[get(i)].thumburl);
+
+    layer[get(thumb_image_name)].loadstyle(thumb_image);
+
+    set(layer[get(thumb_image_name)].parent, get(thumb_name));
+
+
+
+    inc(thumb_index);
+
+    
+
+    if(i == 0, 
+
+      copy(layer[auto_thumbs].active_album, album_name);
+
+      copy(layer[auto_thumbs].active_thumb, thumb_name);
+
+    );
+
+  </action>
+
+          
+
+  <action name="resize_auto_thumbs">
+
+    copy(layer[auto_thumbs].width, area.pixelwidth);
+
+    sub(layer[auto_thumbs].width, settings[auto_thumbs].left);
+
+    sub(layer[auto_thumbs].width, settings[auto_thumbs].right);
+
+    if (stagescale == .5,
+
+      sub(layer[auto_thumbs].width, settings[auto_thumbs].left);
+
+      sub(layer[auto_thumbs].width, settings[auto_thumbs].right);
+
+    );
+
+    copy(layer[auto_thumbs].x, settings[auto_thumbs].left);
+
+    copy(layer[auto_thumbs].y, settings[auto_thumbs].bottom);
+
+    div(layer[auto_thumbs].x, stagescale);
+
+    div(layer[auto_thumbs].y, stagescale);
+
+    copy(layer[albums].width, layer[auto_thumbs].width);
+
+    sub(layer[albums].width, settings[auto_thumbs].albums_right);
+
+    add(layer[albums].width, settings[auto_thumbs].right);
+
+    if (layer[auto_thumbs].scale == .5,
+
+      mul(layer[auto_thumbs].width, 2);
+
+      mul(layer[albums].width, 2);
+
+    );
+
+                                                                                                                                                
+
+
+
+  </action>
+
+
+
+  <action name="show_thumbs">
+
+    stopdelayedcall(disable_thumbs);
+
+                                             
+
+    if (layer[albums].current_container,
+
+      copy(layer[get(container)].zorder, layer[get(layer[albums].current_container)].zorder);
+
+    );
+
+    inc(layer[get(container)].zorder);
+
+    set(layer[albums].current_album, get(name));
+
+    set(layer[albums].current_container, get(container));
+
+    set(layer[get(container)].visible, true);
+
+    tween_alpha(get(container), 1, .25); 
+
+    set(layer[new_thumbs].visible, true);
+
+    set(layer[thumbs_scrollarea].width, get(layer[get(container)].width));
+
+                                                    
+
+    if (stagescale == 1,
+
+                                                         
+
+                                                         
+
+      if(device.html5, 
+
+        mul(layer[thumbs_scrollarea].width, 2); 
+
+      );
+
+    );
+
+    move_thumbs();
+
+    show_or_hide_shadows();
+
+  </action>
+
+  <action name="hide_thumbs">
+
+    delayedcall(get(container), 0,
+
+      hide_container(get(container));          
+
+                                                                                                   
+
+    );
+
+  </action>
+
+  
+
+  <action name="hide_container">
+
+    tween(layer[%1].alpha, 0, .25, easeOutQuad, set(layer[%1].visible, false));
+
+    tween(layer[thumbs_left_shadow].alpha, 0, .1);
+
+    tween(layer[thumbs_right_shadow].alpha, 0, .1);
+
+    
+
+  </action>
+
+  
+
+  <action name="fadeout_siblings">
+
+    for(set(i, 0), i LT layer.count, inc(i), 
+
+      if(layer[get(i)].parent == layer[get(%1)].parent,
+
+        if(layer[get(i)].parent == albums_scrollarea,
+
+          if(scene[0].album,
+
+            tween_alpha(get(i), .6);
+
+            ,
+
+            tween_alpha(get(i), .85);
+
+          );
+
+        ,
+
+          tween_alpha(get(i), .85);
+
+        );
+
+      )
+
+    );
+
+    tween_alpha(get(%1), 1);
+
+  </action>
+
+  <action name="update_active_thumb">
+
+    txtadd(active_thumb_name, 'thumb_', get(scene[get(xml.scene)].index));
+
+    copy(layer[get(layer[auto_thumbs].active_thumb)].crop, thumb_crop);
+
+    copy(layer[auto_thumbs].active_thumb, active_thumb_name);
+
+    copy(layer[get(layer[auto_thumbs].active_thumb)].crop, active_thumb_crop);
+
+    if (layer[get(layer[auto_thumbs].active_album)].as == album,
+
+      copy(layer[get(layer[auto_thumbs].active_album)].crop, album_crop);
+
+    ,
+
+      if(layer[auto_thumbs].active_album, copy(layer[get(layer[auto_thumbs].active_album)].crop, thumb_crop));
+
+    );
+
+    copy(layer[auto_thumbs].active_album, layer[get(active_thumb_name)].album);
+
+    if (layer[get(layer[auto_thumbs].active_album)].as == album,
+
+      copy(layer[get(layer[auto_thumbs].active_album)].crop, active_album_crop);    
+
+    ,
+
+      if(layer[auto_thumbs].active_album, copy(layer[get(layer[auto_thumbs].active_album)].crop, active_thumb_crop);   ) 
+
+    );
+
+                                        
+
+                                                                                                                                                        
+
+  </action>
+
+
+
+  <action name="fadein_children">
+
+    for(set(i, 0), i LT layer.count, inc(i), 
+
+      if(layer[get(i)].parent == %1,
+
+        tween_alpha(get(i), 1);
+
+      )
+
+    );
+
+  </action>
+
+  
+
+  <action name="tween_alpha">
+
+    tween(layer[%1].alpha, %2, .25);
+
+  </action>
+
+
+
+  <action name="move_thumbs">
+
+    if(layer[albums].current_container,
+
+      copy(thumbs_scrollarea_width, layer[thumbs_scrollarea].width); 
+
+      if (stagescale == 1,
+
+        if (device.html5,
+
+          div(thumbs_scrollarea_width, 2); 
+
+        );
+
+      );
+
+
+
+      if (layer[new_thumbs].pixelwidth GE thumbs_scrollarea_width,
+
+                                       
+
+        mul(a, thumb_size, layer[get(layer[albums].current_album)].album_index);
+
+        add(a, thumb_size);
+
+        div(b, thumb_size, 2);
+
+        div(c, layer[get(layer[albums].current_container)].width, 2);
+
+        sub(result, a, b);
+
+        sub(result, c);
+
+        set(layer[get(layer[albums].current_container)].x, get(result));
+
+        sub(layer[get(layer[albums].current_container)].x, get(layer[albums_scrollarea].loverflow));
+
+                               
+
+        if(layer[get(layer[albums].current_container)].x GT 0,
+
+          add(ox_plus_thumbs_width, layer[get(layer[albums].current_container)].x, layer[get(layer[albums].current_container)].width);
+
+          if(ox_plus_thumbs_width GT layer[new_thumbs].pixelwidth,
+
+            sub(dif, ox_plus_thumbs_width, layer[new_thumbs].pixelwidth);
+
+            sub(layer[get(layer[albums].current_container)].x, dif);
+
+          );
+
+        ,
+
+          set(layer[get(layer[albums].current_container)].x, 0);
+
+                                                                                                                                                                                                                                                                                                                                                                                                          
+
+        );
+
+      ,
+
+        set(layer[get(layer[albums].current_container)].x, 0);
+
+      );
+
+    );
+
+  </action>
+
+  
+
+  <action name="show_or_hide_shadows">
+
+    if(layer[albums_scrollarea].loverflow GT 3,
+
+      tween(layer[albums_left_shadow].alpha, 1, .1);
+
+    ,
+
+      tween(layer[albums_left_shadow].alpha, 0, .1);
+
+    );
+
+    if(layer[albums_scrollarea].roverflow GT 3,
+
+      tween(layer[albums_right_shadow].alpha, 1, .1);
+
+    ,
+
+      tween(layer[albums_right_shadow].alpha, 0, .1);
+
+    );
+
+    
+
+    if(layer[thumbs_scrollarea].loverflow GT 3,
+
+      tween(layer[thumbs_left_shadow].alpha, 1, .1);
+
+    ,
+
+      tween(layer[thumbs_left_shadow].alpha, 0, .1);
+
+    );
+
+    if(layer[thumbs_scrollarea].roverflow GT 3,
+
+      tween(layer[thumbs_right_shadow].alpha, 1, .1);
+
+    ,
+
+      tween(layer[thumbs_right_shadow].alpha, 0, .1);
+
+    );
+
+  </action>
+
+  
+
+</krpano>

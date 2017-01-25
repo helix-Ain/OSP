@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=css/Style.css"></script>
+		<style>
+			.pagename {
+				background: url(../Image/06_6.png) no-repeat left;
+				text-indent: 25px;
+				height: 25px;
+				line-height: 25px;
+			}
+			
+			.pagespilt {
+				background: url(../Image/06_9.png) no-repeat center;
+				height: 25px;
+				width: 16px;
+				display: block;
+			}
+			
+			.buttonspilt {
+				color: #A4684B;
+				padding: 0 3px;
+			}
+			
+			.headerlist li {
+				float: left;
+			}
+		</style>
+	</head>
+
+	<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+		<div data-options="region:'north',border:false" style="height: 40px; min-width: 800px;">
+			<div id="div_Header" style="margin: 10px;">
+				<ul id="ul_Header" class="headerlist">
+					<li class="pagename">场景名称：<span id='cSceneName'></span></li>
+				</ul>
+			</div>
+			<div id="div_Buttons" style="float: right; margin-right: 5px; text-align: left;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dcn-icon-new" onclick="newData()">添加</a><span class="buttonspilt">|</span>
+				<a href="javascript:void(0)" class="easyui-linkbutton" plain="true" onclick="deleteData()">删除</a>
+			</div>
+		</div>
+		<div data-options="region:'center',border:false">
+			<table id="datalist" class='easyui-datagrid' rownumbers='true' pagination='true' fit='true' fitColumns='true'>
+				<thead>
+					<tr>
+						<th data-options="field:'ck'" checkbox='true'></th>
+						<th data-options="field:'btn',width:75" formatter="formatBtn"></th>
+						<th data-options="field:'cName',width:150">场景说明名称</th>
+						<th data-options="field:'cContent',width:300">场景说明内容</td>
+					</tr>
+				</thead>
+			</table>
+		</div>
+	</body>
+
+</html>
+
+<script type="text/javascript" language="javascript">
+	var _iSceneID = getHashValue('iSceneID');
+	var _strDetailiFrameID = "div_DataGroupHandle";
+	var _rRecords = [];
+
+	$(function() {
+		checkPagePower({
+			onload: function() {
+				initPage();
+			}
+		});
+	});
+
+	function initPage() {
+		postData({
+			url: 'DcCdSceneManage',
+			params: {
+				Action: 'GetList',
+				iSceneID: _iSceneID
+			},
+			success: function(ci_result) {
+				if(existData(ci_result)) {
+					var m_objData = ci_result.rows[0];
+					$('#cSceneName').html(m_objData.cSceneName);
+				}
+			}
+		});
+		initData();
+	}
+
+	function initData() {
+		_rRecords = [];
+		postData({
+			url: 'DcCdScenedDataManage',
+			params: {
+				Action: 'GetList',
+				iSceneID: _iSceneID,
+				iType: 2,
+				GetRecords: true
+			},
+			success: function(ci_result) {
+				if(existData(ci_result)) {
+					var m_objDatas = ci_result.rows;
+					var data = [];
+					$.each(m_objDatas, function(i, m_objData) {
+						if(m_objData.iObjectID == 7) {
+							var rRecords = m_objData.rRecords;
+							$.each(rRecords, function(i, item) {
+								_rRecords.push(item.iRichID);
+								data.push({
+									'iRichID': item.iRichID,
+									'btn': item.iRichID,
+									'cName': item.cName,
+									'cContent': item.cContent
+								});
+							});
+						}
+					});
+					$('#datalist').datagrid('loadData', data);
+				}
+			}
+		});
+	}
+
+	function formatBtn(val, row) {
+		return '<div style="text-align:left;white-space:normal;height:auto;" class="datagrid-cell datagrid-cell-c1-btn"><a href="javascript:void(0)" onclick="editData(' + val + ');" style="width:50px;display:block;color:Gray;" title="查看详情"><img src="../image/06_8.png" style="vertical-align:middle;">查看</a></div>';
+	}
+
+	function newData() {
+		popupDialog(_strSysUrl + 'OSP/DataRichListManage.html?iObjectID=7&entrust=SceneExplainManage&select=1', 'parent.fillExplain', '选择场景说明', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+	}
+	
+	function editData(iRichID){
+		popupDialog(_strSysUrl + 'OSP/DataRichListDetail.html#Action=Update&entrust=SceneExplain&iObjectID=7&iRichID=' + iRichID, '', '查看场景说明', true, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+	}
+
+	function fillExplain(iRichID) {
+		if(_rRecords.indexOf(iRichID) == -1) {
+			_rRecords.push(iRichID);
+			var cData = '';
+			$.each(_rRecords, function(i, item) {
+				if(cData != '') {
+					cData += ',' + getSeparativeSign() + 7 + getSeparativeSign() + item + getSeparativeSign();
+				} else {
+					cData = 7 + getSeparativeSign() + item + getSeparativeSign();
+				}
+			});
+			postData({
+				url: 'DcCdScenedDataManage',
+				params: {
+					Action: 'Update',
+					iSceneID: _iSceneID,
+					iType: 2,
+					cData: cData
+				},
+				success: function(ci_result) {
+					if(ci_result.DcCode == 0) {
+						refresh();
+						cancel();
+					} else {
+						$.messager.alert('提示', '保存失败', 'info');
+					}
+				}
+			});
+		} else {
+			cancel();
+		}
+	}
+
+	function deleteData() {
+		var m_row = $('#datalist').datagrid('getChecked');
+		if(m_row.length > 0) {
+			$.messager.confirm('提示', '确定要删除所选' + m_row.length + '条记录吗？', function(r) {
+				if(r) {
+					var m_arrID = [];
+					var new_rRecords = [];
+					$.each(m_row, function() {
+						m_arrID.push(this.iRichID);
+					});
+					$.each(_rRecords, function(i, item) {
+						if(m_arrID.indexOf(item) == -1) {
+							new_rRecords.push(item);
+						}
+					});
+					_rRecords = new_rRecords;
+					var cData = '';
+					$.each(_rRecords, function(i, item) {
+						if(cData != '') {
+							cData += ',' + getSeparativeSign() + 7 + getSeparativeSign() + item + getSeparativeSign();
+						} else {
+							cData = 7 + getSeparativeSign() + item + getSeparativeSign();
+						}
+					});
+					postData({
+						url: 'DcCdScenedDataManage',
+						params: {
+							Action: 'Update',
+							iSceneID: _iSceneID,
+							iType: 2,
+							cData: cData
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								refresh();
+							} else {
+								$.messager.alert('提示', '删除失败', 'info');
+							}
+						}
+					});
+				}
+			});
+		} else {
+			$.messager.alert('提示', '请选择记录', 'info');
+		}
+	}
+
+	function refresh() {
+		$('#datalist').datagrid('loadData', { total: 0, rows: [] });  
+		initData();
+	}
+
+	function cancelSelf() {
+		try {
+			parent.cancel();
+		} catch(err) {
+			$('body').css('display', 'none');
+		}
+	}
+
+	function cancel() {
+		closedPopupDialog(_strDetailiFrameID);
+	}
+</script>

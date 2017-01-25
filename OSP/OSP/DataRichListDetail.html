@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+	</head>
+
+	<body  style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span><span id='span-cName'></span>
+						</td>
+						<td>
+							<input id='cName' name='cName' maxlength="50" class='easyui-validatebox' data-options='required:true' style='width:650px;' />
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class='require_sign'>*</span><span id='span-cContent'></span>
+						</td>
+						<td>
+							<textarea id="cContent" name="cContent" rows="10" style="width: 650px;height: 250px;"></textarea>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a id='btn-save' style='display: none;' href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = getHashValue('Action');
+			var _iObjectID = getHashValue('iObjectID');
+			var _iParentID = getHashValue('iParentID');
+			var _iRichID = getHashValue('iRichID');
+			var _strFun = getHashValue('Fun');
+			var _entrust = getHashValue('entrust');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+				if(_iObjectID == 4) {
+					$('#span-cName').html('注释名称：');
+					$('#span-cContent').html('注释内容：');
+				} else if(_iObjectID == 7) {
+					$('#span-cName').html('场景说明名称：');
+					$('#span-cContent').html('场景说明内容：');
+				}
+				if(_entrust == '') {
+					$('#btn-save').show();
+				}
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				dcnloader.load(['ComboList', 'Clearbutton', 'DCNDiv', 'Kindeditor', 'Uploadify'], function() {
+					$('#cContent').kindeditor({
+						width: 650,
+						minWidth: 200
+					});
+					if(_Action == 'Update') {
+						postData({
+							url: 'DcCdDataManage',
+							params: {
+								Action: 'GetRichList',
+								iRichID: _iRichID,
+								GetContent: true
+							},
+							success: function(ci_result) {
+								if(existData(ci_result)) {
+									var m_objData = ci_result.rows[0];
+									$('#cName').val(m_objData.cName);
+									var cContent = m_objData.cContent.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+									$('#cContent').kindeditor('editor').html(cContent);
+								}
+							}
+						});
+					}
+				});
+			}
+
+			function saveData() {
+				if(_Action == 'Add') {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'AddRich'
+						},
+						form: 'form_Edit',
+						validate: true,
+						onPost: function() {
+							this.params.cContent = $('#cContent').kindeditor('editor').html();
+							if(this.params.cContent==''){
+								var tip = _iObjectID==4?'请填写注释内容！':'请填写场景说明内容！';
+								$.messager.alert('提示',tip,'info');
+								return false;
+							}
+							this.params.iObjectID = _iObjectID;
+							this.params.iGroupID = _iParentID;
+							return true;
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								if(_strFun != '') {
+									eval(_strFun);
+								}
+								cancelSelf();
+							}
+						}
+					});
+				} else if(_Action == 'Update') {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'UpdateRich'
+						},
+						form: 'form_Edit',
+						validate: true,
+						onPost: function() {
+							this.params.iRichID = _iRichID;
+							this.params.cContent = $('#cContent').kindeditor('editor').html();
+							if(this.params.cContent==''){
+								$.messager.alert('提示','请填写注释内容！','info');
+								return false;
+							}
+							this.params.iObjectID = _iObjectID;
+							this.params.iGroupID = _iParentID;
+							return true;
+						},
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								$.messager.alert('提示', '保存成功', 'info');
+							}
+						}
+					});
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog();
+			}
+		</script>
+	</body>
+
+</html>

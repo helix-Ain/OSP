@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <style type="text/css">
+        .tree-node { height: 30px; line-height: 15px; white-space: nowrap; cursor: pointer; }
+    </style>
+    <div class="easyui-layout" data-options="fit:true,border:false">
+        <div data-options="region:'center',border:false">
+            <ul id="dept_ul_Dept" class="menuTree" style="margin: 30px;">
+            </ul>
+        </div>
+        <div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+            <div class="ButtonBar" style="position: inherit;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="dept_saveData()"
+                    group="update">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">
+                        关闭</a>
+            </div>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var dept_objPosition = [];
+        var dept_objPositionTop = [];
+        dept_initPage();
+
+        function dept_initPage() {
+            var m_objFileLoader = new fileLoader();
+            m_objFileLoader.isParse = false;
+            m_objFileLoader.addReadyFn(function() {
+                postData({
+                    url: 'DcCdPositionManage',
+                    params: { Action: 'GetList' },
+                    success: function(ci_result) {
+                        $.each(ci_result.rows, function() {
+                            if (this.iLevel == 0) {
+                                dept_objPositionTop.push(this);
+                            }
+                            else {
+                                dept_objPosition.push(this);
+                            }
+                        });
+
+                        postData({
+                            url: 'DcCdDepartmentManage',
+                            params: { Action: 'GetList', Type: 'M' },
+                            success: function(ci_result) {
+                                if (existData(ci_result)) {
+                                    $('#dept_ul_Dept').tree({
+                                        data: dept_getTree(ci_result.rows, 0),
+                                        animate: true,
+                                        dnd: false,
+                                        onLoadSuccess: function() {
+                                            $('.dcnRadioList').find('div').bind('click', function(e) {
+                                                if ($(this).hasClass('active')) {
+                                                    $(this).removeClass('active');
+                                                }
+                                                else {
+                                                    $(this).parent().parent().find('div').removeClass('active');
+                                                    $(this).addClass('active');
+                                                }
+                                            });
+                                            dept_getUserData();
+                                            $.parser.parse('#dept_ul_Dept');
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+            m_objFileLoader.load([_strSysUrl + "CSS/dcnRadioList.css"]);
+        }
+
+        function dept_getUserData() {
+            $('.dcnRadioList').find('div').attr('mid', 0);
+            postData({
+                url: 'DcCdPositionManage',
+                params: { Action: 'GetUList', Type: 'C', iUserID: _iID },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $.each(ci_result.rows, function() {
+                            var m_obj = $('[did=' + this.iDepartmentID + '][pid=' + this.iPositionID + ']');
+                            if (m_obj.length > 0) {
+                                m_obj.attr('mid', this.iMappingID);
+                                m_obj.addClass('active');
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function dept_getTree(ci_objData, ci_iParentID) {
+            var m_objReturn = [];
+            for (var i = 0; i < ci_objData.length; i++) {
+                if (ci_objData[i].iParentDeptID == ci_iParentID) {
+                    var m_objData = {
+                        id: ci_objData[i].iDepartmentID,
+                        text: dept_getText(ci_objData[i].iDepartmentID, ci_iParentID, ci_objData[i].cDeptChiName),
+                        attributes: { iParentDeptID: ci_iParentID, cDeptChiName: ci_objData[i].cDeptChiName }
+                    };
+                    var m_objChildren = dept_getTree(ci_objData, ci_objData[i].iDepartmentID);
+                    if (m_objChildren.length > 0) {
+                        m_objData.children = m_objChildren;
+                    }
+                    m_objReturn.push(m_objData);
+                }
+            }
+            return m_objReturn;
+        }
+
+        function dept_getText(ci_iDepartmentID, ci_iParentID, ci_strName) {
+            var m_obj = [];
+            m_obj.push('<ul>');
+            m_obj.push('<li style="float:left;line-height:30px;margin-left:10px;"><b>');
+            m_obj.push(ci_strName);
+            m_obj.push('</b></li>');
+            if (dept_objPosition.length > 0) {
+                var m_objData = dept_objPosition;
+                if (ci_iParentID == 0) {
+                    m_objData = dept_objPositionTop;
+                }
+
+                m_obj.push('<li style="float:left;margin-left:10px;margin-top:2px;">');
+                m_obj.push('<ul class="dcnRadioList">');
+                for (var i = 0; i < m_objData.length; i++) {
+                    var m_strClass = 'item';
+                    if (i == 0) {
+                        m_strClass += ' firstchild';
+                    }
+                    if (i == m_objData.length - 1) {
+                        m_strClass += ' lastchild';
+                    }
+                    m_obj.push('<li><div class="' + m_strClass + '" did="' + ci_iDepartmentID + '" pid="' + m_objData[i].iPositionID + '" mid="0">' + m_objData[i].cName + '</div></li>');
+                }
+                m_obj.push('</ul>');
+                m_obj.push('</li>');
+            }
+            m_obj.push('</ul>');
+            return m_obj.join('');
+        }
+
+        function dept_saveData() {
+            if ($('.dcnRadioList').find('.active').length > 0) {
+                var m_objList = $('.dcnRadioList').find('div');
+                if (m_objList.length > 0) {
+                    var m_objData = [];
+                    $.each(m_objList, function() {
+                        if ($(this).hasClass('active')) {
+                            if (!parseInt($(this).attr('mid')) > 0) {
+                                m_objData.push(0 + ',' + $(this).attr('did') + ',' + $(this).attr('pid'));
+                            }
+                        }
+                        else if (parseInt($(this).attr('mid')) > 0) {
+                            m_objData.push($(this).attr('mid') + ',' + 0 + ',' + 0);
+                        }
+                    });
+                    if (m_objData.length > 0) {
+                        postData({
+                            url: 'DcCdPositionManage',
+                            params: { Action: 'EditU', DetailData: m_objData.join(';'), iUserID: _iID },
+                            success: function(ci_result) {
+                                $.messager.alert('提示', '保存成功', 'info');
+                                dept_getUserData();
+                            }
+                        });
+                        return;
+                    }
+                }
+                $.messager.alert('提示', '保存成功', 'info');
+            }
+            else {
+                $.messager.alert('提示', '最少要选择一个职位', 'info');
+            }
+        }
+    </script>
+
+</body>
+</html>

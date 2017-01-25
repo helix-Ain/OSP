@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>无标题页</title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body>
+    <form id="form1" runat="server">
+    <div>
+        <table width="400px">
+            <tr>
+                <td style="width: 70px">
+                    Appid:
+                </td>
+                <td>
+                    <input type="text" id="txt_Appid" style="width: 300px;" value="1" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Key:
+                </td>
+                <td>
+                    <input type="text" id="txt_Key" style="width: 300px;" value="1" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    IMEI:
+                </td>
+                <td>
+                    <input type="text" id="txt_IMEI" style="width: 300px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Time:
+                </td>
+                <td>
+                    <input type="text" id="txt_Time" style="width: 300px;" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2" align="center">
+                    <input type="button" id="cmd_Get" value="登录" onclick="login();" />
+                    <input type="button" id="cmd_Logout" value="登出" onclick="logout();" />
+                    <input type="button" id="cmd_GetInfo" value="GetInfo" onclick="getInfo();" />
+                </td>
+            </tr>
+        </table>
+        <table width="400px">
+            <tr>
+                <td style="width: 70px">
+                    SessionID:
+                </td>
+                <td>
+                    <input type="text" id="txt_SessionID" style="width: 300px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Time:
+                </td>
+                <td>
+                    <input type="text" id="txt_ReturnTime" style="width: 300px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Hash:
+                </td>
+                <td>
+                    <input type="text" id="txt_Hash" style="width: 300px;" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Msg:
+                </td>
+                <td>
+                    <textarea id="txt_Result" cols="" rows="2" readonly="readonly" style="width: 300px;"></textarea>
+                </td>
+            </tr>
+        </table>
+    </div>
+    </form>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    function login() {
+        $.post(getInterfaceName("DcCdMobileInterface"),
+        { "action": "logintest", "ver": 1, "AppID": $("#txt_Appid").val(), "Key": $("#txt_Key").val(), "IMEI": $("#txt_IMEI").val(), "Time": $("#txt_Time").val() },
+        function(ci_result) {
+            ci_result = convertToJson(ci_result);
+            $("#txt_SessionID").val(ci_result.Session);
+            $("#txt_ReturnTime").val(ci_result.Time);
+            $("#txt_Hash").val(decodeURI(ci_result.Hash));
+            $("#txt_Result").val(ci_result.Result + "_" + ci_result.Msg);
+        });
+    }
+
+    function logout() {
+        $.post(getInterfaceName("DcCdMobileInterface"),
+        { "action": "logout", "Session": $("#txt_SessionID").val(), "Hash": $("#txt_Hash").val(), "Time": $("#txt_ReturnTime").val() },
+        function(ci_result) {
+            ci_result = convertToJson(ci_result);
+            $("#txt_SessionID").val("");
+            $("#txt_ReturnTime").val("");
+            $("#txt_Hash").val("");
+            $("#txt_Result").val(ci_result.Result + "_" + ci_result.Msg);
+        });
+    }
+
+    function getInfo() {
+        $.post(getInterfaceName("DcCdMobileInterface"),
+        { "action": "getinfo", "Session": $("#txt_SessionID").val(), "Hash": $("#txt_Hash").val(), "Time": $("#txt_ReturnTime").val() },
+        function(ci_result) {
+            ci_result = convertToJson(ci_result);
+            $("#txt_SessionID").val(ci_result.Session);
+            $("#txt_ReturnTime").val(ci_result.Time);
+            $("#txt_Hash").val(decodeURI(ci_result.Hash));
+            $("#txt_Result").val(ci_result.Result + "_" + ci_result.Msg);
+        });
+    }
+</script>
+

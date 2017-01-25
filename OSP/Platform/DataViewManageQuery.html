@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <div id="div_Query_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a class="easyui-linkbutton" iconcls="dc-icon-editadd"
+            plain="true" onclick="query_newData(null)">添加</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                iconcls="dc-icon-cancel" plain="true" onclick="query_deleteData()">删除</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dc-icon-cancel"
+            onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_Query_List" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true">
+                </th>
+                <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iQueryID, 'query_editData');}">
+                    <div style="width: 50px; height: 5px; display: block;">
+                    </div>
+                </th>
+                <th data-options="field:'cValue',width:150,sortable:true">
+                    查询条件
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_Query_Detail" class="easyui-dialog" title="字段详细资料" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form action="" id="form_Query_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 500px;" class="TableCenter">
+            <tr>
+                <td class="tabletext" style="width: 100px;">
+                    <span class="require_sign">*</span>查询条件：
+                </td>
+                <td>
+                    <textarea rows="5" name="cValue" class="easyui-validatebox" data-options="required:true"
+                        style="width: 380px;"></textarea>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="query_saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="query_cancel()">关闭</a>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var _query_iID = 0;
+        var _query_strAction = '';
+
+        checkPagePower({ onload: function() { query_initPage(); }, showMask: false, parse: false, check: false });
+
+        function query_initPage() {
+            $.parser.parse('#div_Query_Detail');
+            $('#div_Query_Detail').dialog({ onClose: function() { $(".tooltip").remove(); } });
+
+            query_getColumnList();
+        }
+
+        function query_getColumnList() {
+            setDataGrid("tab_Query_List", "div_Query_Toolbar", "DcCdDataViewManage", { Action: "QueGetList", iViewID: _iID }, "iQueryID", "iQueryID", "", {
+                onDblClickRow: function(rowIndex, rowData) { $("#tab_Query_List").datagrid("selectRow", rowIndex); query_editData(rowData.iQueryID); },
+                onClickRow: function(rowIndex, rowData) { $("#tab_Query_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                pagination: false
+            });
+        }
+
+        function query_openDialog(ci_strTitle) {
+            $('#div_Query_Detail').dialog({ width: 520, height: 250, title: ci_strTitle }).dialog('open');
+        }
+
+        function query_cancel() {
+            $('#div_Query_Detail').dialog('close')
+        }
+
+        function query_newData() {
+            _query_iID = 0;
+            _query_strAction = 'queadd';
+            $('#div_Query_Detail').form('clear');
+            query_openDialog("添加查询条件");
+        }
+
+        function query_editData(ci_iID) {
+            _query_iID = ci_iID;
+            if (_query_iID > 0) {
+                setTimeout(function() {
+                    var m_objData = $("#tab_Query_List").datagrid("getSelected");
+                    if (m_objData != null) {
+                        $('#div_Query_Detail').form('load', m_objData);
+                        _query_iID = m_objData.iQueryID;
+                        _query_strAction = "queupdate";
+                        query_openDialog("字段详细资料");
+                    }
+                    else {
+                        $.messager.alert('提示', '请选择记录', 'info');
+                    }
+                }, 100);
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function query_saveData() {
+            postData({
+                url: 'DcCdDataViewManage',
+                params: { Action: _query_strAction, iQueryID: _query_iID, iViewID: _iID },
+                validate: true,
+                form: 'form_Query_Edit',
+                success: function(ci_result) {
+                    $('#tab_Query_List').datagrid('reload');
+                    query_cancel();
+                }
+            });
+        }
+
+        function query_deleteData() {
+            var m_objData = $("#tab_Query_List").datagrid("getChecked");
+            if (m_objData.length > 0) {
+                $.messager.confirm('提示', '确定要删除所选' + m_objData.length + '条记录吗？', function(r) {
+                    if (r) {
+                        var m_strIDList = "";
+                        for (var i = 0; i < m_objData.length; i++) {
+                            if (m_strIDList.length > 0) {
+                                m_strIDList += ",";
+                            }
+                            m_strIDList += m_objData[i].iQueryID;
+                        }
+                        if (m_strIDList != "") {
+                            postData({
+                                url: "DcCdDataViewManage",
+                                params: { Action: "quedelete", iQueryID: m_strIDList },
+                                success: function(ci_result) {
+                                    $('#tab_Query_List').datagrid('reload');
+                                    $.messager.alert('提示', '删除成功', 'info');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+    </script>
+
+</body>
+</html>

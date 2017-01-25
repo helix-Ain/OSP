@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+        style="height: 80px;">
+        <ul class="searchForm1">
+            <!--<li class="searchText1">
+                <input name="cGroupCode" type="text" class="dc-input dc-search" dc-tip="请输入角色编号" /></li>-->
+            <li class="searchText1">
+                <input name="cGroupChiName" type="text" class="dc-input dc-search" dc-tip="请输入角色名" /></li>
+            <li class="searchText1"><a href="javascript:void(0)" onclick="searchData()" class="dc-button">
+                查询</a></li>
+        </ul>
+        <label class="">
+        </label>
+    </div>
+    <div data-options="region:'center',border:false">
+        <div id="div_Toolbar" class="GridButtonBar" style="display: none;">
+            <span class="GridButtonBarIco"></span><a id="btn_Add" class="easyui-linkbutton" iconcls="dc-icon-editadd"
+                plain="true" onclick="selectedData()">选择</a> <a class="easyui-linkbutton" iconcls="dc-icon-editadd"
+                    plain="true" onclick="newData()">添加</a>
+        </div>
+        <table id="tab_List" style="display: none;">
+        </table>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iType = 1;
+    var _strFun = "";
+    var _objParams = { Action: "GetAllList" };
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        var m_objColumns = [];
+
+        if (location.hash.indexOf('#') >= 0) {
+            $.each(location.hash.substring(1).split('&'), function(index, value) {
+                var m_strValues = value.toString().split('=');
+                if (m_strValues.length == 2) {
+                    if (m_strValues[0].toLowerCase() == 'type') {
+                        _iType = parseInt(m_strValues[1]);
+                    }
+                    else if (m_strValues[0].toLowerCase() == 'fun') {
+                        _strFun = decodeURI(m_strValues[1]);
+                    }
+                    else {
+                        _objParams[m_strValues[0]] = decodeURI(m_strValues[1]);
+                    }
+                }
+            });
+        }
+        if (_strFun != "") {
+            _strFun += "(_str);";
+        }
+        if (_iType < 0) {
+            _iType = 1;
+        }
+        _iType = parseInt(_iType);
+
+        if (_iType == 1) {
+            m_objColumns.push({ field: 'ck', checkbox: true });
+        }
+        //m_objColumns.push({ field: 'cGroupCode', width: 100, sortable: true, title: '角色编号' });
+        m_objColumns.push({ field: 'cGroupChiName', width: 100, sortable: true, title: '角色名' });
+        m_objColumns.push({ field: 'cTypeDesc', width: 100, sortable: true, title: '角色类型' });
+
+        var m_objEvents = {
+            columns: [m_objColumns]
+        };
+        if (_iType == 0) {
+            m_objEvents.onDblClickCell = function(rowIndex, field, value) { selectedData(); };
+        }
+        else if (_iType == 1) {
+            m_objEvents.checkOnSelect = true;
+            m_objEvents.selectOnCheck = true;
+            m_objEvents.singleSelect = false;
+        }
+
+        setDataGrid("tab_List", "div_Toolbar", "DcCdUserGroupManage", getSearchParameter(), "iUserGroupID", "cGroupCode", "", m_objEvents, true);
+    }
+
+    function getSearchParameter() {
+        return getSearchParameters($(".searchForm1"), _objParams);
+    }
+
+    function searchData() {
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function searchData(ci_iID) {
+        if (ci_iID != undefined && parseInt(ci_iID) > 0) {
+            cancel();
+            editData(ci_iID);
+        }
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function cancel() {
+        closedPopupDialog();
+    }
+
+    function selectedData() {
+        var m_objData = null;
+        switch (_iType) {
+            case 0:
+                m_objData = $("#tab_List").datagrid("getSelected");
+                break;
+            case 1:
+                m_objData = $('#tab_List').datagrid('getChecked');
+                break;
+        }
+        if (m_objData != null && (m_objData.length > 0 || _iType == 0)) {
+            var _str = "";
+            switch (_iType) {
+                case 0:
+                    _str = m_objData.iUserGroupID + "," + m_objData.cGroupChiName;
+                    break;
+                case 1:
+                    var m_arrID = [];
+                    $.each(m_objData, function(index, value) { m_arrID[index] = value.iUserGroupID; });
+                    _str = m_arrID.join(",");
+                    break;
+            }
+            if (_strFun != "") {
+                eval(_strFun + '(_str)');
+            }
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function newData() {
+        popupDialog('../Platform/UserGroupDetail.html#Action=new', 'parent.searchData', "添加角色", true, 540, 500, 'dc-icon-dialog-title');
+    }
+
+    function editData(ci_iID) {
+        if (ci_iID > 0) {
+            popupDialog('../Platform/UserGroupDetail.html#ID=' + ci_iID, 'parent.searchData', "角色详细资料", true, 540, 500, 'dc-icon-dialog-title');
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+</script>
+

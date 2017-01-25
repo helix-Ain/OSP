@@ -1,0 +1,430 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <div id="div_Column_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a href="javascript:void(0)" class="easyui-linkbutton"
+            iconcls="dc-icon-editadd" plain="true" onclick="column_openSearch()">导入</a>
+        <a class="easyui-linkbutton" iconcls="dc-icon-editadd" plain="true" onclick="column_newData(null)">
+            添加</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-cancel"
+                plain="true" onclick="column_deleteData()">删除</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                    iconcls="dc-icon-editadd" plain="true" onclick="column_outputSQL()">生成SQL语句</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dc-icon-cancel"
+            onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_Column_List" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true" rowspan="2">
+                </th>
+                <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iViewColumnID, 'column_editData');}">
+                    <div style="width: 50px; height: 5px; display: block;">
+                    </div>
+                </th>
+                <th data-options="field:'cTypeDesc',width:50,sortable:true">
+                    字段类型
+                </th>
+                <th data-options="field:'cTableName',width:120,sortable:true">
+                    来源表
+                </th>
+                <th data-options="field:'cColumnDBName',width:120,sortable:true">
+                    字段数据库名
+                </th>
+                <th data-options="field:'cMColumnAlias',width:80,sortable:true">
+                    字段别名
+                </th>
+                <th data-options="field:'cMDataTypeDesc',width:50,sortable:true">
+                    数据类型
+                </th>
+                <th data-options="field:'bIsEx',width:40,sortable:true,formatter: function(value,row,index){return getYes(value);}">
+                    扩展字段
+                </th>
+                <th data-options="field:'cMColumnDesc',width:150,sortable:true">
+                    字段描述
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_Column_Detail" class="easyui-dialog" title="字段详细资料" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form action="" id="form_Column_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 500px;" class="TableCenter">
+            <tr>
+                <td class="tabletext" style="width: 100px;">
+                    <span class="require_sign">*</span>字段类型：
+                </td>
+                <td>
+                    <div id="div_Column_Type" name="iType">
+                    </div>
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext" style="width: 100px;">
+                    <span class="require_sign">*</span>字段数据库名：
+                </td>
+                <td>
+                    <input id="txt_Column_ColumnDBName" name="cColumnDBName" class="easyui-validatebox TextReadOnly"
+                        data-options="required:true" style="width: 300px;" />
+                    <input id="hidd_Column_ColumnID" name="iColumnID" type="hidden" />
+                    <input id="hidd_Column_MappingID" name="iMappingID" type="hidden" />
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-search" plain="true"
+                        title="查询" onclick="column_openSearch(0)"></a>
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    字段别名：
+                </td>
+                <td>
+                    <input name="cTableColumnAlias" class="TextReadOnly" style="width: 300px;" />
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    数据类型：
+                </td>
+                <td>
+                    <input name="cTableDataTypeDesc" class="TextReadOnly" style="width: 300px;" />
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    扩展字段：
+                </td>
+                <td>
+                    <input id="chk_Column_IsEx" name="bIsEx" class="TextReadOnly" type="checkbox" disabled="disabled" />
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    字段描述：
+                </td>
+                <td>
+                    <textarea rows="2" name="cColumnName" class="TextReadOnly" style="width: 380px;"></textarea>
+                </td>
+            </tr>
+            <tr group="column_Type2">
+                <td class="tabletext">
+                    <span class="require_sign">*</span>字段表达式：
+                </td>
+                <td>
+                    <textarea rows="2" id="txt_Column_Expression" name="cExpression" class="easyui-validatebox"
+                        data-options="required:false" style="width: 380px;"></textarea>
+                </td>
+            </tr>
+            <tr group="column_Type2">
+                <td class="tabletext">
+                    <span class="require_sign">*</span>数据类型：
+                </td>
+                <td>
+                    <select id="ddl_Column_DataType" class="easyui-combobox" style="width: 152px;" name="iDataType"
+                        editable="false" required="true">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    自定义字段别名：
+                </td>
+                <td>
+                    <input id="txt_Column_ColumnAlias" name="cColumnAlias" class="easyui-validatebox"
+                        data-options="required:false" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    自定义字段描述：
+                </td>
+                <td>
+                    <textarea id="txt_Column_Desc" rows="2" name="cDesc" class="easyui-validatebox" data-options="required:false"
+                        style="width: 380px;"></textarea>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="column_saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="column_cancel()">关闭</a>
+        </div>
+    </div>
+    <form id="form1" method="post" novalidate="novalidate" action="" enctype="MULTIPART/FORM-DATA">
+    </form>
+
+    <script language="javascript" type="text/javascript">
+        var _column_iID = 0;
+        var _column_iDDLCount = 0;
+        var _column_iSearchType = 0;
+        var _column_strAction = '';
+
+        checkPagePower({ onload: function() { column_initPage(); }, showMask: false, parse: false, check: false });
+
+        function column_initPage() {
+            $('.TextReadOnly').attr("readonly", "readonly");
+            $.parser.parse('#div_Column_Detail');
+            $('#div_Column_Detail').dialog({ onClose: function() { $(".tooltip").remove(); } });
+
+            bindCodeMasterData({
+                controlID: "ddl_Column_DataType",
+                cat: "Field",
+                subCat: "DataType",
+                valueField: "cCodeItem",
+                success: function() {
+                    _column_iDDLCount++;
+                    _init();
+                }
+            });
+
+            $('#div_Column_TableList').listbox({
+                width: 270,
+                required: true,
+                textField: 'cTableDBName',
+                valueField: 'iMappingID'
+            });
+
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'vcol', subCat: 'Type' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Column_Type').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            required: true,
+                            data: ci_result.rows,
+                            onChange: function(newValue, oldValue) {
+                                if (newValue != oldValue) {
+                                    column_setTypeDisplay(newValue);
+                                }
+                            }
+                        });
+                    }
+                    _column_iDDLCount++;
+                    _init();
+                }
+            });
+
+            function _init() {
+                if (_column_iDDLCount == 2) {
+                    _column_iDDLCount = 0;
+                    column_getColumnList();
+                }
+            }
+        }
+
+        function column_getColumnList() {
+            setDataGrid("tab_Column_List", "div_Column_Toolbar", "DcCdDataViewManage", { Action: "ColGetList", iViewID: _iID }, "iViewColumnID", "iViewColumnID", "", {
+                onDblClickRow: function(rowIndex, rowData) { $("#tab_Column_List").datagrid("selectRow", rowIndex); column_editData(rowData.iViewColumnID); },
+                onClickRow: function(rowIndex, rowData) { $("#tab_Column_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                pagination: false
+            });
+        }
+
+        function column_openDialog(ci_strTitle) {
+            $('#div_Column_Detail').dialog({ width: 520, height: 360, title: ci_strTitle }).dialog('open');
+        }
+
+        function column_cancel() {
+            $('#div_Column_Detail').dialog('close')
+        }
+
+        function column_newData() {
+            _column_iID = 0;
+            _column_strAction = 'ColAdd';
+            $('#div_Column_Detail').form('clear');
+            $('#div_Column_Type').combolist('selectFirst');
+            column_openDialog("添加字段");
+        }
+
+        function column_editData(ci_iID) {
+            _column_iID = ci_iID;
+            if (_column_iID > 0) {
+                setTimeout(function() {
+                    var m_objData = $("#tab_Column_List").datagrid("getSelected");
+                    if (m_objData != null) {
+                        $('#div_Column_Detail').form('load', m_objData);
+                        $('#div_Column_Type').combolist('select', m_objData.iType);
+                        _column_iID = m_objData.iViewColumnID;
+                        _column_strAction = "ColUpdate";
+                        $('#ddl_Column_DataType').combobox('selectEx', m_objData.iDataType);
+                        $('#chk_Column_IsEx').attr('checked', (m_objData.bIsEx ? 'checked' : false));
+                        column_openDialog("字段详细资料");
+                    }
+                    else {
+                        $.messager.alert('提示', '请选择记录', 'info');
+                    }
+                }, 100);
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function column_saveData() {
+            postData({
+                url: 'DcCdDataViewManage',
+                params: { Action: _column_strAction, iViewColumnID: _column_iID, iViewID: _iID },
+                validate: true,
+                form: 'form_Column_Edit',
+                onPost: function() {
+                    if (this.params.iType == 2) {
+                        this.params.iColumnID = 0;
+                    }
+                    else {
+                        this.params.iDataType = 0;
+                        this.params.cExpression = '';
+                    }
+                    return true;
+                },
+                success: function(ci_result) {
+                    $('#tab_Column_List').datagrid('reload');
+                    column_cancel();
+                }
+            });
+        }
+
+        function column_deleteData() {
+            var m_objData = $("#tab_Column_List").datagrid("getChecked");
+            if (m_objData.length > 0) {
+                $.messager.confirm('提示', '确定要删除所选' + m_objData.length + '条记录吗？', function(r) {
+                    if (r) {
+                        var m_strIDList = "";
+                        for (var i = 0; i < m_objData.length; i++) {
+                            if (m_strIDList.length > 0) {
+                                m_strIDList += ",";
+                            }
+                            m_strIDList += m_objData[i].iViewColumnID;
+                        }
+                        if (m_strIDList != "") {
+                            postData({
+                                url: "DcCdDataViewManage",
+                                params: { Action: "ColDelete", iViewColumnID: m_strIDList },
+                                success: function(ci_result) {
+                                    $('#tab_Column_List').datagrid('reload');
+                                    $.messager.alert('提示', '删除成功', 'info');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function column_setTypeDisplay(ci_iType) {
+            $('tr[group^="column_Type"]').css('display', 'none');
+            $('tr[group="column_Type' + ci_iType + '"]').css('display', '');
+
+            ci_iType = parseInt(ci_iType);
+            switch (ci_iType) {
+                case 1:
+                    $('#txt_Column_ColumnDBName').validatebox({ required: true });
+                    $('#txt_Column_Expression').validatebox({ required: false });
+                    $('#txt_Column_ColumnAlias').validatebox({ required: false });
+                    $('#txt_Column_Desc').validatebox({ required: false });
+                    $('#ddl_Column_DataType').combobox({ required: false });
+                    break;
+                case 2:
+                    $('#txt_Column_ColumnDBName').validatebox({ required: false });
+                    $('#txt_Column_Expression').validatebox({ required: true });
+                    $('#txt_Column_ColumnAlias').validatebox({ required: true });
+                    $('#txt_Column_Desc').validatebox({ required: true });
+                    $('#ddl_Column_DataType').combobox({ required: true });
+                    break;
+            }
+        }
+
+        function column_openSearch(ci_iType) {
+            var m_iTableID = parseInt($('#hidd_MainTableID').val());
+            if (m_iTableID > 0) {
+                if (ci_iType == undefined) {
+                    ci_iType = 1;
+                }
+                _column_iSearchType = ci_iType;
+                popupDialog('SearchTableColumn.html#ViewID=' + _iID + '&Type=' + ci_iType, 'parent.column_readDBColumn', '字段查询', true);
+            }
+            else {
+                $.messager.alert('提示', '请选择主数据表', 'info');
+            }
+        }
+
+        function column_readDBColumn(ci_objData) {
+            closedPopupDialog();
+            if (ci_objData != undefined && ci_objData.length > 0) {
+                var m_objData = $('#tab_Column_List').datagrid('getData');
+                switch (_column_iSearchType) {
+                    case 0:
+                        if (existData(m_objData)) {
+                            for (var i = 0; i < m_objData.rows.length; i++) {
+                                if (m_objData.rows[i].iColumnID == ci_objData[0].iColumnID && m_objData.rows[i].iMappingID == ci_objData[0].iMappingID) {
+                                    if (parseInt($('#hidd_Column_ColumnID').val()) != ci_objData[0].iColumnID && parseInt($('#hidd_Column_MappingID').val()) != ci_objData[0].iMappingID) {
+                                        $.messager.alert('提示', '该字段已添加', 'info');
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                        _setValue(ci_objData[0]);
+                        function _setValue(ci_data) {
+                            $('#txt_Column_ColumnDBName').val(ci_data.cColumnDBName);
+                            $('#hidd_Column_ColumnID').val(ci_data.iColumnID);
+                            $('#hidd_Column_MappingID').val(ci_data.iMappingID);
+                            $('[name="cTableColumnAlias"]').val(ci_data.cColumnAlias);
+                            $('[name="cTableDataTypeDesc"]').val(ci_data.cDataTypeDesc);
+                            $('[name="cColumnName"]').val(ci_data.cColumnName);
+                            $('#chk_Column_IsEx').attr('checked', (ci_data.bIsEx ? 'checked' : false));
+                        }
+                        break;
+                    case 1:
+                        if (existData(m_objData)) {
+                            for (var i = 0; i < m_objData.rows.length; i++) {
+                                for (var j = 0; j < ci_objData.length; j++) {
+                                    if (ci_objData[j].iColumnID == m_objData.rows[i].iColumnID && ci_objData[j].iMappingID == m_objData.rows[i].iMappingID) {
+                                        ci_objData.splice(j, 1);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (ci_objData.length > 0) {
+                            var m_objIDList = [];
+                            for (var i = 0; i < ci_objData.length; i++) {
+                                m_objIDList.push(ci_objData[i].iColumnID + ',' + ci_objData[i].iMappingID);
+                            }
+                            postData({
+                                url: 'DcCdDataViewManage',
+                                params: { Action: 'ColAdd', iViewID: _iID, IDList: m_objIDList.join(';'), iType: 1 },
+                                success: function(ci_result) {
+                                    $('#tab_Column_List').datagrid('reload');
+                                }
+                            });
+                        }
+                        break;
+                }
+            }
+        }
+
+        function column_outputSQL() {
+            $('#form1').form('submit', {
+                url: getInterfaceName("DcCdDataViewManage", true) + "?action=outputsql&cCode=" + $('[name="cCode"]').val(),
+                success: function(result) {
+                    result = convertToJson(result);
+                    if (!checkReturnJson(result)) {
+                        $.messager.alert('提示', result.DcMessage, 'info');
+                    }
+                },
+                failure: function(ci_result) {
+                    $.messager.alert('提示', '导出失败', 'info');
+                }
+            }).error(function(err) { alert(err.responseText); });
+        }
+    </script>
+
+</body>
+</html>

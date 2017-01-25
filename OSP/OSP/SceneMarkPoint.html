@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<script src='JS/krpano.js'></script>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+			}
+			
+			body {
+				min-width: 1366px;
+			}
+			
+			div.panoList {
+				width: 25%;
+				height: 100%;
+				min-width: 340px;
+				float: right;
+				overflow: hidden;
+				background-color: #313131;
+				color: #FFFFFF;
+			}
+			
+			div.pano {
+				width: 75%;
+				height: 100%;
+				float: right;
+				overflow: hidden;
+			}
+			
+			div.panoList div span.title {
+				font-size: 17px;
+				font-weight: 100;
+				display: block;
+				margin-bottom: 10px;
+			}
+			
+			#btn-add {
+				width: 79px;
+				height: 25px;
+				background-color: #1476BA;
+				color: #FFFFFF;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				margin-right: 7px;
+			}
+			
+			#btn-reset {
+				width: 79px;
+				height: 25px;
+				background-color: #FF6C01;
+				color: #FFFFFF;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div style='width:100%;height: 100%;'>
+				<div class='panoList'>
+					<div style='padding:22px;'>
+						<span class='title'>添加标注点</span><br />
+						<span class='title'><hr color="#707070"/></span><br />
+						<span class='title'>当前场景：<span id='cSceneName'></span></span><br />
+						<span class='title'>标点类型：<input id='iObjectID' class='easyui-combobox' data-options="required:true,width:175,valueField:'id',textField:'text',editable:false"/></span>
+						<span style='display: none;' class='title iObjectID iObjectID-1 iObjectID-2 iObjectID-3 iObjectID-4 iObjectID-10'><span id='cRecordDisplayName' style='letter-spacing: 11px;'></span><input id='cRecordName' class='easyui-validatebox' data-options='required:true' readonly="readonly" style='width:173px;cursor: pointer;' /><input type='hidden' id='iRecordID' /></span>
+						<span style='display: none;' class='title iObjectID iObjectID-8'>外链地址：<input id='cExt3' class='easyui-validatebox' data-options='required:true' readonly="readonly" style='width:173px;cursor: pointer;' /></span>
+						<span style='display: none;' class='title iObjectID iObjectID-1 iObjectID-3 iObjectID-4 iObjectID-8 iObjectID-10'>展示样式：<input id='iStyle' class='easyui-combobox' data-options="required:true,width:175,valueField:'id',textField:'text',editable:false"/></span>
+						<span style='display: none;' class='title iObjectID iObjectID-2'>展现类型：<input id='iExt1' class='easyui-combobox' data-options="required:true,width:175,valueField:'id',textField:'text',editable:false"/></span>
+						<span style='display: none;' class='title iObjectID'>初始状态：<input id='iExt2' class='easyui-combobox' data-options="required:true,width:175,valueField:'id',textField:'text',editable:false"/></span>
+						<div style='margin-top:20px;'>
+							<button id='btn-add' type='button' onclick='addMarkPoint()'>添加</button>
+							<button id='btn-reset' type='button'>重置</button><br />
+							<span id='tip' style='font-size: 15px;font-weight:100;color: #F9F007;display:block;margin-top:15px;'></span>
+						</div>
+					</div>
+				</div>
+				<div class='pano'>
+					<div id='pano' style='height:100%;width: 100%;'></div>
+				</div>
+			</div>
+		</div>
+		<script>
+			var _krpano;
+			var _strFun = getHashValue('Fun');
+			var _iSceneID = getHashValue('iSceneID');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var imgSize = 2013;
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+				$('#cRecordName').click(function() {
+					var cRecordDisplayName = $('#cRecordDisplayName').text();
+					var iObjectID = getObjectIDFromRecordName(cRecordDisplayName);
+					if(iObjectID == 1 || iObjectID == 2) {
+						popupDialog(_strSysUrl + 'OSP/DataAttachmentManage.html?iObjectID=' + iObjectID + '&select=1', 'parent.fillcRecordName', '选择' + cRecordDisplayName.split('：')[0], false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+					} else if(iObjectID == 3) {
+						popupDialog(_strSysUrl + 'OSP/DataBookManage.html?iObjectID=' + iObjectID + '&select=1', 'parent.fillcRecordName', '选择' + cRecordDisplayName.split('：')[0], false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+					} else if(iObjectID == 4) {
+						popupDialog(_strSysUrl + 'OSP/DataRichListManage.html?iObjectID=' + iObjectID + '&select=1', 'parent.fillcRecordName', '选择' + cRecordDisplayName.split('：')[0], false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+					} else if(iObjectID == 10) {
+						popupDialog(_strSysUrl + 'OSP/DataProductManage.html?select=1', 'parent.fillcRecordName', '选择产品', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+					}
+				});
+				$('#cExt3').click(function() {
+					popupDialog(_strSysUrl + 'OSP/DataLinkManage.html?iObjectID=8&select=1', 'parent.fillcExt3', '选择外链', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+				$('#btn-reset').click(function() {
+					$('span.iObjectID').hide();
+					$('#iRecordID,#cRecordName,#cExt3').val('');
+					$('#iObjectID,#iStyle,#iExt1,#iExt2').combobox('clear');
+					var data = $('#iStyle').combobox('getData');
+					$('#iStyle').combobox('select',data[0].id);
+					var data = $('#iExt1').combobox('getData');
+					$('#iExt1').combobox('select',data[1].id);
+			        var data = $('#iExt2').combobox('getData');
+			        $('#iExt2').combobox('select',data[0].id);
+				});
+			});
+
+			function initPage() {
+				var swf = '/Attachment/VR/' + _iSceneID + '/vtour/tour.swf';
+				//var xml = '/Attachment/VR/' + _iSceneID + '/vtour/tour.xml';
+				var xml = '/krpano/templates/xml/main.xml';
+				embedpano({
+					swf: swf,
+					xml: xml,
+					target: 'pano',
+					html5: 'auto',
+					mobilescale: 1.0,
+					passQueryParameters: true,
+					onready: panoReady
+				});
+				postData({
+					url: 'DcCdSceneManage',
+					params: {
+						Action: 'GetList',
+						iSceneID: _iSceneID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#cSceneName').html(m_objData.cSceneName);
+						}
+					}
+				});
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Mark'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var iObjectIDs = [];
+							var iStyles = [];
+							var iExt1s = [];
+							var iExt2s = [];
+							$.each(m_objData, function(i, item) {
+								switch(item.cSubCat) {
+									case 'Object':
+										iObjectIDs.push({
+											'id': item.cCodeItem,
+											'text': item.cDesc
+										});
+										break;
+									case 'NStyle':
+										iStyles.push({
+											'id': item.cCodeItem,
+											'text': item.cDesc
+										});
+										break;
+									case 'VideoStyle':
+										iExt1s.push({
+											'id': item.cCodeItem,
+											'text': item.cDesc
+										});
+										break;
+									case 'VideoStatus':
+										iExt2s.push({
+											'id': item.cCodeItem,
+											'text': item.cDesc
+										});
+										break;
+								}
+							});
+							$('#iStyle').combobox('loadData', iStyles);
+							$('#iExt1').combobox('loadData', iExt1s).combobox({
+								onChange: function(newValue, oldValue) {
+									if(newValue == 1 && $('#iObjectID')) {
+										$('#iExt2').parent().show();
+									} else {
+										$('#iExt2').parent().hide();
+									}
+								}
+							});
+							$('#iExt2').combobox('loadData', iExt2s);
+							$('#iObjectID').combobox('loadData', iObjectIDs).combobox({
+								onChange: function(newValue, oldValue) {
+									$('span.iObjectID').hide();
+									$('span.iObjectID-' + newValue).show();
+									$('#cRecordName').val('');
+									$('#iRecordID').val(0);
+									switch(newValue) {
+										case '1':
+											$('#cRecordDisplayName').text('图片：');
+											break;
+										case '2':
+											$('#cRecordDisplayName').text('视频：');
+											if($('#iExt1').combobox('getValue') == 1) {
+												$('#iExt2').parent().show();
+											}
+											break;
+										case '3':
+											$('#cRecordDisplayName').text('手册：');
+											break;
+										case '4':
+											$('#cRecordDisplayName').text('注释：');
+											break;
+										case '10':
+											$('#cRecordDisplayName').text('产品：');
+											break;
+									}
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function initData() {
+				postData({
+					url: 'DcCdMarkPointManage',
+					params: {
+						Action: 'GetList',
+						iSceneID: _iSceneID,
+						GetRecords: true
+					},
+					showMask:false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								if([1, 2, 3, 4].indexOf(parseInt(item.iObjectID)) != -1) {
+									var tooltip = item.rRecords[0].cName;
+								} else if(item.iObjectID == 8) {
+									var tooltip = item.cExt3;
+								} else if(item.iObjectID == 10) {
+									var tooltip = item.rRecords[0].cProductName;
+								}
+								if(item.iStyle == 1 || item.iExt1 == 2) {
+									var type = getTypeFromObjectID(item.iObjectID);
+									_krpano.call('initMarkPointFun(' + item.iID + ',' + type + ',' + tooltip + ',' + item.fImageY + ',' + item.fImageX + ')');
+								} else if(item.iExt1 == 1) {
+									var pointname = 'F' + item.iID;
+									var wh = item.cArea.split(';')[0];
+									var oxoy = item.cArea.split(';')[1];
+									var w = wh.split(',')[0];
+									var h = wh.split(',')[1];
+									var ox = oxoy.split(',')[0];
+									var oy = oxoy.split(',')[1];
+									_krpano.call('addhotspot(\'' + pointname + '\')');
+									_krpano.set("hotspot[" + pointname + "].atv", item.fImageX);
+									_krpano.set("hotspot[" + pointname + "].ath", item.fImageY);
+									_krpano.set("hotspot[" + pointname + "].ox", ox);
+									_krpano.set("hotspot[" + pointname + "].oy", oy);
+									_krpano.set("hotspot[" + pointname + "].width", w);
+									_krpano.set("hotspot[" + pointname + "].height", h);
+									_krpano.set("hotspot[" + pointname + "].distorted", true);
+									_krpano.set("hotspot[" + pointname + "].crop", "" + ((1000 - w) / 2) + "|" + ((1000 - h) / 2) + "|" + w + "|" + h + "");
+									_krpano.call("hotspot[" + pointname + "].loadstyle(videoBorderon)");
+								} else if(item.iStyle == 2) {
+									var pointname = 'E' + item.iID;
+									var points = item.cArea.split(';');
+									_krpano.call('addhotspot(\'' + pointname + '\')');
+									_krpano.call('hotspot[\'' + pointname + '\'].loadstyle(drawokhotspotstyle|tooltip)');
+									_krpano.set('hotspot[\'' + pointname + '\'].tooltip', tooltip);
+									for(var i = 0; i < points.length; i++) {
+										if(points[i] != '') {
+											_krpano.set('hotspot[\'' + pointname + '\'].point[' + i + '].ath', points[i].split(',')[1]);
+											_krpano.set('hotspot[\'' + pointname + '\'].point[' + i + '].atv', points[i].split(',')[0]);
+										}
+									}
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function panoReady(krpanoObj) {
+				_krpano = krpanoObj;
+				_krpano.call('loadpano("/Attachment/VR/' + _iSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+				//_krpano.call('loadscene(scene_' + _iSceneID + ')');
+				_krpano.call('startup()');
+				_krpano.call('switch(layer[auto_thumbs].visible)');
+				_krpano.call('autorotateSwitch(false)');
+			}
+
+			function addMarkPoint() {
+				var iObjectID = $('#iObjectID').combobox('getValue');
+				if(iObjectID != '') {
+					if([1, 3, 4, 10].indexOf(parseInt(iObjectID)) != -1) {
+						var iRecordID = $('#iRecordID').val();
+						var cRecordName = $('#cRecordName').val();
+						var iStyle = $('#iStyle').combobox('getValue');
+						if(iRecordID != '' && iStyle != '') {
+							if(iStyle == 1) {
+								var type = getTypeFromObjectID(iObjectID);
+								_krpano.call('addMarkPointFun(' + type + ',' + cRecordName + ')');
+							} else {
+								_krpano.call('startDraw(' + cRecordName + ')');
+							}
+						} else {
+							$('#tip').html('请填写相关信息！');
+							setTimeout(function() {
+								$('#tip').html('');
+							}, 3000);
+						}
+					} else if(iObjectID == 2) {
+						var iRecordID = $('#iRecordID').val();
+						var cRecordName = $('#cRecordName').val();
+						var iExt1 = $('#iExt1').combobox('getValue');
+						if(iRecordID != '' && iExt1 != '') {
+							if(iExt1 == 2) {
+								var type = getTypeFromObjectID(iObjectID);
+								_krpano.call('addMarkPointFun(' + type + ',' + cRecordName + ')');
+							} else {
+								var hlookat = _krpano.get('view.hlookat');
+								var vlookat = _krpano.get('view.vlookat');
+								_krpano.call('addVideoHotspotFun(1,'+hlookat+','+vlookat+',0,0)');
+							}
+						} else {
+							$('#tip').html('请填写相关信息！');
+							setTimeout(function() {
+								$('#tip').html('');
+							}, 3000);
+						}
+					} else if(iObjectID == 8) {
+						var iStyle = $('#iStyle').combobox('getValue');
+						var cExt3 = $('#cExt3').val();
+						if(iStyle == 1) {
+							var type = getTypeFromObjectID(iObjectID);
+							_krpano.call('addMarkPointFun(' + type + ',' + cExt3 + ')');
+						} else {
+							_krpano.call('startDraw(' + cExt3 + ')');
+						}
+					}
+				} else {
+					$('#tip').html('请填写相关信息！');
+					setTimeout(function() {
+						$('#tip').html('');
+					}, 3000);
+				}
+			}
+
+			function deleteHotspot(delspotname) {
+				var flag = delspotname.substr(0, 1).toUpperCase();
+				if(flag == 'M' || flag == 'N') {
+					$.messager.confirm('提示', '是否删除该标注点？', function(r) {
+						if(r) {
+							if(flag == 'M') {
+								postData({
+									url: 'DcCdMarkPointManage',
+									params: {
+										Action: 'Delete',
+										cIDList: delspotname.substr(1)
+									},
+									success: function(ci_result) {
+										if(ci_result.DcCode == 0) {
+											_krpano.call('deleteHotspotFun(' + delspotname + ')');
+										} else {
+											$.messager.alert('提示', ci_result.DcMessage, 'info');
+										}
+									}
+								});
+							} else {
+								var spotname = delspotname.split('_')[0];
+								_krpano.call('deleteHotspotFun(\'' + spotname + '\')');
+								_krpano.call('deleteHotspotFun(\'' + (spotname + '_ok') + '\')');
+								_krpano.call('deleteHotspotFun(\'' + (spotname + '_del') + '\')');
+								_krpano.call('deleteHotspotFun(\'' + (spotname + '_drag') + '\')');
+							}
+						}
+					});
+				} else if(flag == 'E') {
+					$.messager.confirm('提示', '是否删除该标注点选区？', function(r) {
+						if(r) {
+							postData({
+								url: 'DcCdMarkPointManage',
+								params: {
+									Action: 'Delete',
+									cIDList: delspotname.substr(1)
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										_krpano.call('deleteHotspotFun(' + delspotname + ')');
+									} else {
+										$.messager.alert('提示', ci_result.DcMessage, 'info');
+									}
+								}
+							});
+						}
+					});
+				}
+			}
+
+			function okTempVideoHotspot(hotspotname) {
+				$.messager.confirm('提示', '是否保存该视频区域？', function(r) {
+					if(r) {
+						_krpano.call('addTempVideoOk(' + hotspotname + ')');
+					}
+				});
+			}
+
+			function deleTempVideoHotspot(hotspotname) {
+				$.messager.confirm('提示', '是否删除该视频区域？', function(r) {
+					if(r) {
+						var flag = hotspotname.substr(0, 1).toUpperCase();
+						if(flag == 'F') {
+							postData({
+								url: 'DcCdMarkPointManage',
+								params: {
+									Action: 'Delete',
+									cIDList: hotspotname.substr(1)
+								},
+								success: function(ci_result) {
+									if(ci_result.DcCode == 0) {
+										_krpano.call('deleTempVideoOk(' + hotspotname + ')');
+									} else {
+										$.messager.alert('提示', ci_result.DcMessage, 'info');
+									}
+								}
+							});
+						} else {
+							_krpano.call('deleTempVideoOk(' + hotspotname + ')');
+						}
+					}
+				});
+			}
+
+			function addTempVideoOk(ath, atv, ox, oy, w, h, toId, pointtype, playstatus, videoname) {
+				var getplane = getscreenCoo(ath, atv);
+				var plane = getPointPlane(getplane[0]);
+				postData({
+					url: 'DcCdMarkPointManage',
+					params: {
+						Action: 'Add',
+						iSceneID: _iSceneID,
+						fImageX: atv,
+						fImageY: ath,
+						iObjectID: 2,
+						iRecordID: $('#iRecordID').val(),
+						cArea: w + ',' + h + ';' + ox + ',' + oy,
+						iExt1: $('#iExt1').combobox('getValue'),
+						iExt2: $('#iExt2').combobox('getValue')
+					},
+					success: function(ci_result) {
+						if(ci_result.DcCode == 0) {
+							addTempVideoSuccess(ci_result.DcMessage, videoname);
+						} else {
+							$.messager.alert('提示', ci_result.DcMessage, 'info');
+						}
+					}
+				});
+			}
+
+			function addTempVideoSuccess(id, videoname) {
+				_krpano.call("removehotspot(" + videoname + "_tip)");
+				_krpano.call("removehotspot(" + videoname + "_zooming)");
+				_krpano.call("removehotspot(" + videoname + "_drag)");
+				_krpano.call("removehotspot(" + videoname + "_ok)");
+				_krpano.call("removehotspot(" + videoname + "_dele)");
+				var w = _krpano.get("hotspot[" + videoname + "].width");
+				var h = _krpano.get("hotspot[" + videoname + "].height");
+				_krpano.set("hotspot[" + videoname + "].crop", "" + ((1000 - w) / 2) + "|" + ((1000 - h) / 2) + "|" + w + "|" + h + "");
+				_krpano.set("hotspot[" + videoname + "].ondown", null);
+				_krpano.set("hotspot[" + videoname + "].style", null);
+				_krpano.call("hotspot[" + videoname + "].loadstyle(videoBorderon)");
+				_krpano.set("hotspot[" + videoname + "].name", "F" + id);
+			}
+
+			function changeHotspotposition(toh, tov, name) {
+				var thisParameter = getscreenCoo(toh, tov);
+				var hotspotParameter = getHotspotData(thisParameter[1], thisParameter[2]);
+				_krpano.call("changeHotspotposition(" + name + "," + hotspotParameter[0] + "," + hotspotParameter[1] + "," + thisParameter[3] + "," + thisParameter[4] + ")");
+			}
+
+			function getscreenCoo(oath, oatv) {
+				oath = oath % 360;
+				if(oath > 180) {
+					oath = oath - 360;
+				}
+				if(oath < -180) {
+					oath = 360 + oath;
+				}
+				var ath = oath,
+					atv = oatv;
+				var senceX = 0,
+					isx = -1,
+					plane = "",
+					h = false,
+					thisath, thisatv;
+				if(ath >= -45 && ath < 45) {
+					plane = "front";
+					isx = 1;
+					h = true;
+					thisath = 0;
+					thisatv = 0;
+				} else if(ath >= 45 && ath < 135) {
+					plane = "right";
+					senceX = 270;
+					h = true;
+					thisath = 90;
+					thisatv = 0;
+				} else if((ath >= 135 && ath <= 180) || (ath >= -180 && ath < -135)) {
+					plane = "back";
+					senceX = 180;
+					h = true;
+					thisath = 180;
+					thisatv = 0;
+				} else if(ath >= -135 && ath < -45) {
+					plane = "left";
+					senceX = 90;
+					h = true;
+					thisath = -90;
+					thisatv = 0;
+				}
+				if(plane != "front") {
+					ath = senceX - ath;
+				}
+				var pxscale = Math.tan(ath * (Math.PI / 180));
+				var x = pxscale * imgSize / 2 * isx;
+				var thisx = x + imgSize / 2;
+				thisx = thisx.toFixed(2);
+
+				var thisR = Math.sqrt(Math.pow(x, 2) + Math.pow(imgSize / 2, 2));
+				var pyscale = Math.tan(atv * (Math.PI / 180));
+				var y = thisR * pyscale;
+				var thisy = y + imgSize / 2;
+				thisy = thisy.toFixed(2);
+
+				if((thisy <= 0) && oatv < 0) {
+					plane = "top";
+					h = false;
+					thisath = 0;
+					thisatv = -90;
+				} else if(((thisy - imgSize) >= 0) && oatv > 0) {
+					plane = "bottom";
+					h = false;
+					thisath = 0;
+					thisatv = 90;
+				}
+				if(!h) {
+					var nath = oath,
+						natv = oatv;
+					if(plane == "bottom") {
+						var yNum = 1;
+						if(nath < -90 || nath > 90) {
+							yNum = -1;
+						}
+						var pyscale = Math.tan(natv * (Math.PI / 180));
+						var thisR = imgSize / 2 / pyscale;
+
+						var pxscale = Math.cos((90 - nath) * (Math.PI / 180));
+						var thisx = pxscale * thisR + imgSize / 2;
+						thisx = thisx.toFixed(2);
+
+						var thisy = Math.sqrt(Math.pow(thisR, 2) - Math.pow(pxscale * thisR, 2));
+						thisy = imgSize / 2 - thisy * yNum;
+						thisy = thisy.toFixed(2);
+					}
+					if(plane == "top") {
+						var yNum = 1;
+						if(nath > 0) {
+							yNum = -1;
+						}
+						if(nath < -90 && nath > -180) {
+							nath = nath + 90;
+						}
+						var pyscale = Math.tan(oatv * (Math.PI / 180));
+						var thisR = imgSize / 2 / pyscale;
+
+						var pxscale = Math.cos((nath) * (Math.PI / 180));
+						var thisx = pxscale * thisR + imgSize / 2;
+						thisx = thisx.toFixed(2);
+
+						var thisy = Math.sqrt(Math.pow(thisR, 2) - Math.pow(pxscale * thisR, 2));
+						thisy = imgSize / 2 - thisy * yNum;
+						thisy = thisy.toFixed(2);
+						if(oath > 0 || (oath > -90 && oath < 0)) {
+							var tx = thisy;
+							var ty = imgSize - thisx;
+							thisx = tx;
+							thisy = ty;
+						}
+					}
+				}
+
+				var xy = [plane, thisx, thisy, thisath, thisatv];
+				return xy;
+			}
+
+			function getPointPlane(plane) {
+				var n = "";
+				switch(plane) {
+					case "front":
+						n = 2;
+						break;
+					case "right":
+						n = 3;
+						break;
+					case "back":
+						n = 4;
+						break;
+					case "left":
+						n = 1;
+						break;
+					case "top":
+						n = 5;
+						break;
+					case "bottom":
+						n = 6;
+						break;
+				}
+				return n;
+			};
+
+			function getHotspotData(ox, oy) {
+				var hotspot_ox = (ox * 1000 / imgSize - 500).toFixed(3);
+				var hotspot_oy = (oy * 1000 / imgSize - 500).toFixed(3);
+				var xy = [hotspot_ox, hotspot_oy];
+				return xy;
+			}
+
+			function fillcRecordName(id) {
+				var cRecordDisplayName = $('#cRecordDisplayName').text();
+				var iObjectID = getObjectIDFromRecordName(cRecordDisplayName);
+				if(iObjectID == 1 || iObjectID == 2) {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'GetAttachmentList',
+							iAttachmentID: id
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								$('#cRecordName').val(m_objData.cName);
+								$('#iRecordID').val(m_objData.iAttachmentID);
+							}
+						}
+					});
+				} else if(iObjectID == 3) {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'GetBookList',
+							iBookID: id,
+							GetImages: false
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								$('#cRecordName').val(m_objData.cName);
+								$('#iRecordID').val(m_objData.iBookID);
+							}
+						}
+					});
+				} else if(iObjectID == 4) {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'GetRichList',
+							iRichID: id,
+							GetContent: false
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								$('#cRecordName').val(m_objData.cName);
+								$('#iRecordID').val(m_objData.iRichID);
+							}
+						}
+					});
+				} else if(iObjectID == 10) {
+					postData({
+						url: 'DcCdProductManage',
+						params: {
+							Action: 'GetList',
+							iProductID: id,
+							GetImages: false
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								$('#cRecordName').val(m_objData.cProductName);
+								$('#iRecordID').val(m_objData.iProductID);
+							}
+						}
+					});
+				}
+				cancel();
+			}
+
+			function fillcExt3(iLinkID) {
+				postData({
+					url: 'DcCdDataManage',
+					params: {
+						Action: 'GetLinkList',
+						iLinkID: iLinkID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#cExt3').val(m_objData.cUrl);
+						}
+					}
+				});
+				cancel();
+			}
+
+			function moveIcon(spotname) {
+				var okIcon = spotname + "_ok";
+				var delIcon = spotname + "_del";
+				var dragIcon = spotname + "_drag";
+				var thisath = _krpano.get("hotspot[" + spotname + "].ath");
+				var thisatv = _krpano.get("hotspot[" + spotname + "].atv");
+				_krpano.set("hotspot[" + okIcon + "].atv", thisatv);
+				_krpano.set("hotspot[" + okIcon + "].ath", thisath);
+				_krpano.set("hotspot[" + delIcon + "].atv", thisatv);
+				_krpano.set("hotspot[" + delIcon + "].ath", thisath);
+				_krpano.set("hotspot[" + dragIcon + "].atv", thisatv);
+				_krpano.set("hotspot[" + dragIcon + "].ath", thisath);
+			}
+
+			function saveData(points) {
+				var iStyle = $('#iStyle').combobox('getValue');
+				var iObjectID = $('#iObjectID').combobox('getValue');
+				if(iObjectID != 2) {
+					if(iStyle == 1) {
+						$.messager.confirm('提示', '是否保存该标注点？', function(r) {
+							if(r) {
+								var spotname = points.split('_')[0];
+								var thisath = _krpano.get("hotspot[" + spotname + "].ath");
+								var thisatv = _krpano.get("hotspot[" + spotname + "].atv");
+								var iRecordID = $('#iRecordID').val();
+								var cExt3 = $('#cExt3').val();
+								var bConform = false;
+								if([1, 3, 4, 10].indexOf(parseInt(iObjectID)) != -1 && iRecordID != '') {
+									var params = {
+										Action: 'Add',
+										iSceneID: _iSceneID,
+										fImageX: thisatv,
+										fImageY: thisath,
+										iObjectID: iObjectID,
+										iRecordID: iRecordID,
+										iStyle: iStyle
+									};
+									bConform = true;
+								} else if(iObjectID == 8 && cExt3 != '') {
+									var params = {
+										Action: 'Add',
+										iSceneID: _iSceneID,
+										fImageX: thisatv,
+										fImageY: thisath,
+										iObjectID: iObjectID,
+										cExt3: cExt3,
+										iStyle: iStyle
+									};
+									bConform = true;
+								}
+								if(bConform) {
+									postData({
+										url: 'DcCdMarkPointManage',
+										params: params,
+										success: function(ci_result) {
+											if(ci_result.DcCode == 0) {
+												var newSpotName = 'M' + ci_result.DcMessage;
+												_krpano.set("hotspot[" + spotname + "].name", newSpotName);
+												_krpano.set("hotspot[" + newSpotName + "].ondown", null);
+												_krpano.set("hotspot[" + newSpotName + "].onclick", 'js(deleteHotspot(get(name)))');
+												_krpano.call('deleteHotspotFun(\'' + spotname + '_ok\')');
+												_krpano.call('deleteHotspotFun(\'' + spotname + '_del\')');
+												_krpano.call('deleteHotspotFun(\'' + spotname + '_drag\')');
+												$('#btn-reset').trigger('click');
+											} else {
+												$.messager.alert('提示', ci_result.DcMessage, 'info');
+											}
+										}
+									});
+								} else {
+									$('#tip').html('请填写相关信息！');
+									setTimeout(function() {
+										$('#tip').html('');
+									}, 3000);
+								}
+							}
+						});
+					} else {
+						$.messager.confirm('提示', '是否保存该标注点选区？', function(r) {
+							if(r) {
+								points = points.getArray();
+								var cArea = '';
+								$.each(points, function(i, item) {
+									cArea += item.atv + ',' + item.ath + ';';
+								});
+								var iObjectID = $('#iObjectID').combobox('getValue');
+								var iRecordID = $('#iRecordID').val();
+								var cExt3 = $('#cExt3').val();
+								var tooltip;
+								if([1, 3, 4, 10].indexOf(parseInt(iObjectID)) != -1) {
+									var params = {
+										Action: 'Add',
+										iSceneID: _iSceneID,
+										iObjectID: iObjectID,
+										iRecordID: iRecordID,
+										iStyle: iStyle,
+										cArea: cArea
+									};
+									tooltip = $('#cRecordName').val();
+								} else if(iObjectID == 8) {
+									var params = {
+										Action: 'Add',
+										iSceneID: _iSceneID,
+										iObjectID: iObjectID,
+										cExt3: cExt3,
+										iStyle: iStyle,
+										cArea: cArea
+									};
+									tooltip = $('#cExt3').val();
+								}
+								postData({
+									url: 'DcCdMarkPointManage',
+									params: params,
+									success: function(ci_result) {
+										if(ci_result.DcCode == 0) {
+											var pointname = 'E' + ci_result.DcMessage;
+											_krpano.call('drawDelete()');
+											_krpano.set('layer[operList].visible', false);
+											_krpano.call('addhotspot(' + pointname + ')');
+											_krpano.set('hotspot[' + pointname + '].tooltip', tooltip);
+											_krpano.call('hotspot[' + pointname + '].loadstyle(drawokhotspotstyle|tooltip)');
+											for(var i = 0; i < points.length; i++) {
+												_krpano.set('hotspot[' + pointname + '].point[' + i + '].ath', points[i].ath);
+												_krpano.set('hotspot[' + pointname + '].point[' + i + '].atv', points[i].atv);
+											}
+										} else {
+											$.messager.alert('提示', ci_result.DcMessage, 'info');
+										}
+									}
+								});
+							}
+						});
+					}
+				} else {
+					var iExt1 = $('#iExt1').combobox('getValue');
+					var iRecordID = $('#iRecordID').val();
+					if(iExt1 == 2) {
+						var spotname = points.split('_')[0];
+						var thisath = _krpano.get("hotspot[" + spotname + "].ath");
+						var thisatv = _krpano.get("hotspot[" + spotname + "].atv");
+						var params = {
+							Action: 'Add',
+							iSceneID: _iSceneID,
+							fImageX: thisatv,
+							fImageY: thisath,
+							iObjectID: iObjectID,
+							iRecordID: iRecordID,
+							iExt1: 2
+						};
+						postData({
+							url: 'DcCdMarkPointManage',
+							params: params,
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									var newSpotName = 'M' + ci_result.DcMessage;
+									_krpano.set("hotspot[" + spotname + "].name", newSpotName);
+									_krpano.set("hotspot[" + newSpotName + "].ondown", null);
+									_krpano.set("hotspot[" + newSpotName + "].onclick", 'js(deleteHotspot(get(name)))');
+									_krpano.call('deleteHotspotFun(\'' + spotname + '_ok\')');
+									_krpano.call('deleteHotspotFun(\'' + spotname + '_del\')');
+									_krpano.call('deleteHotspotFun(\'' + spotname + '_drag\')');
+									$('#btn-reset').trigger('click');
+								} else {
+									$.messager.alert('提示', ci_result.DcMessage, 'info');
+								}
+							}
+						});
+					}
+				}
+			}
+
+			function getTypeFromObjectID(iObjectID) {
+				var type;
+				switch(parseInt(iObjectID)) {
+					case 1:
+						type = 'pic';
+						break;
+					case 2:
+						type = 'video';
+						break;
+					case 3:
+						type = 'book';
+						break;
+					case 4:
+						type = 'info';
+						break;
+					case 8:
+						type = 'link';
+						break;
+					case 10:
+						type = 'product';
+						break;
+				}
+				return type;
+			}
+
+			function getObjectIDFromRecordName(cRecordDisplayName) {
+				var iObjectID;
+				var cRecordDisplayName = cRecordDisplayName.split('：')[0];
+				switch(cRecordDisplayName) {
+					case '图片':
+						iObjectID = 1;
+						break;
+					case '视频':
+						iObjectID = 2;
+						break;
+					case '手册':
+						iObjectID = 3;
+						break;
+					case '注释':
+						iObjectID = 4;
+						break;
+					case '外链':
+						iObjectID = 8;
+						break;
+					case '产品':
+						iObjectID = 10;
+						break;
+				}
+				return iObjectID;
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

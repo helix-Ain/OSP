@@ -1,0 +1,171 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=../js/EsayUI/jquery.validatebox.rules.js,../plugins/DCN/jquery.dcnplugins.js"></script>
+
+</head>
+<body style="display: none; overflow: hidden;">
+    <form id="form_Edit" method="post" novalidate="novalidate" action="">
+    <table style="width: 500px;" class="TableCenter">
+        <tr>
+            <td class="tabletext" style="width: 110px;">
+                联系邮箱：
+            </td>
+            <td>
+                <input id="txt_Email" type="text" name="cEmail" style="width: 350px;" class="easyui-validatebox"
+                    data-options="validType:'email'" />
+            </td>
+        </tr>
+        <tr>
+            <td class="tabletext">
+                联系电话：
+            </td>
+            <td>
+                <input id="txt_Tel" type="text" name="cTel" class="easyui-validatebox" data-options="validType:'phoneOrMobile'" />
+            </td>
+        </tr>
+        <tr>
+            <td class="tabletext">
+                分类：
+            </td>
+            <td>
+                <div id="div_Category" name="iCategory">
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td class="tabletext">
+                <div style="float: right; width: 10px; height: 30px; line-height: 25px;">
+                    ：
+                </div>
+                <div id="div_Type" style="float: right;" name="iType">
+                </div>
+            </td>
+            <td>
+                <textarea id="txt_Content" rows="7" name="cContent" class="TextEdit" style="width: 350px;"></textarea>
+            </td>
+        </tr>
+    </table>
+    </form>
+    <div class="ButtonBar" style="min-width: 150px;">
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData();">提交</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iDDLCount = 0;
+    var _iUserID = 0;
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        loadingMask();
+        var m_objTime = setTimeout(function() {
+            hiddMask();
+            $.messager.alert('提示', '页面加载失败', 'info', function() { cancelSelf(); });
+        }, 60000);
+        
+        dcnloader.load('ComboList', function() {
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'Suggest', subCat: 'Type' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Type').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            required: true,
+                            data: ci_result.rows,
+                            onLoadSuccess: function() {
+                                $(this).combolist('selectFirst');
+                            },
+                            onSelect: function() {
+                                $('#txt_Content').focus();
+                            }
+                        });
+                    }
+                    _iDDLCount++;
+                    _init();
+                }
+            });
+
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'Suggest', subCat: 'Category' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Category').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            required: true,
+                            data: ci_result.rows,
+                            onLoadSuccess: function() {
+                                $(this).combolist('selectFirst');
+                            }
+                        });
+                    }
+                    _iDDLCount++;
+                    _init();
+                }
+            });
+        });
+
+        postData({
+            url: 'DcCdUserManage',
+            params: { Action: 'query', Type: 'U' },
+            isSys: true,
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    var m_objData = ci_result.rows[0];
+                    _iUserID = m_objData.iUserID;
+                    $('#txt_Email').val(m_objData.cEmail);
+                    if (m_objData.cMobileNO == '') {
+                        $('#txt_Tel').val(m_objData.cTelNo);
+                    }
+                    else {
+                        $('#txt_Tel').val(m_objData.cMobileNO);
+                    }
+                }
+                _iDDLCount++;
+                _init();
+            }
+        });
+
+        function _init() {
+            if (_iDDLCount == 3) {
+                hiddMask();
+                _iDDLCount = 0;
+                clearTimeout(m_objTime);
+
+
+            }
+        }
+    }
+
+    function cancelSelf() {
+        parent.closedPopupDialog();
+    }
+
+    function saveData() {
+        postData({
+            url: 'DcCdSysSuggestManage',
+            params: { Action: 'Add', iUserID: _iUserID },
+            validate: true,
+            form: 'form_Edit',
+            isSys: true,
+            success: function(ci_result) {
+                $.messager.alert('提示', '提交成功', 'info', function() { cancelSelf(); });
+            }
+        });
+    }
+</script>
+

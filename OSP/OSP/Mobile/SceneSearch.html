@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html ng-app='app'>
+
+	<head>
+		<title></title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+		<link rel='stylesheet' href='CSS/Ionic/ionic.min.css' />
+		<link rel='stylesheet' href='CSS/Common.css' />
+		<script src="JS/Ionic/ionic.bundle.min.js"></script>
+		<script src="JS/Constants.js"></script>
+		<script src="JS/Common.js?v=1.0"></script>
+		<style>
+			i.ion-ios-arrow-right {
+				color: #C1C1C1;
+				margin-right: -10px;
+			}
+			
+			.item-icon-right:hover {
+				background-color: #EEEEEE;
+			}
+			
+			img.item-image {
+				width: 17px;
+				height: 17px;
+				margin-right: 10px;
+				position: relative;
+				top: 3px;
+			}
+		</style>
+	</head>
+
+	<body ng-controller='app' ng-init='init()' ng-cloak>
+		<ion-header-bar align-title='center' class='item-input-inset' style='background-color: #A4684B;'>
+			<button class='button button-icon icon ion-ios-arrow-left' style='color:#FFFFFF;'  onclick="back()"></button>
+			<label class="item-input-wrapper">
+    			<i class="icon ion-ios-search placeholder-icon"></i>
+   				<input type="search" placeholder="幼儿园" ng-model='keyword'>
+ 			 </label>
+			<button class='button' style='color:#FFFFFF;background-color: #FF8400;' ng-click='search()'>搜索</button>
+		</ion-header-bar>
+		<ion-content style='background-color:#F3F4F6;padding-bottom: 15px;'>
+			<ion-list>
+				<ion-item style='height:12px;padding: 0;background-color: #F3F4F6;border:none;'></ion-item>
+				<ion-item class='item-icon-left item-icon-right' ng-click='classifiedSearch()'>
+					<i class='icon ion-android-apps' style='color:#B4B4B4;'></i> 分类搜索
+					<i class="icon ion-ios-arrow-right"></i>
+				</ion-item>
+				<ion-item style='height:12px;padding: 0;background-color: #F3F4F6;border-bottom:none;'></ion-item>
+				<ion-item class='item-icon-left' ng-repeat='item in keywords track by $index' ng-click='search(item)'>
+					<i class="icon ion-location" style='color:#B4B4B4;'></i> {{item}}
+				</ion-item>
+			</ion-list>
+		</ion-content>
+		<script>
+			app.controller('app', function($scope, $window, commonService) {
+				$scope.keyword = '';
+				$scope.keywords = [];
+				$scope.init = function() {
+					initPage();
+				}
+
+				$scope.search = function(keyword) {
+					if(keyword!=undefined){
+						$window.location = 'SearchResult.html?Keyword='+keyword;
+					}else if($scope.keyword != '') {
+						if($scope.keywords.indexOf($scope.keyword) == -1) {
+							var keywords = $scope.keywords.slice();
+							keywords.unshift($scope.keyword);
+							localStorage.setItem('keywords', JSON.stringify(keywords.slice(0,6)));
+						}
+						$window.location = 'SearchResult.html?Keyword='+$scope.keyword;
+					}else{
+						commonService.showAlert('请输入搜索关键字！');
+					}
+				}
+
+				$scope.classifiedSearch = function() {
+					$window.location = 'ClassifiedSearch.html?iParentID=0';
+				}
+
+				function initPage() {
+					var keywords = JSON.parse(localStorage.getItem('keywords'));
+					if(keywords != null) {
+						$scope.keywords = keywords.slice(0, 6);
+					}
+				}
+
+			});
+
+			function back() {
+				history.back();
+			}
+		</script>
+	</body>
+
+</html>

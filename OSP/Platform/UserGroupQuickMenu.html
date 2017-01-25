@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body style="display: none;">
+    <style type="text/css">
+        .selectmenu li { float: left; margin-left: 10px; }
+    </style>
+    <div id="quick_div_Main" class="easyui-layout" data-options="fit:true,border:false">
+        <div id="quick_div_Top" data-options="region:'north',border:false" style="height: 70px;">
+            <div id="div_QuickMenu" class="easyui-panel" data-options="fit:true,border:false,title:'快捷菜单列表'"
+                style="padding: 10px;">
+            </div>
+        </div>
+        <div data-options="region:'center',border:false,title:'已选菜单列表'" style="padding: 10px;">
+            <ul id="ul_Select" class="selectmenu">
+            </ul>
+        </div>
+        <div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+            <div class="ButtonBar" style="position: inherit; min-width: 150px;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="quick_SaveData()"
+                    group="update">保存</a> <a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeDetail();">
+                        关闭</a>
+            </div>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        //var quick_iUserGroupID = 0;
+        var quick_objMenu = [];
+
+        checkPagePower({ onload: function() { quick_InitPage(); }, showMask: false, check: false });
+
+        function quick_InitPage() {
+            if ($('#btn_Save').css('display') == 'none') {
+                $('[group="update"]').css('display', 'none');
+                $('#quick_div_Top').css('height', '0px').css('display', 'none');
+                setTimeout(function() {
+                    $('#quick_div_Main').layout('resize');
+                }, 10);
+            }
+        
+            var m_objScriptList = [];
+            m_objScriptList.push(_strSysUrl + "CSS/quickmenu.css");
+            m_objScriptList.push(_strSysUrl + "CSS/dcnRadioList.css");
+
+            var m_objFileLoader = new fileLoader();
+            m_objFileLoader.isParse = false;
+            m_objFileLoader.addReadyFn(function() {
+                //quick_iUserGroupID = getHashValue("UserGroupID");
+                quick_GetQuickMenu();
+            });
+            m_objFileLoader.load(m_objScriptList);
+        }
+
+        function quick_GetQuickMenu() {
+            quick_objMenu = [];
+            postData({
+                url: "DcCdQuickMenuManage",
+                isSys: true,
+                params: { Action: "GetList" },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        quick_objMenu = ci_result.rows;
+                        var m_objHtml = [];
+                        m_objHtml.push('<ul id="ul_QuickMenu" class="dcnRadioList">');
+
+                        for (var i = 0; i < ci_result.rows.length; i++) {
+                            var m_strClass = 'item';
+                            if (i == 0) {
+                                m_strClass += ' firstchild';
+                            }
+                            else if (i == ci_result.rows.length - 1) {
+                                m_strClass += ' lastchild';
+                            }
+                            m_objHtml.push('<li><div class="' + m_strClass + '" name="' + ci_result.rows[i].iQuickMenuID + '" value="' + i + '">' + ci_result.rows[i].cItemChiName + '</div></li>');
+                            quick_objMenu[i].iID = 0;
+                        }
+
+                        m_objHtml.push('</ul>');
+                        $(m_objHtml.join('')).appendTo('#div_QuickMenu');
+
+                        $('#ul_QuickMenu').find('div').bind('click', function(e) {
+                            quick_CheckboxClick(this);
+                        });
+
+                        quick_GetUserGroupQuickMenu();
+                    }
+                }
+            });
+        }
+
+        function quick_GetUserGroupQuickMenu() {
+            $('#ul_Select').empty();
+            for (var i = 0; i < quick_objMenu.length; i++) {
+                quick_objMenu[i].iID = 0;
+            }
+            postData({
+                url: 'DcCdUserGroupQuickMenuManage',
+                params: { Action: 'GetList', iUserGroupID: _iID },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        ci_result.rows.sort(function(a, b) { return a.iIndex - b.iIndex; });
+                        $.each(ci_result.rows, function(index, value) {
+                            var m_obj = $('#div_QuickMenu').find('div[name=' + value.iQuickMenuID + ']');
+                            if (m_obj.length > 0) {
+                                $(m_obj[0]).addClass('active');
+                                quick_objMenu[$(m_obj[0]).attr('value')].iID = parseInt(value.iID);
+                                quick_AddMenu(quick_objMenu[$(m_obj[0]).attr('value')]);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function quick_CheckboxClick(ci_obj) {
+            var m_objData = quick_objMenu[$(ci_obj).attr('value')];
+            if ($(ci_obj).hasClass('active')) {
+                $(ci_obj).removeClass('active');
+
+                $('#ul_Select').find('li[name=' + m_objData.iQuickMenuID + ']').remove();
+            }
+            else {
+                $(ci_obj).addClass('active')
+                quick_AddMenu(m_objData);
+            }
+        }
+
+        function quick_AddMenu(ci_objData) {
+            var m_strClass = 'quick_default';
+            if (ci_objData.cIconCls != '') {
+                m_strClass = ci_objData.cIconCls;
+            }
+
+            var m_objHTML = [];
+            if ($.trim(ci_objData.cIconCls) != '') {
+                m_strClass = ci_objData.cIconCls;
+            }
+            m_objHTML.push('<li name="' + ci_objData.iQuickMenuID + '">');
+            m_objHTML.push('<div id="div_Menu_' + ci_objData.iQuickMenuID + '" class="' + m_strClass + '" ');
+            m_objHTML.push('title="' + ci_objData.cItemChiName + '">');
+            if (m_strClass == 'quick_default') {
+                m_objHTML.push('<div>' + ci_objData.cItemChiName + '</div>');
+            }
+            m_objHTML.push('</div></li>');
+
+            $(m_objHTML.join('')).appendTo('#ul_Select');
+        }
+
+        function quick_SaveData() {
+            var m_objDetail = [];
+            $.each($('#ul_QuickMenu').find('div[value]'), function() {
+                var m_obj = $(this);
+                var m_objData = [];
+                var m_iIndex = parseInt(m_obj.attr('value'));
+                if (m_obj.hasClass('active')) {
+                    m_objData.push(quick_objMenu[m_iIndex].iID);
+                    m_objData.push(quick_objMenu[m_iIndex].iQuickMenuID);
+                    m_objData.push($('#div_Menu_' + quick_objMenu[m_iIndex].iQuickMenuID).parent().index());
+
+                    m_objDetail.push(m_objData.join(getSeparativeSign()));
+                }
+                else {
+                    if (quick_objMenu[m_iIndex].iID > 0) {
+                        m_objData.push(quick_objMenu[m_iIndex].iID * -1);
+                        m_objData.push(0);
+                        m_objData.push(0);
+
+                        m_objDetail.push(m_objData.join(getSeparativeSign()));
+                    }
+                }
+            });
+
+            if (m_objDetail.length > 0) {
+                postData({
+                    url: 'DcCdUserGroupQuickMenuManage',
+                    params: { Action: 'UpdateData', iUserGroupID: _iID, DetailData: m_objDetail.join(getSeparativeSign() + ',' + getSeparativeSign()) },
+                    isSys: true,
+                    success: function(ci_result) {
+                        quick_GetUserGroupQuickMenu();
+                        $.messager.alert('提示', '保存成功', 'info');
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '保存成功', 'info');
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,383 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../js/CommonScript.js?script=,../plugins/DCN/jquery.dcnplugins.js,js/CurrCommonScript.js"></script>
+
+</head>
+<body style="display: none;">
+    <form action="" id="form_Add" method="post" novalidate="novalidate">
+    <table style="width: 500px;" class="TableCenter">
+        <tr>
+            <td class="tabletext" style="width: 100px;">
+                <span class="require_sign">*</span>姓名：
+            </td>
+            <td class="dcn-div" name="cUserChiName">
+                <input type="text" name="cUserChiName" style="width: 300px;" class="easyui-validatebox"
+                    data-options="required:true" />
+            </td>
+        </tr>
+        <tr>
+            <td class="tabletext dcn-div" data-options="textField:'cInviteTypeDesc',formatter:function(value){return '<div class=\'tabletext\' style=\'width:100%;\'>'+value+'：</div>';}">
+                <table>
+                    <tr>
+                        <td>
+                            <span class="require_sign">*</span>
+                        </td>
+                        <td>
+                            <div id="div_Key" name="iInviteType" style="width: 90px;">
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td class="dcn-div" name="cInviteKey">
+                <input id="txt_Key" type="text" name="cInviteKey" style="width: 300px;" class="easyui-validatebox"
+                    data-options="required:true,validType:'email'" />
+            </td>
+        </tr>
+        <tr>
+            <td class="tabletext">
+                用户类型：
+            </td>
+            <td class="dcn-div" name="cUserTypeDesc">
+                <div id="div_UserType" name="iUserType">
+                </div>
+            </td>
+        </tr>
+        <tr group="normal">
+            <td class="tabletext">
+                <span class="require_sign">*</span>用户角色：
+            </td>
+            <td id="td_UserGroup" class="dcn-div">
+            </td>
+        </tr>
+        <tr group="normal">
+            <td class="tabletext">
+                <span class="require_sign">*</span>部门：
+            </td>
+            <td id="td_Department" class="dcn-div">
+            </td>
+        </tr>
+        <tr group="normal">
+            <td class="tabletext">
+                职位：
+            </td>
+            <td class="dcn-div" name="cPosition">
+                <div id="div_Position" name="iPosition">
+                </div>
+            </td>
+        </tr>
+        <tr group="Ex">
+            <td class="tabletext">
+                状态：
+            </td>
+            <td class="dcn-div" name="cStatusDesc">
+                <input type="text" name="cStatusDesc" class="TextEdit" />
+            </td>
+        </tr>
+        <tr group="Ex">
+            <td class="tabletext">
+                类型：
+            </td>
+            <td class="dcn-div" name="cTypeDesc">
+                <input type="text" name="cTypeDesc" class="TextEdit" />
+            </td>
+        </tr>
+        <tr group="Ex">
+            <td class="tabletext">
+                日期：
+            </td>
+            <td class="dcn-div" name="dApplyDate">
+                <input type="text" name="dApplyDate" class="TextEdit" />
+            </td>
+        </tr>
+    </table>
+    </form>
+    <div class="ButtonBar">
+        <a id="btn_Accept" href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData(3);"
+            group="edit">接受</a> <a id="btn_Reject" href="javascript:void(0)" class="easyui-linkbutton"
+                onclick="saveData(4);" group="edit">拒绝</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                    onclick="addData()" group="add">发送邀请</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                        onclick="cancelSelf();">关闭</a>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _strAction = "";
+    var _iID = 0;
+    var _iOrgID = 0;
+    var _iDDLCount = 0;
+
+    initReady(function() {
+        //setControlEnable("txt_UserGroup", false);
+        //setControlEnable("txt_Dept", false);
+
+        $('.ButtonBar').find('a[group]').css('display', 'none');
+        $('[group="Ex"],[group="update"],[group="normal"]').css('display', 'none');
+
+        _strAction = getHashValue("Action");
+        _iOrgID = parseInt(getHashValue("iOrgID"));
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        dcnloader.load(['ComboList', 'DCNDiv', _strSysUrl + 'js/EsayUI/jquery.validatebox.rules.js'], function() {
+            $('#td_UserGroup').dcndiv({
+                valueField: 'iUserGroupID',
+                textField: 'cUserGroup',
+                editButtons: [{ type: 1, btnCls: 'dcn-search', iconCls: "icon-search", title: '查询', plain: true, onClick: searchUserGroup}]
+            });
+
+            $('#td_Department').dcndiv({
+                valueField: 'iDepartmentID',
+                textField: 'cDepartment',
+                editButtons: [{ type: 1, btnCls: 'dcn-search', iconCls: "icon-search", title: '查询', plain: true, onClick: searchDept}]
+            });
+
+            _iDDLCount++;
+            _init();
+        });
+
+        function _init() {
+            if (_iDDLCount == 1) {
+                _iDDLCount = 0;
+                if (_strAction != "new") {
+                    _iID = getHashValue("ID");
+                    if (_iID > 0) {
+                        editData();
+                    }
+                }
+                else {
+                    newData();
+                }
+            }
+        }
+    }
+
+    function setUserTypeDisplay(ci_iType) {
+        ci_iType = parseInt(ci_iType || 1);
+        $('#td_Department,#td_UserGroup').dcndiv('load');
+        switch (ci_iType) {
+            case 1:
+                $('[group="normal"]').css('display', 'none');
+                $('#div_Position').combolist({ required: false });
+                break;
+            default:
+                $('[group="normal"]').css('display', '');
+                $('#div_Position').combolist({ required: true }).combolist('selectFirst');
+                break;
+        }
+    }
+
+    function cancelSelf() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function cancel() {
+        closedPopupDialog();
+    }
+
+    function newData() {
+        _strAction = 'add';
+        _iID = 0;
+        $('#form_Add').form('dcndivEdit');
+        $('a[group="add"],[group="update"]').css('display', '');
+        $('#div_UserType').combolist({ required: true });
+
+        postData({
+            url: "DcCdCodeMasterManage",
+            params: { Action: 'combo', cat: 'useap', subCat: 'InviteType', fValue1: 1 },
+            isSys: true,
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    $('#div_Key').combolist({
+                        data: ci_result.rows,
+                        valueField: 'cCodeItem',
+                        textField: 'cDesc',
+                        onLoadSuccess: function() {
+                            $(this).combolist('selectFirst');
+                        },
+                        onChange: function(newValue, oldValue) {
+                            $('#txt_Key').val('').validatebox({ validType: (newValue == '1' ? 'email' : 'mobile') });
+                        }
+                    });
+                }
+            }
+        });
+
+        postData({
+            url: "DcCdCodeMasterManage",
+            params: { Action: 'combo', cat: 'useap', subCat: 'UserType' },
+            isSys: true,
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    $('#div_UserType').combolist({
+                        valueField: 'cCodeItem',
+                        textField: 'cDesc',
+                        data: ci_result.rows,
+                        onLoadSuccess: function() {
+                            $(this).combolist('select', '2');
+                            setUserTypeDisplay(2);
+                        },
+                        onChange: function(newValue, oldValue) {
+                            setUserTypeDisplay(newValue);
+                        }
+                    });
+                }
+            }
+        });
+
+        postData({
+            url: 'DcCdPositionManage',
+            params: { Action: 'GetList' },
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    var m_objData = [];
+                    $.each(ci_result.rows, function() {
+                        if (this.iLevel != 0) {
+                            m_objData.push(this);
+                        }
+                    });
+                    $('#div_Position').combolist({
+                        valueField: 'iPositionID',
+                        textField: 'cName',
+                        data: m_objData
+                    });
+                }
+            }
+        });
+    }
+
+    function editData() {
+        $('#txt_Key').validatebox({ required: false });
+        if (_iID > 0) {
+            postData({
+                url: "DcCdUserApplyManage",
+                params: { Action: "GetList", iApplyID: _iID },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        var m_objData = ci_result.rows[0];
+                        _strAction = 'update';
+                        _iID = m_objData.iApplyID;
+
+                        if (m_objData.iType == 1 && m_objData.iStatus == 1) {
+                            $('a[group="edit"],[group="update"]').css('display', '');
+                        }
+                        setUserTypeDisplay(m_objData.iUserType);
+                        $('[group="Ex"]').css('display', '');
+                        $('#form_Add').form('dcndivLoad', m_objData);
+                    }
+                    else {
+                        $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+                    }
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+        }
+    }
+
+    function addData(ci_iUserID) {
+        ci_iUserID = ci_iUserID || 0;
+        postData({
+            url: 'DcCdUserApplyManage',
+            params: { Action: 'add', iUserID: ci_iUserID, iType: 2 },
+            validate: true,
+            form: 'form_Add',
+            onPost: function() {
+                if (this.params.iUserType == 2) {
+                    if (!parseInt(this.params.iUserGroupID) > 0) {
+                        $.messager.alert('提示', '请选择用户角色', 'info');
+                        return false;
+                    }
+                    if (!parseInt(this.params.iDepartmentID) > 0) {
+                        $.messager.alert('提示', '请选择部门', 'info');
+                        return false;
+                    }
+                }
+                if (_iOrgID > 0) {
+                    this.params.iOrgID = _iOrgID;
+                }
+                return true;
+            },
+            success: function(ci_result) {
+                if (ci_result.DcCode == 2) {
+                    $.messager.confirm('提示', ci_result.DcMessage, function(r) {
+                        if (r) {
+                            addData(-1);
+                        }
+                    });
+                }
+                else {
+                    parent.searchData();
+                    $.messager.alert('提示', '发送成功', 'info', function() { cancelSelf(); });
+                }
+            }
+        });
+    }
+
+    function saveData(ci_iStatus) {
+        postData({
+            url: 'DcCdUserApplyManage',
+            params: { Action: 'update', iApplyID: _iID, iStatus: ci_iStatus },
+            validate: (ci_iStatus == 4 ? false : true),
+            form: 'form_Add',
+            success: function(ci_result) {
+                parent.searchData();
+                $.messager.alert('提示', '保存成功', 'info', function() { cancelSelf(); });
+            }
+        });
+    }
+
+    function searchDept() {
+        var m_objParams = [];
+        m_objParams.push('Type=3');
+        m_objParams.push('searchQuery=' + encodeURI('iParentDeptID' + getSeparativeSign() + '2' + getSeparativeSign() + '0'));
+        if (_iOrgID > 0) {
+            m_objParams.push('iOrgID=' + _iOrgID);
+        }
+        popupDialog("SearchDept.html#" + m_objParams.join('&'), 'parent.addRefRecordText', "部门查询", true, 750, 500, 'dc-icon-search');
+    }
+
+    function searchUserGroup() {
+        var m_objParams = [];
+        m_objParams.push('Type=0');
+        if (_iOrgID > 0) {
+            m_objParams.push('iOrgID=' + _iOrgID);
+        }
+        else {
+            m_objParams.push('iOrgID=' + top._objUserData.iOrgID);
+        }
+        m_objParams.push('bIsDisplay=1');
+        m_objParams.push('searchQuery=' + encodeURI('cGroupCode' + getSeparativeSign() + '6' + getSeparativeSign() + 'boss'));
+        popupDialog('SearchUserGroup.html#' + m_objParams.join('&'), 'parent.addUserGroup', '角色查询', true, 500, 400);
+    }
+
+    function addRefRecordText(_str) {
+        closedPopupDialog();
+        if (_str != undefined && _str.length > 0) {
+            $('#td_Department').dcndiv('setText', _str[0].cDeptChiName).dcndiv('setValue', _str[0].iDepartmentID);
+        }
+    }
+
+    function addUserGroup(_str) {
+        var _strArr = _str.split(",");
+        $('#td_UserGroup').dcndiv('setText', _strArr[1]).dcndiv('setValue', _strArr[0]);
+        closedPopupDialog();
+    }
+</script>
+

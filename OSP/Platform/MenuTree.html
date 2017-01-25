@@ -1,0 +1,182 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false">
+    <input type="hidden" id="MainMenuCode" />
+    <div data-options="region:'center',split:true" style="width: 250px; background: #E0E0E3 url(image/sidebar.png) repeat;">
+        <div style="width: 240px; height: 40px; border-bottom: solid 1px #ccc; text-align: center;">
+            <div class="quick_search quick_search_position1">
+                <input id="txtKeyWord" type="text" value="" style="margin-top: 3px;" datatype="*"
+                    class="dc-input" dc-tip="请输菜单关键字" />
+                <input id="btnSearch" class="search_button3" type="button" title="Submit" value=""
+                    onclick="searchApp()" />
+            </div>
+        </div>
+        <div id="MenuTree">
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript">
+    var _bInit = false;
+
+    checkPagePower({ onload: function() { pageInit() }, showMask: false });
+
+    function pageInit() {
+        var m_cTreeID = getHashValue('treeid');
+        var m_cTreeName = getHashValue('treename');
+        if (m_cTreeID != "") {
+            var m_iOpenDesktop = getHashValue('opendesktop');
+            if (m_iOpenDesktop == '1') {
+                location.hash = 'treeid=' + m_cTreeID + '&treename=' + m_cTreeName;
+                _bInit = true;
+            }
+            createTree(m_cTreeID, m_cTreeName);
+        }
+    }
+
+    function selectNode(treeid, nodeid) {
+        try {
+            var node = $('#' + treeid).tree('find', nodeid);
+            $('#' + treeid).tree('select', node.target);
+        }
+        catch (ex) {
+            $('#' + treeid).tree('select', "");
+        }
+    }
+
+//    $(document).ready(function() {
+//        $("#txtKeyWord").keydown(function(e) {
+//            var curKey = e.which;
+//            if (curKey == 13) {
+//                if ($("#txtKeyWord").value != "") {
+//                    $("#btnSearch").click();
+//                    return false;
+//                }
+//                alert("请输入关键字");
+//                $("#txtKeyWord").focus();
+//            }
+//        });
+//    });
+
+    function searchApp() {
+        if (document.getElementById("txtKeyWord").value != "") {
+            location.href = "Search.aspx?keyword=" + escape(document.getElementById("txtKeyWord").value);
+        }
+        else {
+            alert("请输入关键字");
+            document.getElementById("txtKeyWord").focus();
+        }
+    }
+
+    function createTree(id, menuname, tabid, ci_bIsOpenMenu, ci_strParameter) {
+        location.hash = "treeid=" + id + "&treename=" + menuname;
+        $('#MenuTree > ul').hide();
+        var obj = $('#' + id);
+        if (obj.length > 0) {
+            $.parser.parse($('#' + id));
+            $('#' + id).show();
+            $('#MainMenuCode').val(id);
+            window.parent.setLayoutTitle(id, $('#' + id).attr('treename'));
+            if (ci_bIsOpenMenu != undefined && ci_bIsOpenMenu) {
+                openTab(id, tabid, ci_strParameter);
+            }
+            else if (tabid != undefined && tabid != "") {
+                selectNode(id, tabid, ci_strParameter);
+            }
+        }
+        else {
+            var _Action = id;
+            var arr = id.split("_");
+            var mainmenu = arr[1];
+            var _ID = id;
+            var m_MainTree = document.getElementById("MenuTree");
+            if (m_MainTree) {
+                var m_NewTree = document.getElementById(_ID);
+                if (m_NewTree == null) {
+                    m_NewTree = document.createElement("ul");
+                    m_NewTree.setAttribute('id', _ID);
+                    m_NewTree.setAttribute('treename', menuname);
+                    m_NewTree.className = "easyui-tree";
+                    m_MainTree.appendChild(m_NewTree);
+                }
+            }
+            postData({
+                url: 'DcCdMenu',
+                params: { Action: "usermenu", "mainmenu": mainmenu },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        $('#' + _ID).tree({
+                            data: ci_result.rows,
+                            animate: true,
+                            onLoadError: function() { $.messager.alert('提示', '读取失败', 'error'); }
+                        });
+                        $('#MainMenuCode').val(id);
+                        if (ci_bIsOpenMenu != undefined && ci_bIsOpenMenu) {
+                            openTab(id, tabid, ci_strParameter);
+                        }
+                        else if (tabid != undefined && tabid != "") {
+                            selectNode(id, tabid);
+                        }
+                        window.parent.setLayoutTitle(id, menuname);
+                        if (_bInit) {
+                            window.parent.openDesktop();
+                            _bInit = false;
+                        }
+                    }
+                    else {
+                        $.messager.alert('提示', '读取失败', 'error')
+                    }
+                }
+            });
+            $('#' + _ID).tree({
+                onClick: function(node) {
+                    $(this).tree('toggle', node.target);
+                    window.parent.openTab(node.attributes.title, node.id, node.attributes.openUrl, $('#' + _ID).attr('treename'), node.attributes.iconUrl, _ID);
+                }
+            });
+        }
+    }
+
+    function getTreeData(ci_strTreeID) {
+        var m_objReturn = [];
+        if (ci_strTreeID != "") {
+            var m_objMenuData = [];
+            m_objMenuData = $("#" + ci_strTreeID).tree("getRoots");
+            if (m_objMenuData.length > 0) {
+                for (var i = 0; i < m_objMenuData.length; i++) {
+                    var m_objChild = $("#" + ci_strTreeID).tree("getChildren", m_objMenuData[i].target);
+                    if (m_objChild.length > 0) {
+                        for (var j = 0; j < m_objChild.length; j++) {
+                            m_objChild[j].attributes.treeName = $('#' + ci_strTreeID).attr('treename');
+                            m_objReturn.push(m_objChild[j]);
+                        }
+                    }
+                }
+            }
+        }
+        return m_objReturn;
+    }
+
+    function openTab(ci_strTreeID, ci_strMenuID, ci_strParameter) {
+        m_objMenuData = getTreeData(ci_strTreeID);
+        if (m_objMenuData.length > 0) {
+            for (var i = 0; i < m_objMenuData.length; i++) {
+                if (m_objMenuData[i].id == ci_strMenuID) {
+                    var m_strUrl = m_objMenuData[i].attributes.openUrl;
+                    window.parent.openTab(m_objMenuData[i].attributes.title, ci_strMenuID, m_strUrl, m_objMenuData[i].attributes.treeName, m_objMenuData[i].attributes.iconUrl, ci_strTreeID, true, ci_strParameter);
+                    return;
+                }
+            }
+        }
+    }
+</script>
+

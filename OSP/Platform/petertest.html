@@ -1,0 +1,68 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=JS/SearchOrg.js"></script>
+
+    <style>
+        .headerCls {
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div id="aa" class="easyui-accordion" data-options="fit:true">
+        <div title="联系人" data-options="headerCls:'headerCls'">
+            <table id="tab_List" style="display: none;">
+                <thead data-options="frozen:true">
+                    <tr>
+                        <th data-options="field:'ck',checkbox:true">
+                        </th>
+                        <th data-options="field:'cLastname',width:80,sortable:true">
+                            姓
+                        </th>
+                    </tr>
+                </thead>
+                <thead>
+                    <tr>
+                        <th data-options="field:'cFirstname',width:50,sortable:true">
+                            名
+                        </th>
+                        <th data-options="field:'cMobile',width:50,sortable:true">
+                            手机号码
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div title="用户">
+            <table id="tab_User" style="display: none;">
+                <thead data-options="frozen:true">
+                    <tr>
+                        <th data-options="field:'ck',checkbox:true">
+                        </th>
+                        <th data-options="field:'cLoginName',width:80,sortable:true">
+                            登录ID
+                        </th>
+                    </tr>
+                </thead>
+                <thead>
+                    <tr>
+                        <th data-options="field:'cUserChiName',width:50,sortable:true">
+                            用户中文名
+                        </th>
+                        <th data-options="field:'cMobileNO',width:50,sortable:true">
+                            手机号码
+                        </th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div title="客户">
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,506 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <style type="text/css">
+        .indicator { position: absolute; font-size: 9px; width: 20px; height: 10px; display: none; color: red; }
+    </style>
+    <div id="div_Column_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a href="javascript:void(0)" class="easyui-linkbutton"
+            iconcls="dc-icon-editadd" plain="true" onclick="column_openSearch()">导入</a>
+        <a class="easyui-linkbutton" iconcls="dc-icon-editadd" plain="true" onclick="column_newData(null)">
+            添加</a> <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-cancel"
+                plain="true" onclick="column_deleteData()">删除</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                    plain="true" iconcls="dc-icon-cancel" onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_Column_List" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true">
+                </th>
+                <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iColumnID, 'column_editData');}">
+                    <div style="width: 50px; height: 5px; display: block;">
+                    </div>
+                </th>
+                <th data-options="field:'cField',width:80,sortable:true">
+                    字段名
+                </th>
+                <th data-options="field:'cTitle',width:100,sortable:true">
+                    标题
+                </th>
+                <th data-options="field:'cTypeDesc',width:80,sortable:true">
+                    字段类型
+                </th>
+                <th data-options="field:'cColumnAlias',width:80,sortable:true">
+                    视图字段名
+                </th>
+                <th data-options="field:'cDataTypeDesc',width:80,sortable:true">
+                    视图字段数据类型
+                </th>
+                <th data-options="field:'cColumnDesc',width:150,sortable:true">
+                    视图字段描述
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_Column_Detail" class="easyui-dialog" title="字段详细资料" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form action="" id="form_Column_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 550px;" class="TableCenter">
+            <tr>
+                <td class="tabletext" style="width: 100px;">
+                    <span class="require_sign">*</span>字段类型：
+                </td>
+                <td colspan="3">
+                    <div id="div_Column_Type" name="iType">
+                    </div>
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    <span class="require_sign">*</span>视图字段名：
+                </td>
+                <td colspan="3">
+                    <input id="txt_Column_ColumnAlias" name="cColumnAlias" class="easyui-validatebox TextReadOnly"
+                        data-options="required:true" style="width: 380px;" />
+                    <input id="hidd_Column_ViewColumnID" name="iViewColumnID" type="hidden" />
+                    <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-search" plain="true"
+                        title="查询" onclick="column_openSearch(0)"></a>
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    字段描述：
+                </td>
+                <td colspan="3">
+                    <input name="cColumnDesc" class="TextReadOnly" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr group="column_Type1">
+                <td class="tabletext">
+                    数据类型：
+                </td>
+                <td>
+                    <input name="cDataTypeDesc" class="TextReadOnly" />
+                </td>
+                <td class="tabletext">
+                    扩展字段：
+                </td>
+                <td>
+                    <input id="chk_Column_IsEx" type="checkbox" name="bIsEx" disabled="disabled" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>字段名称：
+                </td>
+                <td colspan="3">
+                    <input name="cField" class="easyui-validatebox" data-options="required:false" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>标题：
+                </td>
+                <td colspan="3">
+                    <input name="cTitle" class="easyui-validatebox" data-options="required:false" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    宽度：
+                </td>
+                <td>
+                    <input name="iWidth" class="easyui-numberbox TextEdit" data-options="max:1000,precision:0" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext" style="width: 25%;">
+                    用户可见：
+                </td>
+                <td style="width: 35%;">
+                    <input id="chk_Column_IsDisplay" type="checkbox" name="bIsDisplay" />
+                </td>
+                <td class="tabletext" style="width: 20%;">
+                    用户自定义：
+                </td>
+                <td style="width: 20%;">
+                    <input id="chk_Column_IsDefined" type="checkbox" name="bIsDefined" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext" >
+                    可以排序：
+                </td>
+                <td>
+                    <input id="chk_Column_Sortable" type="checkbox" name="bSortable" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    数据格式：
+                </td>
+                <td colspan="3">
+                    <input name="cFormat" class="easyui-validatebox" data-options="required:false" style="width: 380px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    字段设置：
+                </td>
+                <td colspan="3">
+                    <textarea rows="5" name="cOptions" class="TextEdit" style="width: 380px;"></textarea>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="column_saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="column_cancel()">关闭</a>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var _column_iID = 0;
+        var _column_iDDLCount = 0;
+        var _column_iSearchType = 0;
+        var _column_strAction = '';
+        var _column_objIn = $('<div class="indicator">>>></div>').appendTo('body');
+
+        checkPagePower({ onload: function() { column_initPage(); }, showMask: false, parse: false, check: false });
+
+        function column_initPage() {
+            $('.TextReadOnly').attr("readonly", "readonly");
+            $.parser.parse('#div_Column_Detail');
+            $('#div_Column_Detail').dialog({ onClose: function() { $(".tooltip").remove(); } });
+
+            postData({
+                url: "DcCdCodeMasterManage",
+                params: { Action: 'combo', cat: 'gridc', subCat: 'Type' },
+                isSys: true,
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Column_Type').combolist({
+                            valueField: 'cCodeItem',
+                            textField: 'cDesc',
+                            required: true,
+                            data: ci_result.rows,
+                            onChange: function(newValue, oldValue) {
+                                if (newValue != oldValue) {
+                                    column_setTypeDisplay(newValue);
+                                }
+                            }
+                        });
+                    }
+                    _column_iDDLCount++;
+                    _init();
+                }
+            });
+
+            function _init() {
+                if (_column_iDDLCount == 1) {
+                    _column_iDDLCount = 0;
+                    column_getColumnList();
+                }
+            }
+        }
+
+        function column_getColumnList() {
+            setDataGrid("tab_Column_List", "div_Column_Toolbar", "DcCdDataGridManage", { Action: "ColGetList", iDataGridID: _iID }, "iColumnID", "iIndex", "", {
+                onDblClickRow: function(rowIndex, rowData) { $("#tab_Column_List").datagrid("selectRow", rowIndex); column_editData(rowData.iColumnID); },
+                onClickRow: function(rowIndex, rowData) { $("#tab_Column_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                pagination: false,
+                loadFilter: function(data) {
+                    data.rows.sort(function(a, b) { return a.iIndex - b.iIndex; });
+                    return data;
+                },
+                onLoadSuccess: function() {
+                    try {
+                        setDnd();
+                    } catch (ex) { }
+                }
+            });
+        }
+
+        function column_openDialog(ci_strTitle) {
+            $('#div_Column_Detail').dialog({ width: 570, height: 500, title: ci_strTitle }).dialog('open');
+        }
+
+        function column_cancel() {
+            $('#div_Column_Detail').dialog('close')
+        }
+
+        function column_newData() {
+            _column_iID = 0;
+            _column_strAction = 'ColAdd';
+            $('#div_Column_Detail').form('clear');
+            $('#div_Column_Type').combolist('selectFirst');
+            $('input[id^="chk_Column_Is"]').attr('checked', 'checked');
+            column_openDialog("添加字段");
+        }
+
+        function column_editData(ci_iID) {
+            _column_iID = ci_iID;
+            if (_column_iID > 0) {
+                setTimeout(function() {
+                    var m_objData = $("#tab_Column_List").datagrid("getSelected");
+                    if (m_objData != null) {
+                        $('#div_Column_Detail').form('load', m_objData);
+                        $('#txt_Column_Options').val(m_objData.cOptions.replace('&lt;', '\&lt;'));
+                        $('#div_Column_Type').combolist('select', m_objData.iType);
+                        $('#chk_Column_IsEx').attr('checked', (m_objData.bIsEx ? 'checked' : false));
+                        $('#chk_Column_IsDisplay').attr('checked', (m_objData.bIsDisplay ? 'checked' : false));
+                        $('#chk_Column_IsDefined').attr('checked', (m_objData.bIsDefined ? 'checked' : false));
+                        $('#chk_Column_Sortable').attr('checked', (m_objData.bSortable ? 'checked' : false));
+                        _column_iID = m_objData.iColumnID;
+                        _column_strAction = "ColUpdate";
+                        $('#ddl_Column_DataType').combobox('selectEx', m_objData.iDataType);
+                        column_openDialog("字段详细资料");
+                    }
+                    else {
+                        $.messager.alert('提示', '请选择记录', 'info');
+                    }
+                }, 100);
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function column_saveData() {
+            postData({
+                url: 'DcCdDataGridManage',
+                params: { Action: _column_strAction, iColumnID: _column_iID, iDataGridID: _iID },
+                validate: true,
+                form: 'form_Column_Edit',
+                onPost: function() {
+                    if (this.params.iType == 2) {
+                        this.params.iViewColumnID = 0;
+                    }
+                    return true;
+                },
+                success: function(ci_result) {
+                    $('#tab_Column_List').datagrid('reload');
+                    column_cancel();
+                }
+            });
+        }
+
+        function column_deleteData() {
+            var m_objData = $("#tab_Column_List").datagrid("getChecked");
+            if (m_objData.length > 0) {
+                $.messager.confirm('提示', '确定要删除所选' + m_objData.length + '条记录吗？', function(r) {
+                    if (r) {
+                        var m_strIDList = "";
+                        for (var i = 0; i < m_objData.length; i++) {
+                            if (m_strIDList.length > 0) {
+                                m_strIDList += ",";
+                            }
+                            m_strIDList += m_objData[i].iColumnID;
+                        }
+                        if (m_strIDList != "") {
+                            postData({
+                                url: "DcCdDataGridManage",
+                                params: { Action: "ColDelete", iColumnID: m_strIDList },
+                                success: function(ci_result) {
+                                    $('#tab_Column_List').datagrid('reload');
+                                    $.messager.alert('提示', '删除成功', 'info');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function column_setTypeDisplay(ci_iType) {
+            $('tr[group^="column_Type"]').css('display', 'none');
+            $('tr[group="column_Type' + ci_iType + '"]').css('display', '');
+
+            ci_iType = parseInt(ci_iType);
+            switch (ci_iType) {
+                case 1:
+                    $('#txt_Column_ColumnAlias').validatebox({ required: true });
+                    break;
+                default:
+                    $('#txt_Column_ColumnAlias').validatebox({ required: false });
+                    break;
+            }
+        }
+
+        function column_openSearch(ci_iType) {
+            var m_iViewID = parseInt($('#hidd_ViewID').val());
+            if (m_iViewID > 0) {
+                if (ci_iType == undefined) {
+                    ci_iType = 1;
+                }
+                _column_iSearchType = ci_iType;
+                popupDialog('SearchViewColumn.html#iViewID=' + m_iViewID + '&Type=' + ci_iType, 'parent.column_readDBColumn', '字段查询', true);
+            }
+            else {
+                $.messager.alert('提示', '请选择视图', 'info');
+            }
+        }
+
+        function column_readDBColumn(ci_objData) {
+            closedPopupDialog();
+            if (ci_objData != undefined && ci_objData.length > 0) {
+                var m_objData = $('#tab_Column_List').datagrid('getData');
+                switch (_column_iSearchType) {
+                    case 0:
+                        if (existData(m_objData)) {
+                            for (var i = 0; i < m_objData.rows.length; i++) {
+                                if (m_objData.rows[i].iViewColumnID == ci_objData[0].iViewColumnID) {
+                                    $.messager.alert('提示', '该字段已添加', 'info');
+                                    return;
+                                }
+                            }
+                        }
+                        $('#txt_Column_ColumnAlias').val(ci_objData[0].cMColumnAlias);
+                        $('#hidd_Column_ViewColumnID').val(ci_objData[0].iViewColumnID);
+                        $('[name="cColumnDesc"]').val(ci_objData[0].cMColumnDesc);
+                        $('[name="cDataTypeDesc"]').val(ci_objData[0].cMDataTypeDesc);
+                        $('[name="bIsEx"]').attr('checked', (ci_objData[0].bIsEx ? 'checked' : false));
+
+                        $('[name="cField"]').val(ci_objData[0].cMColumnAlias);
+                        $('[name="cTitle"]').val(ci_objData[0].cMColumnDesc);
+                        break;
+                    case 1:
+                        if (existData(m_objData)) {
+                            for (var i = 0; i < m_objData.rows.length; i++) {
+                                for (var j = 0; j < ci_objData.length; j++) {
+                                    if (ci_objData[j].iViewColumnID == m_objData.rows[i].iViewColumnID) {
+                                        ci_objData.splice(j, 1);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (ci_objData.length > 0) {
+                            var m_objIDList = [];
+                            for (var i = 0; i < ci_objData.length; i++) {
+                                m_objIDList.push(ci_objData[i].iViewColumnID);
+                            }
+                            postData({
+                                url: 'DcCdDataGridManage',
+                                params: { Action: 'ColInput', iDataGridID: _iID, iViewColumnID: m_objIDList.join(',') },
+                                success: function(ci_result) {
+                                    $('#tab_Column_List').datagrid('reload');
+                                }
+                            });
+                        }
+                        break;
+                }
+            }
+        }
+
+
+
+        function setDnd() {
+            $('.datagrid-row').draggable({
+                revert: true,
+                cursor: 'move',
+                edge: 5,
+                proxy: function(source) {
+                    var p = $('<div class="tree-node-proxy tree-dnd-no" style="position:absolute;border:1px solid #ccc;"/>').appendTo('body');
+                    p.html($(source).html());
+                    p.find('[field="ck"]').remove();
+                    p.find('[field="btn"]').remove();
+                    p.hide();
+                    return p;
+                },
+                onBeforeDrag: function(e) {
+                    e.data.startLeft = $(this).offset().left;
+                    e.data.startTop = $(this).offset().top;
+                },
+                onStartDrag: function() {
+                    $(this).draggable('proxy').css({
+                        left: -10000,
+                        top: -10000
+                    });
+                },
+                onDrag: function(e) {
+                    $(this).draggable('proxy').show().css({
+                        left: e.pageX + 15,
+                        top: e.pageY + 15
+                    });
+                    this.pageY = e.pageY;
+                    return false;
+                }
+            }).droppable({
+                accept: '.datagrid-row',
+                onDragOver: function(e, source) {
+                    $(source).draggable('proxy').removeClass('tree-dnd-no').addClass('tree-dnd-yes');
+
+                    var pageY = source.pageY;
+                    var top = $(e.target).offset().top;
+                    var bottom = top + $(e.target).outerHeight();
+
+                    if (pageY > top + (bottom - top) / 2) {
+                        _column_objIn.css({
+                            display: 'block',
+                            top: bottom - 5,
+                            left: $(e.target).offset().left - 18
+                        });
+                        source.position = 'bottom';
+                    } else {
+                        _column_objIn.css({
+                            display: 'block',
+                            top: top - 5,
+                            left: $(e.target).offset().left - 18
+                        });
+                        source.position = 'top';
+                    }
+                },
+                onDragLeave: function(e, source) {
+                    $(source).draggable('proxy').removeClass('tree-dnd-yes').addClass('tree-dnd-no');
+                    _column_objIn.hide();
+                },
+                onDrop: function(e, source) {
+                    _column_objIn.hide();
+                    $.messager.confirm('提示', '您确定要改变排序吗？', function(r) {
+                        if (r) {
+                            var m_objData = $('#tab_Column_List').datagrid('getData');
+                            var m_iSource = parseInt($(source).attr('datagrid-row-index'));
+                            var m_iTarget = parseInt($(e.target).attr('datagrid-row-index'));
+                            var m_iStart = 0;
+                            var m_objDataDetail = [];
+                            if (source.position == 'bottom') {
+                                m_iTarget++;
+                            }
+                            m_objData.rows.splice(m_iTarget, 0, m_objData.rows[m_iSource]);
+                            if (m_iSource > m_iTarget) {
+                                m_iStart = m_iTarget;
+                                m_objData.rows.splice(m_iSource + 1, 1);
+                            }
+                            else {
+                                m_iStart = m_iSource;
+                                m_objData.rows.splice(m_iSource, 1);
+                            }
+                            for (var i = m_iStart; i < m_objData.rows.length; i++) {
+                                m_objDataDetail.push(m_objData.rows[i].iColumnID + ',' + i);
+                            }
+                            postData({
+                                url: 'DcCdDataGridManage',
+                                params: { Action: 'colupdateindex', DataDetail: m_objDataDetail.join(';') },
+                                success: function(ci_result) {
+                                    $('#tab_Column_List').datagrid('reload');
+                                    $.messager.alert('提示', '修改成功', 'info');
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        } 
+    </script>
+
+</body>
+</html>

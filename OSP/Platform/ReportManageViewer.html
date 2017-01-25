@@ -1,0 +1,240 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=../JS/EsayUI/datagrid-groupview.min.js"></script>
+
+</head>
+<body style="display: none;">
+    <div id="div_Toolbar" style="display: none; height: auto; width: 100%; background-color: White;">
+        <ul class="searchForm1">
+            <li id="li_Output"><a href="javascript:void(0)" onclick="outExcel()" class="dc-button">
+                导出Excel</a> </li>
+        </ul>
+    </div>
+    <table id="tab_List" style="display: none;">
+    </table>
+    <form id="form1" method="post" novalidate="novalidate" action="" enctype="MULTIPART/FORM-DATA">
+    </form>
+</body>
+</html>
+
+<script type="text/javascript" language="javascript">
+    var _iID = 0;
+    var _bShowFooter = false;
+    var _objCount = [];
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        _iID = getHashValue("ID");
+        getReoprtData();
+    }
+
+    function getReoprtData() {
+        postData({
+            url: "DcCdReportManage",
+            params: { Action: "ColGetList", iReportID: _iID },
+            isSys: true,
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    var m_objSubCount = [];
+                    var m_objQuery = [];
+                    var m_strGroupTitle = '';
+                    var m_objOptions = {
+                        columns: [],
+                        pagination: false,
+                        rownumbers: false,
+                        showFooter: false
+                    };
+                    _objCount = [];
+                    $.each(ci_result.rows, function() {
+                        if (this.bIsDisplay) {
+                            m_objOptions.columns.push({ field: this.cColumnAlias, title: this.cColumnDesc, sortable: true, width: 100 });
+                            if (this.iSubTotalType > 0) {
+                                m_objSubCount.push({ cField: this.cColumnAlias, cTitle: this.cColumnDesc, iType: this.iSubTotalType, iDataType: this.iDataType });
+                            }
+                            if (this.iTotalType > 0) {
+                                _objCount.push({ cField: this.cColumnAlias, iType: this.iTotalType, iDataType: this.iDataType });
+                                m_objOptions.showFooter = true;
+                                _bShowFooter = true;
+                            }
+                        }
+                        if (this.bIsGroupBy) {
+                            m_objOptions.groupField = this.cColumnAlias;
+                            m_strGroupTitle = this.cColumnDesc;
+                        }
+                        if (this.bIsQuery) {
+                            m_objQuery.push({ cField: this.cColumnAlias, cTitle: this.cColumnDesc, iDataType: this.iDataType });
+                        }
+                    });
+                    m_objOptions.columns = [m_objOptions.columns];
+
+                    if (m_objQuery.length > 0) {
+                        $.each(m_objQuery, function() {
+                            var m_objHtml = [];
+                            m_objHtml.push('<li>');
+                            if (this.iDataType == 3) {
+                                m_objHtml.push('<input id="ddl_' + this.cField + '" dc-tip="请选择' + this.cTitle + '" name="' + this.cField + '" class="easyui-combobox dc-input dc-search" data-options="editable:true,width:150" />');
+                                bindCodeMasterData({
+                                    controlID: 'ddl_' + this.cField,
+                                    cat: "requ",
+                                    subCat: "ValueType",
+                                    codm_fValue1: 3,
+                                    valueField: "cCodeItem"
+                                });
+                            }
+                            else {
+                                m_objHtml.push('<input type="text" class="dc-input dc-search" dc-tip="请输入' + this.cTitle + '" name="' + this.cField + '" />');
+                            }
+                            m_objHtml.push('</li>');
+                            $(m_objHtml.join('')).insertBefore('#li_Output');
+                        });
+                        $('<li><a href="javascript:void(0)" onclick="searchData();" class="dc-button">查询</a></li>').insertBefore('#li_Output');
+                        $.parser.parse($('.searchForm1'));
+                        $('span.combo,span.spinner').addClass('text-radius');
+                        $('.dc-input').dcinput();
+                    }
+                    if (m_objOptions.groupField != undefined) {
+                        var m_objFileLoader = new fileLoader();
+                        m_objFileLoader.isParse = false;
+                        m_objFileLoader.addReadyFn(function() {
+                            m_objOptions.view = groupview;
+                            m_objOptions.groupFormatter = function(value, rows) {
+                                var m_objHtml = [];
+                                var m_strValue = value;
+                                if (m_strValue == '' && m_strValue != 0) {
+                                    m_strValue = '【未填写】';
+                                }
+                                m_objHtml.push(m_strGroupTitle + '【' + m_strValue + '】 共' + rows.length + '条记录');
+                                //debugger;
+                                $.each(m_objSubCount, function() {
+                                    m_objHtml.push('，' + this.cTitle + getCount(this.cField, this.iType, this.iDataType, rows));
+                                });
+                                return m_objHtml.join('');
+                            };
+
+                            _bind();
+                        });
+                        m_objFileLoader.load(['../JS/EsayUI/datagrid-groupview.min.js']);
+                    }
+                    else {
+                        _bind();
+                    }
+
+                    function _bind() {
+                        setDataGrid("tab_List", "div_Toolbar", "", [], "", "", "", m_objOptions);
+                        searchData(true);
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '请添加报表字段', 'info', function() { $('body').css('display', 'none'); });
+                }
+            }
+        });
+    }
+
+    function getCount(ci_strField, ci_iType, ci_iDataType, ci_objData) {
+        var m_iValue = 0;
+        if (ci_strField != '' && ci_iType > 0 && ci_objData !=undefined && ci_objData.length > 0 && ci_objData[0][ci_strField] != undefined) {
+            var m_iTotal = 0;
+            var m_iMax = ci_objData[0][ci_strField];
+            var m_iMin = ci_objData[0][ci_strField];
+            $.each(ci_objData, function() {
+                switch (ci_iType) {
+                    case 1:
+                        if (this[ci_strField] > m_iMax) {
+                            m_iMax = this[ci_strField];
+                        }
+                        break;
+                    case 2:
+                        if (this[ci_strField] < m_iMin) {
+                            m_iMin = this[ci_strField];
+                        }
+                        break;
+                    case 3:
+                    case 4:
+                        if (ci_iDataType >= 4 && ci_iDataType <= 8 && !isNaN(parseFloat(this[ci_strField]))) {
+                            m_iTotal += this[ci_strField];
+                        }
+                        else {
+                            m_iTotal++;
+                        }
+                        break;
+                }
+            });
+            switch (ci_iType) {
+                case 1:
+                    m_iValue = m_iMax;
+                    break;
+                case 2:
+                    m_iValue = m_iMin;
+                    break;
+                case 3:
+                    m_iValue = m_iTotal;
+                    break;
+                case 4:
+                    m_iValue = parseFloat(m_iTotal / ci_objData.length).toFixed(4);
+                    break;
+            }
+        }
+        switch (ci_iType) {
+            case 1:
+                return '最大值：' + m_iValue;
+            case 2:
+                return '最小值：' + m_iValue;
+            case 3:
+                return '合计：' + m_iValue;
+            case 4:
+                return '平均值：' + m_iValue;
+        }
+        return 0;
+    }
+
+    function outExcel() {
+        var m_strUrl = getInterfaceName("DcCdReportManage", true) + '?';
+        var m_objParams = { Action: 'GetExcel', iReportID: _iID };
+        m_objParams = getSearchParameters($(".searchForm1"), m_objParams);
+        for (var i in m_objParams) {
+            m_strUrl += i + '=' + encodeURI(m_objParams[i]) + '&';
+        }
+        $('#form1').form('submit', {
+            url: m_strUrl,
+            success: function(result) {
+                result = convertToJson(result);
+                if (!checkReturnJson(result)) {
+                    $.messager.alert('提示', result.DcMessage, 'info');
+                }
+            },
+            failure: function(ci_result) {
+                $.messager.alert('提示', '导出Excel失败', 'info');
+            }
+        }).error(function(err) { alert(err.responseText); });
+    }
+
+    function searchData(ci_bIsBase) {
+        var m_objParams = { Action: 'GetData', iReportID: _iID };
+        if (!ci_bIsBase) {
+            m_objParams = getSearchParameters($(".searchForm1"), m_objParams);
+        }
+        postData({
+            url: 'DcCdReportManage',
+            params: m_objParams,
+            success: function(ci_result) {
+                if (_bShowFooter) {
+                    ci_result.footer = [{}];
+                    $.each(_objCount, function() {
+                        ci_result.footer[0][this.cField] = getCount(this.cField, this.iType, this.iDataType, ci_result.rows);
+                    });
+                }
+                $('#tab_List').datagrid('loadData', ci_result)
+            }
+        });
+    }
+</script>
+

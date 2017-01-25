@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body>
+    <div id="formLogin" method="post" url="List.aspx" style="width: 300px; height: 200px;"
+        title="用户选择公司">
+        <table width="100%" style="line-height: 50px; border: red 1px;">
+            <tr align="center">
+                <td align="right">
+                    选择公司：
+                </td>
+                <td align="left">
+                    <select id="combo_cCompanyName" name="cCompanyName" class="easyui-combobox" style="width: 152px"
+                        required="true" editable="false">
+                    </select>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    checkPagePower({ onload: function() { initPage(); } });
+    var m_formLogin = $('#formLogin');
+    m_formLogin.dialog({
+        modal: true,
+        closable: false,
+        iconCls: 'dc-icon-dialog-title',
+        buttons: [{
+            handler: function() {
+                if (!m_formLogin.form("validate")) {
+                    return;
+                }
+                var ci_companyid = $('#combo_cCompanyName').combobox('getValue');
+                var cookie_companyid = getCookie('companyid');
+                if (cookie_companyid == ci_companyid) {
+                    top.$('#div_CompanySelected').dialog('close');
+                }
+                else {
+                    postData({
+                        url: "DcCdCompanyManage",
+                        params: { "action": "setcompany", "CompanyID": ci_companyid },
+                        success: function(ci_result) {
+                            if (cookie_companyid != null && cookie_companyid != "") {
+                                top.window.location.href = top.window.location.href;
+                            }
+                            setCookie("companyid", ci_companyid);
+                            top.$('#div_CompanySelected').dialog('close');
+
+                        },
+                        failure: function(ci_result) {
+                            $.messager.alert('提示', '选择公司失败', 'info');
+                        }
+                    });
+                }
+            },
+            text: '选择'
+        },
+        {
+            id: 'btn_cancel',
+            text: '取消',
+            handler: function() {
+                top.window.closeCompanySelectWindow();
+            }
+        }]
+    });
+
+    function initPage() {
+        postData({
+            url: "DcCdCompanyManage",
+            params: { "action": "getbyuser" },
+            success: function(ci_result) {
+                $("#combo_cCompanyName").combobox({
+                    data: ci_result.rows,
+                    valueField: 'iCompanyID',
+                    textField: 'cCompChiName',
+                    onLoadSuccess: function() {
+                        isShowBtn();
+                        var companyid = getCookie('companyid');
+                        if (companyid == null || companyid == "") {
+                            var arr_Company = $("#combo_cCompanyName").combobox('getData');
+                            if (arr_Company.length == 1) {
+                                postData({
+                                    url: "DcCdCompanyManage",
+                                    params: { "action": "setcompany", "CompanyID": arr_Company[0].iCompanyID },
+                                    success: function(ci_result) { setCookie("companyid", arr_Company[0].iCompanyID); top.$('#div_CompanySelected').dialog('close'); },
+                                    failure: function(ci_result) {
+                                        $.messager.alert('提示', '选择公司失败', 'info');
+                                    }
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    function isShowBtn() {
+        var companyid = getCookie('companyid');
+        if (companyid != null && companyid != "") {
+            $("#btn_cancel").show();
+            $("#combo_cCompanyName").combobox('select', companyid);
+        }
+        else {
+            $("#btn_cancel").hide();
+        }
+    }
+</script>
+

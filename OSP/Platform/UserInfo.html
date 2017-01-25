@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../js/CommonScript.js?script=../js/EsayUI/jquery.validatebox.rules.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'center',border:false">
+        <form action="" id="form_Edit" method="post" novalidate="novalidate">
+        <table style="width: 500px;" class="TableCenter">
+            <tr>
+                <td class="tabletext">
+                    登录ID：
+                </td>
+                <td class="tableinput">
+                    <input id="txt_LoginName" type="text" name="cLoginName" class="easyui-validatebox"
+                        data-options="required:true,validType:'username'" />
+                </td>
+                <td class="tabletext">
+                    注册日期：
+                </td>
+                <td>
+                    <input id="txt_CreationDt" type="text" name="dCreationDt" class="TextEdit" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    注册邮箱：
+                </td>
+                <td colspan="3" class="tableinput_t1">
+                    <input id="txt_Email" type="text" name="cEmail" class="TextEdit" style="width: 390px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    姓名：
+                </td>
+                <td>
+                    <input type="text" name="cUserChiName" class="easyui-validatebox" data-options="required:true" />
+                </td>
+                <td class="tabletext">
+                    性别：
+                </td>
+                <td>
+                    <input id="ddl_Sex" name="cSex" class="easyui-combobox" data-options="editable:true,width:150" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    手机号码：
+                </td>
+                <td class="tableinput">
+                    <input type="text" name="cMobileNO" class="easyui-validatebox" data-options="validType:'mobile'" />
+                </td>
+                <td class="tabletext">
+                    联系电话：
+                </td>
+                <td>
+                    <input type="text" name="cTelNo" class="easyui-validatebox" data-options="validType:'phoneOrMobile'" />
+                </td>
+            </tr>
+        </table>
+        </form>
+    </div>
+    <div data-options="region:'south',border:false" style="height: 35px;">
+        <div class="ButtonBar" style="position: inherit;">
+            <a id="btn_Save" href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">
+                保存</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _strAction = "";
+    var _iID = 0;
+
+    initReady(function() {
+        setControlEnable('txt_LoginName', false);
+        setControlEnable('txt_CreationDt', false);
+        setControlEnable('txt_Email', false);
+
+        bindCodeMasterData({
+            controlID: "ddl_Sex",
+            cat: "usm",
+            subCat: "sex",
+            valueField: "cCodeItem"
+        });
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        editData();
+    }
+
+    function editData() {
+        postData({
+            url: "DcCdUserManage",
+            params: { Action: "Query", Type: "U" },
+            success: function(ci_result) {
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                    var m_objData = ci_result.rows[0];
+                    _strAction = 'update';
+                    _iID = m_objData.iUserID;
+
+                    $('#form_Edit').form('load', m_objData);
+                    $('[name=cUserChiName]').focus();
+                }
+                else {
+                    $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancel(); });
+                }
+            }
+        });
+    }
+
+    function cancel() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function saveData(ci_iType) {
+        postData({
+            url: 'DcCdUserManage',
+            params: { Action: 'Edit', iUserID: _iID },
+            validate: true,
+            form: 'form_Edit',
+            success: function(ci_result) {
+                top.updateUserName();
+                $.messager.alert('提示', '保存成功', 'info');
+            }
+        });
+    }
+</script>
+

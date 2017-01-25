@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+		<script src='JS/krpano.js'></script>
+		<style>
+			* {
+				margin;
+				0;
+				padding: 0;
+			}
+			
+			body {
+				min-width: 1366px;
+			}
+			
+			div.panoList {
+				width: 25%;
+				height: 100%;
+				min-width: 340px;
+				float: right;
+				overflow: hidden;
+				background-color: #313131;
+				color: #FFFFFF;
+			}
+			
+			div.pano {
+				width: 75%;
+				height: 100%;
+				float: right;
+				overflow: hidden;
+			}
+			
+			div.panoList div span.title {
+				font-size: 17px;
+				font-weight: 100;
+				display: block;
+				margin-bottom: 10px;
+			}
+			
+			#btn-add {
+				width: 79px;
+				height: 25px;
+				background-color: #1476BA;
+				color: #FFFFFF;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+				margin-right: 7px;
+			}
+			
+			#btn-reset {
+				width: 79px;
+				height: 25px;
+				background-color: #FF6C01;
+				color: #FFFFFF;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div style='width:100%;height: 100%;'>
+				<div class='panoList'>
+					<div style='padding:22px;'>
+						<span class='title'>添加场景特效</span><br />
+						<span class='title'><hr color="#707070"/></span><br />
+						<span class='title'>当前场景：<span id='cSceneName'></span></span><br />
+						<span class='title'>效果类型：<input id="iEffects" class="easyui-combobox" data-options="required:true,width:176,valueField:'id', textField:'text',editable:false"/></span>
+						<div style='margin-top:20px;'>
+							<button id='btn-add' type='button' onclick='saveData()'>设置</button>
+							<button id='btn-reset' type='button'>重置</button><br />
+							<span id='tip' style='font-size: 15px;font-weight:100;color: #F9F007;display:block;margin-top:15px;'></span>
+						</div>
+					</div>
+				</div>
+				<div class='pano'>
+					<div id='pano' style='height:100%;width: 100%;'></div>
+				</div>
+			</div>
+		</div>
+		<script>
+			var _krpano;
+			var _iEffects = 0;
+			var _Action = '';
+			var _strFun = getHashValue('Fun');
+			var _iGroupID = getHashValue('iGroupID');
+			var _iSceneID = getHashValue('iSceneID');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _fImageX = 0;
+			var _fImageY = 0;
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+
+				$('#btn-reset').click(function() {
+					$('#iEffects').combobox('clear');
+					_krpano.set('plugin[snow].visible', 'false');
+				});
+			});
+
+			function initPage() {
+				var swf = '/Attachment/VR/' + _iSceneID + '/vtour/tour.swf';
+				var xml = '/krpano/templates/xml/main.xml';
+				embedpano({
+					swf: swf,
+					xml: xml,
+					target: 'pano',
+					html5: 'pano',
+					mobilescale: 1.0,
+					passQueryParameters: true,
+					onready: panoReady
+				});
+				postData({
+					url: 'DcCdSceneManage',
+					params: {
+						Action: 'GetList',
+						iSceneID: _iSceneID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#cSceneName').html(m_objData.cSceneName);
+						}
+					}
+				});
+				postData({
+					url: '../../Ajax/DcCdCodeMasterManage',
+					params: {
+						Action: 'GetList',
+						cCat: 'Scene',
+						cSubCat: 'Effects'
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							var data = [];
+							$.each(m_objData, function(i, item) {
+								data.push({
+									'id': item.cCodeItem,
+									'text': item.cDesc,
+									'selected':i==9?true:false
+								});
+							});
+							$('#iEffects').combobox({
+								onChange: function(newValue, oldValue) {
+									setTimeout(function() {
+										setSpecialEfficiency(newValue);
+									}, 100);
+								}
+							}).combobox('loadData', data);
+						}
+					}
+				});
+			}
+
+			function panoReady(krpanoObj) {
+				_krpano = krpanoObj;
+				_krpano.call('loadpano("/Attachment/VR/' + _iSceneID + '/vtour/tour.xml",null,KEEPSCENES)');
+				_krpano.call('startup()');
+				_krpano.call('switch(layer[auto_thumbs].visible)');
+				_krpano.call('autorotateSwitch(false)');
+			}
+
+			function setSpecialEfficiency(iEffects) {
+				iEffects = parseInt(iEffects);
+				switch(iEffects) {
+					case 1:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('defaultsnow()');
+						break;
+					case 2:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('snowballs()');
+						break;
+					case 3:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('snowflakes()');
+						break;
+					case 4:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('silverstars()');
+						break;
+					case 5:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('hearts()');
+						break;
+					case 6:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('rain()');
+						break;
+					case 7:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('heavyrain()');
+						break;
+					case 8:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('leaves()');
+						break;
+					case 9:
+						_krpano.set('plugin[snow].visible', 'true');
+						_krpano.call('treeleaf()');
+						break;
+					default:
+						_krpano.set('plugin[snow].visible', 'false');
+				}
+			}
+
+			function initData() {
+				postData({
+					url: 'DcCdSceneEffectsManage',
+					params: {
+						Action: 'GetList',
+						iSceneID: _iSceneID,
+						iGroupID:0
+					},
+					showMask:false,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							_Action = 'Update';
+							_iID = m_objData.iID;
+							_iEffects = m_objData.iEffects;
+							$('#iEffects').combobox('select', m_objData.iEffects);
+							setTimeout(function() {
+								setSpecialEfficiency(_iEffects);
+							}, 100);
+						} else {
+							_Action = 'Add';
+							
+						}
+					}
+				});
+			}
+
+			function saveData() {
+				var iEffects = $('#iEffects').combobox('getValue');
+				if(iEffects != '') {
+					var params = {
+						iSceneID: _iSceneID,
+						iGroupID:0,
+						iEffects: $('#iEffects').combobox('getValue')
+					};
+					if(_Action == 'Update') {
+						params.Action = 'Update';
+						params.iID = _iID;
+					} else if(_Action == 'Add') {
+						params.Action = 'Add';
+					}
+					postData({
+						url: 'DcCdSceneEffectsManage',
+						params: params,
+						success: function(ci_result) {
+							if(ci_result.DcCode == 0) {
+								$.messager.alert('提示', '保存成功', 'info');
+							} else {
+								$.messager.alert('提示', '保存失败', 'info');
+							}
+						}
+					});
+				} else {
+					if(_Action=='Update'){
+						postData({
+							url:'DcCdSceneEffectsManage',
+							params:{
+								Action:'Delete',
+								cIDList:_iID
+							},
+							success:function(ci_result){
+								if(ci_result.DcCode==0){
+									$.messager.alert('提示','保存成功','info');
+								}else{
+									$.messager.alert('提示','保存失败','info');
+								}
+							}
+						});
+					}else{
+						$.messager.alert('提示','保存成功','info');
+					}
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

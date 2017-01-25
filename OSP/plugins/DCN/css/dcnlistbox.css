@@ -1,0 +1,8 @@
+﻿.listbox { border: solid 1px #d3d3d3; border-radius: 5px; resize: none; min-height: 32px; float: left; }
+.listbox-disabled { background-color: #EBEBE4; color: #545454; }
+.listbox-required { background-color: #FFF3F3; }
+.listbox-item { margin: 5px; zoom: 1; text-overflow: ellipsis; white-space: nowrap; float: left; display: block; position: relative; padding: 2px; border: solid 1px #d3d3d3; border-radius: 5px; }
+.listbox-item-hover { background-color: #fafafa; }
+.listbox-item-text { margin-right: 2px; }
+.listbox-item-close { background-image: url(../icons/msg_bg.png); background-repeat: no-repeat; width: 16px; height: 16px; float: right; }
+.listbox-item-close-hover { background-position: -20px 0; }

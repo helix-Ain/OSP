@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../Platform/js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js,../JS/EsayUI/jquery.validatebox.rules.js"></script>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							背景音乐：
+						</td>
+						<td>
+							<input id='iMusicID' name='iMusicID' type='hidden' value='0' />
+							<input id='cMusicName' name='cMusicName' class='easyui-validatebox' readonly="readonly" style='width:500px;cursor: pointer;' value='' />
+							<a href="javascript:$('#iMusicID').val(0);$('#cMusicName').val('');" class="dcn-clearbutton l-btn l-btn-plain" title="清空"><span class="l-btn-left"><span class="l-btn-text"><span class="l-btn-empty icon-clear">&nbsp;</span></span>
+								</span>
+							</a>
+						</td>
+					</tr>
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							场景解说：
+						</td>
+						<td>
+							<input id='iExplainID' name='iExplainID' type='hidden' value='0' />
+							<input id='cExplainName' name='cExplainName' class='easyui-validatebox' readonly="readonly" style='width:500px;cursor:pointer ;' value="" />
+							<a href="javascript:$('#iExplainID').val(0);$('#cExplainName').val('');" class="dcn-clearbutton l-btn l-btn-plain" title="清空"><span class="l-btn-left"><span class="l-btn-text"><span class="l-btn-empty icon-clear">&nbsp;</span></span>
+								</span>
+							</a>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = '';
+			var _iDDLCount = 0;
+			var _strFun = getHashValue('Fun');
+			var _strDetailiFrameID = "div_DataGroupHandle";
+			var _iGroupID = getHashValue('iGroupID');
+			var _iSceneID = getHashValue('iSceneID');
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+					}
+				});
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				initData();
+				$('#cMusicName').on('click', function() {
+					popupDialog(_strSysUrl + 'OSP/DataAttachmentManage.html?iObjectID=5&select=1', 'parent.fillMusic', '请选择背景音乐', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+				$('#cExplainName').on('click', function() {
+					popupDialog(_strSysUrl + 'OSP/DataAttachmentManage.html?iObjectID=6&select=1', 'parent.fillExplain', '请选择场景解说', false, 550, 550, 'dc-icon-dialog-title', _strDetailiFrameID);
+				});
+			}
+
+			function initData() {
+				var params = {
+					Action: 'GetList',
+					iType: 1,
+					GetRecords: true
+				};
+				if(_iGroupID != '') {
+					params.iGroupID = _iGroupID;
+				}
+				if(_iSceneID != '') {
+					params.iSceneID = _iSceneID;
+				}
+				postData({
+					url: 'DcCdScenedDataManage',
+					params: params,
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows;
+							$.each(m_objData, function(i, item) {
+								if(item.iObjectID == 5 && item.rRecords[0] != undefined) {
+									$('#iMusicID').val(item.rRecords[0].iAttachmentID);
+									$('#cMusicName').val(item.rRecords[0].cName);
+								} else if(item.iObjectID == 6 && item.rRecords[0] != undefined) {
+									$('#iExplainID').val(item.rRecords[0].iAttachmentID);
+									$('#cExplainName').val(item.rRecords[0].cName);
+								}
+							});
+						}
+					}
+				});
+			}
+
+			function fillMusic(iAttachmentID) {
+				postData({
+					url: 'DcCdDataManage',
+					params: {
+						Action: 'GetAttachmentList',
+						iAttachmentID: iAttachmentID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#iMusicID').val(m_objData.iAttachmentID);
+							$('#cMusicName').val(m_objData.cName);
+							cancel();
+						}
+					}
+				});
+			}
+
+			function fillExplain(iAttachmentID) {
+				postData({
+					url: 'DcCdDataManage',
+					params: {
+						Action: 'GetAttachmentList',
+						iAttachmentID: iAttachmentID
+					},
+					success: function(ci_result) {
+						if(existData(ci_result)) {
+							var m_objData = ci_result.rows[0];
+							$('#iExplainID').val(m_objData.iAttachmentID);
+							$('#cExplainName').val(m_objData.cName);
+							cancel();
+						}
+					}
+				});
+			}
+
+			function saveData() {
+				var params = {
+					Action: 'Update',
+					iType: 1
+				};
+				postData({
+					url: 'DcCdScenedDataManage',
+					params: params,
+					form: 'form_Edit',
+					validate: true,
+					onPost: function() {
+						if(_iGroupID != '') {
+							this.params.iGroupID = _iGroupID;
+						}
+						if(_iSceneID != '') {
+							this.params.iSceneID = _iSceneID;
+						}
+						this.params.cData = 5 + getSeparativeSign() + $('#iMusicID').val() + getSeparativeSign() + ',' + getSeparativeSign() + 6 + getSeparativeSign() + $('#iExplainID').val()
+						return true;
+					},
+					success: function(ci_result) {
+						if(ci_result.DcCode == 0) {
+							$.messager.alert('提示', '保存成功', 'info');
+							if(_strFun != '') {
+								eval(_strFun);
+							}
+						}
+					}
+				});
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog(_strDetailiFrameID);
+			}
+		</script>
+	</body>
+
+</html>

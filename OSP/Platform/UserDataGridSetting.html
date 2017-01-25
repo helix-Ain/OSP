@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+    <style type="text/css">
+        .drag-item { width: 100%; }
+        .dragging { list-style-type: none; display: block; padding: 5px; border: 1px solid #ccc; margin: 2px; width: auto; background: #fafafa; }
+        .column { list-style-type: none; display: block; padding: 5px; border: 1px solid #ccc; margin: 2px; width: auto; background: #fafafa; }
+        .indicator { position: absolute; font-size: 9px; width: 10px; height: 10px; display: none; color: red; }
+    </style>
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'center',border:false">
+        <lu id="lu_Select">
+            <li style="list-style-type:none;">
+                <input type="checkbox" name="All" onclick="checkAll()" />全选
+            </li>
+        </lu>
+    </div>
+    <div data-options="region:'south',border:false" style="height: 35px;">
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancel();">取消</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="JavaScript" type="text/javascript">
+    var _strCode = "";
+    var _iDataGridID = 0;
+    var indicator = null;
+
+    function checkAll() {
+        if ($('[name="All"]').attr("checked") != undefined) {
+            $('[name="Column"]').attr("checked", "checked");
+        }
+        else {
+            $('[name="Column"]').removeAttr("checked");
+        }
+    }
+
+    function checkItem() {
+        $('[name="All"]').attr("checked", "checked");
+        $('[name="Column"]').each(function() {
+            if ($(this).attr("checked") == undefined) {
+                $('[name="All"]').removeAttr("checked");
+                return false;
+            }
+        });
+    }
+
+    initReady(function() {
+        indicator = $('<div class="indicator">>></div>').appendTo('body');
+
+        _strCode = getParameter(location.hash, "Code");
+        postData({
+            url: "DcCdDataGridManage",
+            params: { "Action": "GetUserSetting", "DataGridCode": _strCode },
+            success: function(ci_result) {
+                if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                    _iDataGridID = ci_result.rows[0].iDataGridID;
+                    ci_result.rows.sort(function(a, b) { return a.iOrder - b.iOrder; });
+                    for (var i = 0; i < ci_result.rows.length; i++) {
+                        var m_strHtml = "<li class='column'>";
+                        m_strHtml += "<input type='checkbox' name='Column' onclick='checkItem()' " + (ci_result.rows[i].bSelected ? "checked='checked' " : "");
+                        m_strHtml += "cField='" + ci_result.rows[i].cField + "' />";
+                        m_strHtml += "<span class='drag-item'>" + ci_result.rows[i].cTitle + "</span>"
+                        m_strHtml += "</li>";
+                        $(m_strHtml).appendTo("#lu_Select");
+                    }
+                    setDraggable();
+                    checkItem();
+                }
+            }
+        });
+    });
+
+    function setDraggable() {
+        $('.drag-item').draggable({
+            revert: true,
+            deltaX: 0,
+            deltaY: 0,
+            onStartDrag: function() {
+                $(this).addClass('dragging');
+            },
+            onStopDrag: function() {
+                $(this).removeClass('dragging');
+            }
+        });
+        $('.column').droppable({
+            onDragOver: function(e, source) {
+                indicator.css({
+                    display: 'block',
+                    top: $(this).offset().top + $(this).outerHeight() - 5
+                });
+            },
+            onDragLeave: function(e, source) {
+                indicator.hide();
+            },
+            onDrop: function(e, source) {
+                if ($(source).parent()[0] != this) {
+                    $(source).parent().insertAfter(this);
+                }
+                indicator.hide();
+            }
+        });
+    }
+
+    function cancel() {
+        parent.closedPopupDialog();
+    }
+
+    function saveData() {
+        var m_objCheckBoxList = $('[name="Column"]');
+        var m_objField = [];
+        for (var i = 0; i < m_objCheckBoxList.length; i++) {
+            if ($(m_objCheckBoxList[i]).attr("checked") == "checked") {
+                m_objField.push($(m_objCheckBoxList[i]).attr("cField"));
+            }
+        }
+        if (m_objField.length == 0) {
+            window.parent.$.messager.alert('提示', '请最少选择一个列头', 'info');
+            return;
+        }
+
+        postData({
+            url: "DcCdDataGridManage",
+            params: { "Action": "defedit", iDataGridID: _iDataGridID, cField: m_objField.join(',') },
+            success: function(ci_result) {
+                if (checkReturnJson(ci_result)) {
+                    var m_strReturnFun = getParameter(location.hash, "ReturnFun");
+                    if (m_strReturnFun != "") {
+                        eval('window.parent.' + m_strReturnFun + '()');
+                    }
+                    setTimeout('cancel();', 100);
+                }
+                else {
+                    window.parent.$.messager.alert('保存失败', result.DcMessage, 'error');
+                }
+            }
+        });
+    }
+</script>
+

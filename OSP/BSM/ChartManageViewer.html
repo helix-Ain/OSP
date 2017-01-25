@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false" style="height: 500px;">
+        <div id="div_Chart" style="height: 500px; width: auto;">
+        </div>
+    </div>
+    <div data-options="region:'center',border:false">
+    </div>
+</body>
+</html>
+
+<script type="text/javascript" language="javascript">
+    var _iID = 0;
+
+    checkPagePower({ onload: function() { initPage(); }, showMask: false });
+
+    function initPage() {
+        _iID = parseInt(getHashValue("ID"));
+        if (_iID > 0) {
+            var m_objScriptList = [];
+            m_objScriptList.push(_strSysUrl + "plugins/Highcharts/highcharts.js");
+            m_objScriptList.push(_strSysUrl + "plugins/Highcharts/modules/exporting.js");
+            //m_objScriptList.push(_strSysUrl + "plugins/Highcharts/themes/grid.js");
+            m_objScriptList.push(_strSysUrl + "plugins/Highcharts/modules/funnel.js");
+
+            var m_objFileLoader = new fileLoader();
+            m_objFileLoader.readyFunction[m_objFileLoader.readyFunction.length] = function() {
+                //汉化图表菜单
+                Highcharts.setOptions({
+                    lang: {
+                        contextButtonTitle: "图表菜单",
+                        printChart: "打印图片",
+                        downloadJPEG: "下载JPEG 图片",
+                        downloadPDF: "下载PDF文档",
+                        downloadPNG: "下载PNG 图片",
+                        downloadSVG: "下载SVG 矢量图",
+                        exportButtonTitle: "导出图片"
+                    }
+                });
+
+                getData();
+            };
+            m_objFileLoader.load(m_objScriptList);
+        }
+    }
+
+    function getData() {
+        var m_objReport = [];
+        postData({
+            url: 'DcCdSysReportManage',
+            params: { Action: "GetList", Type: "Chart", iReportID: _iID },
+            success: function(ci_result) {
+                if (existData(ci_result)) {
+                    m_objReport = ci_result.rows[0];
+
+                    postData({
+                        url: "DcCdSysReportManage",
+                        params: { Action: "ColGetList", iReportID: _iID },
+                        isSys: true,
+                        success: function(ci_result) {
+                            if (existData(ci_result)) {
+                                var m_objXField = [];
+                                var m_objGroupField = null;
+                                var m_objCountField = [];
+
+                                $.each(ci_result.rows, function() {
+                                    switch (this.iType) {
+                                        case 1:
+                                            m_objXField = { cField: this.cColumnAlias, cTitle: this.cColumnDesc, iDataType: this.iDataType, iTotalType: this.iTotalType };
+                                            break;
+                                        case 2:
+                                            m_objGroupField = { cField: this.cColumnAlias, cTitle: this.cColumnDesc, iDataType: this.iDataType, iTotalType: this.iTotalType };
+                                            break;
+                                        case 0:
+                                            m_objCountField = { cField: this.cColumnAlias, cTitle: this.cColumnDesc, iDataType: this.iDataType, iTotalType: this.iTotalType };
+                                            break;
+                                    }
+                                });
+
+                                postData({
+                                    url: 'DcCdSysReportManage',
+                                    params: { Action: 'GetData', iReportID: _iID },
+                                    success: function(ci_result) {
+                                        if (existData(ci_result)) {
+                                            ci_result.rows.sort(function(a, b) { return (a[m_objXField.cField] > b[m_objXField.cField] ? 0 : -1); });
+                                            var m_strKey = null;
+                                            var m_objData = [];
+                                            var m_iXIndex = -1;
+                                            var m_objXAxis = [];
+                                            switch (m_objReport.iType) {
+                                                case 101:
+                                                case 102:
+                                                    $.each(ci_result.rows, function() {
+                                                        var m_strName = ' ';
+                                                        if (m_objGroupField != null) {
+                                                            m_strName = this[m_objGroupField.cField];
+                                                        }
+                                                        else {
+                                                            m_strName = m_objCountField.cTitle;
+                                                        }
+                                                        if (m_strName == '') {
+                                                            m_strName = '【未填写】';
+                                                        }
+                                                        var m_iYIndex = -1;
+                                                        for (var i = 0; i < m_objData.length; i++) {
+                                                            if (m_objData[i].name == m_strName) {
+                                                                m_iYIndex = i;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (m_iYIndex == -1) {
+                                                            m_objData.push({ name: m_strName, data: [] });
+                                                            m_iYIndex = m_objData.length - 1;
+                                                            for (var i = 0; i <= m_iXIndex; i++) {
+                                                                m_objData[m_iYIndex].data.push(0)
+                                                            }
+                                                        }
+
+                                                        if (m_strKey != this[m_objXField.cField]) {
+                                                            m_strKey = this[m_objXField.cField];
+                                                            m_objXAxis.push((m_strKey == '' ? '【未填写】' : m_strKey));
+                                                            m_iXIndex++;
+                                                            for (var i = 0; i < m_objData.length; i++) {
+                                                                m_objData[i].data.push(0);
+                                                            }
+                                                        }
+                                                        m_objData[m_iYIndex].data[m_iXIndex] += getValue(m_objCountField.iDataType, this[m_objCountField.cField]);
+                                                    });
+
+                                                    $('#div_Chart').highcharts({
+                                                        chart: {
+                                                            type: (m_objReport.iType == 102 ? 'column' : '')
+                                                        },
+                                                        title: {
+                                                            text: m_objReport.cName
+                                                        },
+                                                        credits: {
+                                                            enabled: false
+                                                        },
+                                                        tooltip: {
+                                                            pointFormat: '{series.name}合计：<b>{point.y}</b>'
+                                                        },
+                                                        legend: {
+                                                            layout: 'vertical',
+                                                            align: 'right',
+                                                            verticalAlign: 'middle',
+                                                            borderWidth: 0,
+                                                            enabled: (m_objGroupField == null ? false : true)
+                                                        },
+                                                        plotOptions: {
+                                                            line: {
+                                                                dataLabels: {
+                                                                    enabled: true
+                                                                }
+                                                            },
+                                                            column: {
+                                                                dataLabels: {
+                                                                    enabled: true
+                                                                }
+                                                            }
+                                                        },
+                                                        yAxis: {
+                                                            title: {
+                                                                text: ''
+                                                            },
+                                                            plotLines: [{ value: 0, color: '#808080'}]
+                                                        },
+                                                        xAxis: { categories: m_objXAxis },
+                                                        series: m_objData
+                                                    });
+                                                    break;
+                                                case 103:
+                                                case 104:
+                                                    var m_objData = [];
+                                                    var m_strKey = null;
+                                                    var m_iTotal = 0;
+                                                    $.each(ci_result.rows, function() {
+                                                        if (m_strKey != this[m_objXField.cField]) {
+                                                            m_strKey = this[m_objXField.cField];
+                                                            m_objData.push([(m_strKey == '' ? '【未填写】' : m_strKey.toString()), 0]);
+                                                        }
+                                                        m_objData[m_objData.length - 1][1] += getValue(m_objCountField.iDataType, this[m_objCountField.cField]);
+                                                        m_iTotal += getValue(m_objCountField.iDataType, this[m_objCountField.cField]);
+                                                    });
+                                                    $('#div_Chart').highcharts({
+                                                        chart: {
+                                                            type: (m_objReport.iType == 104 ? 'funnel' : 'pie'),
+                                                            plotBackgroundColor: null,
+                                                            plotBorderWidth: null,
+                                                            plotShadow: false
+                                                        },
+                                                        title: {
+                                                            text: m_objReport.cName
+                                                        },
+                                                        credits: {
+                                                            enabled: false
+                                                        },
+                                                        plotOptions: {
+                                                            series: {
+                                                                dataLabels: {
+                                                                    enabled: true,
+                                                                    format: '<b>{point.name}</b> ({point.y:,.0f})',
+                                                                    color: 'black',
+                                                                    softConnector: true
+                                                                },
+                                                                neckWidth: '30%',
+                                                                neckHeight: '25%'
+                                                            },
+                                                            pie: {
+                                                                allowPointSelect: true,
+                                                                cursor: 'pointer',
+                                                                dataLabels: {
+                                                                    enabled: true,
+                                                                    color: '#000000',
+                                                                    connectorColor: '#000000',
+                                                                    format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+                                                                }
+                                                            }
+                                                        },
+                                                        tooltip: {
+                                                            hideDelay: 100,
+                                                            formatter: function() {
+                                                                return '<b>' + this.point.name + '</b>：' + Highcharts.numberFormat((m_iTotal > 0 ? this.y / m_iTotal : 0) * 100, 2) + '%';
+                                                            }
+                                                        },
+                                                        series: [{ name: '合计', data: m_objData}]
+                                                    });
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                            else {
+                                $.messager.alert('提示', '请设置图表字段', 'info', function() { $('body').css('display', 'none'); });
+                            }
+                        }
+                    });
+                }
+                else {
+                    $.messager.alert('提示', '记录不存在或已删除', 'info', function() { $('body').css('display', 'none'); });
+                }
+            }
+        });
+    }
+
+    function getValue(ci_iDataType, ci_objValue) {
+        if (ci_iDataType >= 4 && ci_iDataType <= 8) {
+            return (isNaN(parseFloat(ci_objValue)) ? 1 : ci_objValue);
+        }
+        return 1;
+    }
+</script>
+

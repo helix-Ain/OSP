@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <div id="div_Data_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a href="javascript:void(0)" class="easyui-linkbutton"
+            iconcls="dc-icon-pencil" plain="true" onclick="data_showSelect()">列头设置</a> <a href="javascript:void(0)"
+                class="easyui-linkbutton" iconcls="dc-icon-pencil" plain="true" onclick="data_showFilter()">
+                筛选</a> <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dc-icon-cancel"
+                    onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_Data_List" style="display: none;">
+    </table>
+
+    <script language="javascript" type="text/javascript">
+        var _data_strCode = '';
+
+        checkPagePower({ onload: function() { data_initPage(); }, showMask: false, parse: false, check: false });
+
+        function data_initPage() {
+            _data_strCode = $('[name="cCode"]').val();
+            $('#tab_Data_List').attr('SettingCode', _data_strCode);
+
+            $('#tab_Data_List').datagrid('init', {
+                toolbar: '#div_Data_Toolbar',
+                settingCode: _data_strCode,
+                filterBtn: false,
+                fitColumns: false
+            });
+        }
+
+        function data_getColumnList() {
+            setDataGrid("tab_Data_List", "div_Data_Toolbar", "DcCdDataGridManage", { Action: "GetData", SettingCode: _data_strCode }, "", "", "", {
+                onClickRow: function(rowIndex, rowData) { $("#tab_Data_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                fitColumns: false
+            });
+        }
+
+        function data_showSelect() {
+            showDataGridSetting($("#tab_Data_List").attr("SettingCode"), "data_getColumnList");
+        }
+
+        function data_showFilter() {
+            if ($('#tab_Data_List').datagrid('options').filterHide) {
+                $('#tab_Data_List').datagrid('showFilter');
+            }
+            else {
+                $('#tab_Data_List').datagrid('hideFilter');
+            }
+        }
+    </script>
+
+</body>
+</html>

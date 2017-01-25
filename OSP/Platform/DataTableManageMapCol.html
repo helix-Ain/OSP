@@ -1,0 +1,241 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <div id="div_MapCol_Toolbar" style="display: none;" class="GridButtonBar">
+        <span class="GridButtonBarIco"></span><a class="easyui-linkbutton" iconcls="dc-icon-editadd"
+            plain="true" onclick="mapcol_newData(null)">添加</a> <a href="javascript:void(0)" class="easyui-linkbutton"
+                iconcls="dc-icon-cancel" plain="true" onclick="mapcol_deleteData()">删除</a>
+        <a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dc-icon-cancel"
+            onclick="cancelSelf();">关闭</a>
+    </div>
+    <table id="tab_MapCol_List" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true">
+                </th>
+                <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton(row.iColumnID, 'mapcol_editData');}">
+                    <div style="width: 50px; height: 5px; display: block;">
+                    </div>
+                </th>
+                <th data-options="field:'cColumnDBName',width:150,sortable:true">
+                    字段数据库名
+                </th>
+                <th data-options="field:'cColumnAlias',width:100,sortable:true">
+                    字段别名
+                </th>
+                <th data-options="field:'cDataTypeDesc',width:50,sortable:true">
+                    字段类型
+                </th>
+                <th data-options="field:'cColumnName',width:150,sortable:true">
+                    字段描述
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_MapCol_Detail" class="easyui-dialog" title="字段详细资料" data-options="closed:true,modal:true,border:false,iconCls:'dc-icon-dialog-title'">
+        <form action="" id="form_MapCol_Edit" method="post" novalidate="novalidate" class="codemasterform">
+        <table style="width: 500px;" class="TableCenter">
+            <tr>
+                <td class="tabletext" style="width: 100px;">
+                    <span class="require_sign">*</span>字段数据库名：
+                </td>
+                <td>
+                    <input name="cColumnDBName" class="easyui-validatebox" data-options="required:true"
+                        style="width: 380px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>字段别名：
+                </td>
+                <td>
+                    <input name="cColumnAlias" class="easyui-validatebox" data-options="required:true"
+                        style="width: 380px;" />
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>字段类型：
+                </td>
+                <td>
+                    <select id="ddl_MapCol_Type" class="easyui-combobox" style="width: 152px;" name="iDataType"
+                        editable="false" required="true">
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    <span class="require_sign">*</span>关联表：
+                </td>
+                <td>
+                    <div id="div_MapCol_TableList" name="cMappingIDList">
+                    </div>
+                    <a href="javascript:void(0)" class="easyui-linkbutton" onclick="mapcol_openSearch()"
+                        style="margin-left: 5px;">添加关联表</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabletext">
+                    字段描述：
+                </td>
+                <td>
+                    <textarea rows="2" name="cColumnName" class="TextEdit" style="width: 380px;"></textarea>
+                </td>
+            </tr>
+        </table>
+        </form>
+        <div class="ButtonBar">
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="mapcol_saveData()">保存</a>
+            <a href="javascript:void(0)" class="easyui-linkbutton" onclick="mapcol_cancel()">关闭</a>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+        var _mapcol_iID = 0;
+        var _mapcol_strAction = '';
+
+        checkPagePower({ onload: function() { mapcol_initPage(); }, showMask: false, parse: false, check: false });
+
+        function mapcol_initPage() {
+            $.parser.parse('#div_MapCol_Detail');
+            $('#div_MapCol_Detail').dialog({ onClose: function() { $(".tooltip").remove(); } });
+
+            bindCodeMasterData({
+                controlID: "ddl_MapCol_Type",
+                cat: "dtcol",
+                subCat: "DataType",
+                valueField: "cCodeItem",
+                textField: "cDesc",
+                success: function() {
+                    mapcol_getColumnList();
+                }
+            });
+
+            dcnloader.load('ListBox', function() {
+                $('#div_MapCol_TableList').listbox({ width: 270, required: true, textField: 'cTableDBName', valueField: 'iMappingID' });
+            });
+        }
+
+        function mapcol_getColumnList() {
+            setDataGrid("tab_MapCol_List", "div_MapCol_Toolbar", "DcCdDataTableManage", { Action: "GetMapCol", iTableID: _iID }, "iColumnID", "cColumnAlias", "", {
+                onDblClickRow: function(rowIndex, rowData) { $("#tab_MapCol_List").datagrid("selectRow", rowIndex); mapcol_editData(rowData.iColumnID); },
+                onClickRow: function(rowIndex, rowData) { $("#tab_MapCol_List").datagrid("unselectAll").datagrid("selectRow", rowIndex); },
+                checkOnSelect: true,
+                selectOnCheck: true,
+                singleSelect: false,
+                pagination: false
+            });
+        }
+
+        function mapcol_openDialog(ci_strTitle) {
+            $('#div_MapCol_Detail').dialog({ width: 520, height: 330, title: ci_strTitle }).dialog('open');
+        }
+
+        function mapcol_cancel() {
+            $('#div_MapCol_Detail').dialog('close')
+        }
+
+        function mapcol_newData() {
+            _mapcol_iID = 0;
+            _mapcol_strAction = 'addmapcol';
+            $('#div_MapCol_TableList').listbox('reset');
+            $('#div_MapCol_Detail').form('clear');
+            mapcol_openDialog("添加字段");
+        }
+
+        function mapcol_editData(ci_iID) {
+            _mapcol_iID = ci_iID;
+            if (_mapcol_iID > 0) {
+                setTimeout(function() {
+                    var m_objData = $("#tab_MapCol_List").datagrid("getSelected");
+                    if (m_objData != null) {
+                        $('#div_MapCol_TableList').listbox('reset');
+                        $('#div_MapCol_Detail').form('load', m_objData);
+                        $('#chk_IsAuto').attr('checked', m_objData.bIsAuto ? 'checked' : '');
+                        _mapcol_iID = m_objData.iColumnID;
+                        _mapcol_strAction = "UpdateMapCol";
+                        mapcol_openDialog("字段详细资料");
+                        postData({
+                            url: 'DcCdDataTableManage',
+                            params: { Action: 'GetMapping', IDList: m_objData.cMappingIDList },
+                            success: function(ci_result) {
+                                if (existData(ci_result)) {
+                                    $('#div_MapCol_TableList').listbox('addItemList', ci_result.rows);
+                                }
+                            }
+                        });
+                    }
+                    else {
+                        $.messager.alert('提示', '请选择记录', 'info');
+                    }
+                }, 100);
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function mapcol_saveData() {
+            postData({
+                url: 'DcCdDataTableManage',
+                params: { Action: _mapcol_strAction, iColumnID: _mapcol_iID, iTableID: _iID },
+                validate: true,
+                form: 'form_MapCol_Edit',
+                onPost: function() {
+                    this.params.cMappingIDList = this.params.cMappingIDList.join(',');
+                    return true;
+                },
+                success: function(ci_result) {
+                    $('#tab_MapCol_List').datagrid('reload');
+                    mapcol_cancel();
+                }
+            });
+        }
+
+        function mapcol_deleteData() {
+            var m_objData = $("#tab_MapCol_List").datagrid("getChecked");
+            if (m_objData.length > 0) {
+                $.messager.confirm('提示', '确定要删除所选' + m_objData.length + '条记录吗？', function(r) {
+                    if (r) {
+                        var m_strIDList = "";
+                        for (var i = 0; i < m_objData.length; i++) {
+                            if (m_strIDList.length > 0) {
+                                m_strIDList += ",";
+                            }
+                            m_strIDList += m_objData[i].iColumnID;
+                        }
+                        if (m_strIDList != "") {
+                            postData({
+                                url: "DcCdDataTableManage",
+                                params: { Action: "DeleteMapCol", iColumnID: m_strIDList },
+                                success: function(ci_result) {
+                                    $('#tab_MapCol_List').datagrid('reload');
+                                    $.messager.alert('提示', '删除成功', 'info');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '请选择记录', 'info');
+            }
+        }
+
+        function mapcol_openSearch() {
+            popupDialog('SearchTableMapping.html#iTableID=' + _iID + '&Type=1', 'parent.mapcol_readDBColumn', '数据字段查询');
+        }
+
+        function mapcol_readDBColumn(ci_objData) {
+            closedPopupDialog();
+            if (ci_objData != undefined && ci_objData.length > 0) {
+                $('#div_MapCol_TableList').listbox('addItemList', ci_objData);
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<title></title>
+		<meta charset="UTF-8">
+		<script src='../JS/jquery-1.8.3.min.js'></script>
+		<script src='JS/Constants.js'></script>
+		<script type="text/javascript" src="../JS/CommonScript.js?script=../JS/lightbox2/css/lightbox.min.css,../JS/lightbox2/js/lightbox.min.js,../CSS/Attachment.css,../JS/uploadify-v2.1.4/css/uploadify.css,../JS/uploadify-v2.1.4/scripts/jquery.uploadify.v2.1.4.min.js,../JS/uploadify-v2.1.4/scripts/swfobject.js"></script>
+		<style>
+			#table_cPCImages td div,
+			#table_cMHImages td div,
+			#table_cMSImages td div {
+				height: 95px;
+				width: 75px;
+				margin: 0 0 7px 7px;
+				text-align: center;
+				line-height: 95px;
+				font-size: 25px;
+				color: #DADADA;
+				padding: 5px 5px 0 0;
+			}
+			
+			#table_cPCImages td,
+			#table_cMHImages td,
+			#table_cMSImages td {
+				text-align: center;
+				border: 1px solid #E1E1E1;
+				background-color: #F6F6F6;
+			}
+			
+			#table_cPCImages button,
+			#table_cMHImages button,
+			#table_cMSImages button {
+				margin: 0 auto 5px;
+				border: none;
+				border-radius: 3px;
+				color: #FFFFFF;
+				background-color: #4AA2FB;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+
+	<body style='display: none;' class="easyui-layout" data-options="fit:true,border:false">
+		<div id="div_Center" data-options="region:'center',border:false">
+			<div id="div_FileQueue" style="position: absolute; z-index: 999; top: 0;">
+			</div>
+			<form action="" id="form_Edit" method="post" novalidate="novalidate" class="codemasterform">
+				<table style="width: 800px;" class="TableCenter">
+					<tr>
+						<td class='tabletext' style='width:130px;'>
+							<span class="require_sign">*</span>手册名称：
+						</td>
+						<td>
+							<input id='cName' name='cName' maxlength="50" class='easyui-validatebox' data-options='required:true' style='width:550px;' />
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" style='padding:5px 55px;'>
+							<div id="tab_Manual" class="easyui-tabs" data-options="fit:true,plain:true" style='width:550px;height:450px;'>
+								<div title="PC版手册" id='tab_cPCImages'>
+									<table style="width:550px;" class='TableCenter'>
+										<tr>
+											<td style='width:75px;'>
+												<span class='require_sign'>*</span>上传手册：
+											</td>
+											<td>
+												您图片的添加顺序,即为手册页的前后顺序,手册页数4-60页<br/> 图片大小：小于500kb &nbsp;&nbsp; 图片建议尺寸：480*640 注:(图片宽度不可超过480px)
+											</td>
+										</tr>
+										<tr>
+											<td style='width:75px;padding-left:73px;' colspan="2">
+												<div class='easyui-linkbutton' style='display: inline-block;position: relative;top:5.5px;margin:0 5px;'>
+													<input id='input_Upload1' type='file' style='display: none;' />
+												</div>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="2">
+												<table id='table_cPCImages' cellspacing="5px"></table>
+											</td>
+										</tr>
+									</table>
+								</div>
+								<div title="移动横板手册" id='tab_cMHImages'>
+									<table style="width:550px;" class='TableCenter'>
+										<tr>
+											<td style='width:75px;'>
+												<span class='require_sign'>*</span>上传手册：
+											</td>
+											<td>
+												您图片的添加顺序,即为手册页的前后顺序,手册页数4-60页<br/> 图片大小:小于500KB 图片建议尺寸：1096*640
+											</td>
+										</tr>
+										<tr>
+											<td style='width:75px;padding-left:73px;' colspan="2">
+												<div class='easyui-linkbutton' style='display: inline-block;position: relative;top:5.5px;margin:0 5px;'>
+													<input id='input_Upload2' type='file' style='display: none;' />
+												</div>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="2">
+												<table id='table_cMHImages' cellspacing="5px"></table>
+											</td>
+										</tr>
+									</table>
+								</div>
+								<div title="移动竖版手册" id='tab_cMSImages'>
+									<table style='width:550px;' class='TableCenter'>
+										<tr>
+											<td style='width:75px;'>
+												<span class='require_sign'>*</span>上传手册：
+											</td>
+											<td>
+												您图片的添加顺序,即为手册页的前后顺序,手册页数4-60页 <br/>图片大小:小于500KB 图片建议尺寸：640*1096
+											</td>
+										</tr>
+										<tr>
+											<td style='width:75px;padding-left:73px;' colspan="2">
+												<div class='easyui-linkbutton' style='display: inline-block;position: relative;top:5.5px;margin:0 5px;'>
+													<input id='input_Upload3' type='file' style='display: none;' />
+												</div>
+											</td>
+										</tr>
+										<tr>
+											<td colspan="2">
+												<table id='table_cMSImages' cellspacing="5px"></table>
+											</td>
+										</tr>
+									</table>
+								</div>
+							</div>
+						</td>
+					</tr>
+				</table>
+			</form>
+		</div>
+		<div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+			<div class="ButtonBar" style="position: inherit; min-width: 150px;">
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveData()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+			</div>
+		</div>
+		<script>
+			var _Action = getHashValue('Action');
+			var _iObjectID = getHashValue('iObjectID');
+			var _iParentID = getHashValue('iParentID');
+			var _iBookID = getHashValue('iBookID');
+			var _strFun = getHashValue('Fun');
+			var _iServerID = 0;
+			var _cFilePath = '';
+			var _cPCImages = [];
+			var _cMHImages = [];
+			var _cMSImages = [];
+			var _cFilePath = '';
+			var _selectTabId = '';
+
+			$(function() {
+				checkPagePower({
+					onload: function() {
+						initPage();
+						setUpload();
+					}
+				});
+			});
+
+			function initPage() {
+				if(_strFun != '') {
+					_strFun += '()';
+				}
+				for(var i = 0; i < 10; i++) {
+					$('#table_cPCImages').append('<tr><td id="cPCImages_' + (i * 6 + 1) + '"><div>' + (i * 6 + 1) + '</div></td><td id="cPCImages_' + (i * 6 + 2) + '"><div>' + (i * 6 + 2) + '</div></td><td id="cPCImages_' + (i * 6 + 3) + '"><div>' + (i * 6 + 3) + '</div></td><td id="cPCImages_' + (i * 6 + 4) + '"><div>' + (i * 6 + 4) + '</div></td><td id="cPCImages_' + (i * 6 + 5) + '"><div>' + (i * 6 + 5) + '</div></td><td id="cPCImages_' + (i * 6 + 6) + '"><div>' + (i * 6 + 6) + '</div></td></tr>');
+					$('#table_cMHImages').append('<tr><td id="cMHImages_' + (i * 6 + 1) + '"><div>' + (i * 6 + 1) + '</div></td><td id="cMHImages_' + (i * 6 + 2) + '"><div>' + (i * 6 + 2) + '</div></td><td id="cMHImages_' + (i * 6 + 3) + '"><div>' + (i * 6 + 3) + '</div></td><td id="cMHImages_' + (i * 6 + 4) + '"><div>' + (i * 6 + 4) + '</div></td><td id="cMHImages_' + (i * 6 + 5) + '"><div>' + (i * 6 + 5) + '</div></td><td id="cMHImages_' + (i * 6 + 6) + '"><div>' + (i * 6 + 6) + '</div></td></tr>');
+					$('#table_cMSImages').append('<tr><td id="cMSImages_' + (i * 6 + 1) + '"><div>' + (i * 6 + 1) + '</div></td><td id="cMSImages_' + (i * 6 + 2) + '"><div>' + (i * 6 + 2) + '</div></td><td id="cMSImages_' + (i * 6 + 3) + '"><div>' + (i * 6 + 3) + '</div></td><td id="cMSImages_' + (i * 6 + 4) + '"><div>' + (i * 6 + 4) + '</div></td><td id="cMSImages_' + (i * 6 + 5) + '"><div>' + (i * 6 + 5) + '</div></td><td id="cMSImages_' + (i * 6 + 6) + '"><div>' + (i * 6 + 6) + '</div></td></tr>');
+				}
+				if(_Action == 'Update') {
+					postData({
+						url: 'DcCdDataManage',
+						params: {
+							Action: 'GetBookList',
+							iBookID: _iBookID,
+							GetImages: true
+						},
+						success: function(ci_result) {
+							if(existData(ci_result)) {
+								var m_objData = ci_result.rows[0];
+								_iServerID = m_objData.iServerID;
+								$('#cName').val(m_objData.cName);
+								_cFilePath = m_objData.cFilePath;
+								_cPCImages = m_objData.cPCImages.split(',');
+								_cMHImages = m_objData.cMHImages.split(',');
+								_cMSImages = m_objData.cMSImages.split(',');
+								if(_cPCImages[0] == '') {
+									_cPCImages = [];
+								}
+								if(_cMHImages[0] == '') {
+									_cMHImages = [];
+								}
+								if(_cMSImages[0] == '') {
+									_cMSImages = [];
+								}
+								for(var i = 0; i < _cPCImages.length; i++) {
+									$('#cPCImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + m_objData.cFilePath + '/' + _cPCImages[i] + '"><img style="width:75px;height:95px;" src="/' + m_objData.cFilePath + '/150/' + _cPCImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ',\'cPCImages\')">删除</button>');
+								}
+								for(var i = 0; i < _cMHImages.length; i++) {
+									$('#cMHImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + m_objData.cFilePath + '/' + _cMHImages[i] + '"><img style="width:75px;height:95px;" src="/' + m_objData.cFilePath + '/150/' + _cMHImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ',\'cMHImages\')">删除</button>');
+								}
+								for(var i = 0; i < _cMSImages.length; i++) {
+									$('#cMSImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + m_objData.cFilePath + '/' + _cMSImages[i] + '"><img style="width:75px;height:95px;" src="/' + m_objData.cFilePath + '/150/' + _cMSImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ',\'cMSImages\')">删除</button>');
+								}
+							}
+						}
+					});
+				}
+				lightbox.option({
+					'fadeDuration': 100,
+					'resizeDuration': 100
+				});
+			}
+
+			function setUpload() {
+				$("#input_Upload1,#input_Upload2,#input_Upload3").uploadify({
+					'uploader': _strSysUrl + 'JS/uploadify-v2.1.4/scripts/uploadify.swf',
+					'cancelImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/cancel.png',
+					'buttonImg': _strSysUrl + 'JS/uploadify-v2.1.4/css/upload_btn.png',
+					'script': getInterfaceName("DcCdAttachmentManage", true),
+					'queueID': 'div_FileQueue',
+					'auto': true,
+					'multi': true,
+					'width': 55,
+					'height': 22,
+					'buttonText': '',
+					'method': 'post',
+					'onError': function(event, ID, fileObj, errorObj) {
+						if(errorObj.type === "File Size") {
+							$("#input_Upload").uploadifyCancel(ID);
+							$.messager.alert('提示', '超过文件上传大小限制！', 'info');
+						} else {
+							$.messager.alert('提示', '上传失败！', 'info');
+						}
+					},
+					'onSelect': function(e, queueId, fileObj) {
+						var iType = iObjectIDToiType(parseInt(_iObjectID));
+						_selectTabId = $($('#tab_Manual').tabs('getSelected')).attr('id');
+						var target = '';
+						if(_selectTabId == 'tab_cPCImages') {
+							target = 'input_Upload1';
+						} else if(_selectTabId == 'tab_cMHImages') {
+							target = 'input_Upload2';
+						} else if(_selectTabId == 'tab_cMSImages') {
+							target = 'input_Upload3';
+						}
+						$('#' + target).uploadifySettings('scriptData', {
+							Action: 'Upload',
+							iType: iType,
+							cObjectCode: 'OSP'
+						});
+					},
+					'onComplete': function(event, queueId, fileObj, response, data) {
+						var m_result = convertToJson(response);
+						if(m_result.DcCode != undefined && m_result.DcCode == 0) {
+							var m_objData = m_result.rows[0];
+							var index = 0;
+							_iServerID = m_objData.iServerID;
+							_cFilePath = m_objData.cFileUrl;
+							if(_selectTabId == 'tab_cPCImages') {
+								_cPCImages.push(m_objData.cFileName);
+								index = _cPCImages.length;
+							} else if(_selectTabId == 'tab_cMHImages') {
+								_cMHImages.push(m_objData.cFileName);
+								index = _cMHImages.length;
+							} else if(_selectTabId == 'tab_cMSImages') {
+								_cMSImages.push(m_objData.cFileName);
+								index = _cMSImages.length;
+							}
+							$('#' + _selectTabId.split('_')[1] + '_' + index).children('div').html('<a href="/' + m_objData.cFilePath + '" data-lightbox="roadtrip"><img style="width:75px;height:95px;" src="/' + m_objData.cFileUrl + 'thumbnail/' + m_objData.cThumbnail + '"/></a>').after('<button type="button" onclick="delImage(' + (index - 1) + ',\'' + _selectTabId.split('_')[1] + '\')">删除</button>');
+						} else {
+							if(m_result.DcMessage != undefined && m_result.DcMessage != '') {
+								$.messager.alert('提示', m_result.DcMessage, 'info');
+							} else {
+								$.messager.alert('提示', '上传失败！', 'info');
+							}
+						}
+					}
+				});
+			}
+
+			function saveData() {
+				if(_cPCImages.length < 4 && _cMHImages.length < 4 && _cMSImages.length <4) {
+					$.messager.alert('提示','请至少为一份手册上传不少于4张图片','info');
+				} else {
+					if(_Action == 'Add') {
+						postData({
+							url: 'DcCdDataManage',
+							form: 'form_Edit',
+							validate: true,
+							params: {
+								Action: 'AddBook'
+							},
+							onPost: function() {
+								this.params.iGroupID = _iParentID;
+								this.params.iServerID = _iServerID;
+								this.params.cPCImages = _cPCImages.join(',');
+								this.params.cMHImages = _cMHImages.join(',');
+								this.params.cMSImages = _cMSImages.join(',');
+								return true;
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									if(_strFun != '') {
+										eval(_strFun);
+									}
+									cancelSelf();
+								}
+							}
+						});
+					} else if(_Action == 'Update') {
+						postData({
+							url: 'DcCdDataManage',
+							form: 'form_Edit',
+							validate: true,
+							params: {
+								Action: 'UpdateBook',
+								iBookID: _iBookID,
+								iGroupID: _iParentID,
+								iServerID: _iServerID,
+								cPCImages: _cPCImages.join(','),
+								cMHImages: _cMHImages.join(','),
+								cMSImages: _cMSImages.join(',')
+							},
+							success: function(ci_result) {
+								if(ci_result.DcCode == 0) {
+									$.messager.alert('提示', '保存成功', 'info');
+									if(_strFun != '') {
+										eval(_strFun);
+									}
+								}
+							}
+						});
+					}
+				}
+			}
+
+			function delImage(i, flag) {
+				if(flag == 'cPCImages') {
+					$('#table_cPCImages').empty();
+					_cPCImages.splice(i, 1);
+					for(var i = 0; i < 10; i++) {
+						$('#table_cPCImages').append('<tr><td id="cPCImages_' + (i * 6 + 1) + '"><div>' + (i * 6 + 1) + '</div></td><td id="cPCImages_' + (i * 6 + 2) + '"><div>' + (i * 6 + 2) + '</div></td><td id="cPCImages_' + (i * 6 + 3) + '"><div>' + (i * 6 + 3) + '</div></td><td id="cPCImages_' + (i * 6 + 4) + '"><div>' + (i * 6 + 4) + '</div></td><td id="cPCImages_' + (i * 6 + 5) + '"><div>' + (i * 6 + 5) + '</div></td><td id="cPCImages_' + (i * 6 + 6) + '"><div>' + (i * 6 + 6) + '</div></td></tr>');
+					}
+					for(var i = 0; i < _cPCImages.length; i++) {
+						$('#cPCImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + _cFilePath + '/' + _cPCImages[i] + '"><img style="width:75px;height:95px;" src="/' + _cFilePath + '/150/' + _cPCImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ',\'cPCImages\')">删除</button>');
+					}
+				} else if(flag == 'cMHImages') {
+					$('#table_cMHImages').empty();
+					_cMHImages.splice(i, 1);
+					for(var i = 0; i < 10; i++) {
+						$('#table_cMHImages').append('<tr><td id="cMHImages_' + (i * 6 + 1) + '"><div>' + (i * 6 + 1) + '</div></td><td id="cMHImages_' + (i * 6 + 2) + '"><div>' + (i * 6 + 2) + '</div></td><td id="cMHImages_' + (i * 6 + 3) + '"><div>' + (i * 6 + 3) + '</div></td><td id="cMHImages_' + (i * 6 + 4) + '"><div>' + (i * 6 + 4) + '</div></td><td id="cMHImages_' + (i * 6 + 5) + '"><div>' + (i * 6 + 5) + '</div></td><td id="cMHImages_' + (i * 6 + 6) + '"><div>' + (i * 6 + 6) + '</div></td></tr>');
+					}
+					for(var i = 0; i < _cMHImages.length; i++) {
+						$('#cMHImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + _cFilePath + '/' + _cMHImages[i] + '"><img style="width:75px;height:95px;" src="/' + _cFilePath + '/150/' + _cMHImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ',\'cMHImages\')">删除</button>');
+					}
+				} else if(flag == 'cMSImages') {
+					$('#table_cMSImages').empty();
+					_cMSImages.splice(i, 1);
+					for(var i = 0; i < 10; i++) {
+						$('#table_cMSImages').append('<tr><td id="cMSImages_' + (i * 6 + 1) + '"><div>' + (i * 6 + 1) + '</div></td><td id="cMSImages_' + (i * 6 + 2) + '"><div>' + (i * 6 + 2) + '</div></td><td id="cMSImages_' + (i * 6 + 3) + '"><div>' + (i * 6 + 3) + '</div></td><td id="cMSImages_' + (i * 6 + 4) + '"><div>' + (i * 6 + 4) + '</div></td><td id="cMSImages_' + (i * 6 + 5) + '"><div>' + (i * 6 + 5) + '</div></td><td id="cMSImages_' + (i * 6 + 6) + '"><div>' + (i * 6 + 6) + '</div></td></tr>');
+					}
+					for(var i = 0; i < _cMSImages.length; i++) {
+						$('#cMSImages_' + (i + 1)).children('div').html('<a data-lightbox="roadtrip" href="/' + _cFilePath + '/' + _cMSImages[i] + '"><img style="width:75px;height:95px;" src="/' + _cFilePath + '/150/' + _cMSImages[i] + '"/></a>').after('<button type="button" onclick="delImage(' + i + ',\'cMSImages\')">删除</button>');
+					}
+				}
+			}
+
+			function cancelSelf() {
+				try {
+					parent.cancel();
+				} catch(err) {
+					$('body').css('display', 'none');
+				}
+			}
+
+			function cancel() {
+				closedPopupDialog();
+			}
+
+			function iObjectIDToiType(iObjectID) {
+				var iType = 0;
+				if(iObjectID > 0 && iObjectID < 9) {
+					iType = 60 + iObjectID;
+				}
+				return iType;
+			}
+		</script>
+	</body>
+
+</html>

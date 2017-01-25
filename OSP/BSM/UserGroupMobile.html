@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body style="display: none;">
+    <style type="text/css">
+        .listbox-item { float: none !important; border: none !important; }
+    </style>
+    <div class="easyui-layout" data-options="fit:true,border:false">
+        <div data-options="region:'center',border:false,title:'手机模块列表'" style="padding: 10px;">
+            <div id="div_Mobile_List" style="border: none;">
+            </div>
+        </div>
+        <div data-options="region:'south',border:false" style="height: 35px; overflow: hidden;">
+            <div class="ButtonBar" style="position: inherit; min-width: 150px;">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="mobile_SaveData()">保存</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+            </div>
+        </div>
+    </div>
+
+    <script language="javascript" type="text/javascript">
+
+        checkPagePower({ onload: function() { mobile_InitPage(); }, showMask: false, check: false });
+
+        function mobile_InitPage() {
+            dcnloader.load(['ListBox', 'ComboList'], function() {
+                mobile_GetMobileModule();
+            });
+        }
+
+        function mobile_GetMobileModule() {
+            postData({
+                url: "DcCdMobileModuleItemManage",
+                params: { Action: "GetList" },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $('#div_Mobile_List').listbox({
+                            valueField: 'iModuleID',
+                            textField: 'cDesc',
+                            removeable: false,
+                            single: false,
+                            width: 'auto',
+                            data: ci_result.rows,
+                            formatter: function(row) {
+                                var m_objDiv = $('<div></div>');
+                                var m_obj = $('<span></span>');
+                                m_obj.attr('mid', row.iModuleID).attr('sid', 0);
+                                m_obj.combolist({
+                                    valueField: 'value',
+                                    textField: 'text',
+                                    multiple: true,
+                                    data: [{ value: 'bIsVisible', text: '可见' }, { value: 'bIsAvailable', text: '使用'}]
+                                });
+                                m_obj.appendTo(m_objDiv);
+                                $('<span style="margin-left:10px;">' + row.cDesc + ' (' + row.cModuleCode + ')' + '</span>').appendTo(m_objDiv);
+                                return m_objDiv;
+                            },
+                            onLoadSuccess: function() {
+                                mobile_GetSelectd();
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function mobile_GetSelectd() {
+            postData({
+                url: "DcCdUserGroupMobileModuleManage",
+                params: { Action: "GetList", iUserGroupID: _iID },
+                success: function(ci_result) {
+                    if (existData(ci_result)) {
+                        $.each(ci_result.rows, function() {
+                            var m_obj = $('#div_Mobile_List').find('span[mid=' + this.iModuleID + ']');
+                            if (m_obj.length > 0) {
+                                m_obj.attr('sid', this.iID);
+                                if (this.bIsVisible) {
+                                    m_obj.combolist('select', 'bIsVisible');
+                                }
+                                if (this.bIsAvailable) {
+                                    m_obj.combolist('select', 'bIsAvailable');
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        function mobile_SaveData() {
+            var m_objDetail = [];
+            $.each($('#div_Mobile_List').find('.listbox-item'), function() {
+                var m_obj = $(this);
+                if (m_obj.length > 0) {
+                    var m_objList = m_obj.find('span[mid]');
+                    if (m_objList.length > 0) {
+                        var m_objData = [];
+                        var m_objValues = m_objList.combolist('getValues');
+                        if (m_objValues.length > 0) {
+                            m_objData.push(m_objList.attr('sid'));
+                            m_objData.push(m_objList.attr('mid'));
+                            m_objData.push(m_objList.find('div[value="bIsVisible"]').hasClass('combolist-item-active'));
+                            m_objData.push(m_objList.find('div[value="bIsAvailable"]').hasClass('combolist-item-active'));
+                        }
+                        else if (parseInt(m_objList.attr('sid')) > 0) {
+                            m_objData.push(parseInt(m_objList.attr('sid')) * -1);
+                            m_objData.push(0);
+                            m_objData.push(false);
+                            m_objData.push(false);
+                        }
+                        m_objDetail.push(m_objData.join(getSeparativeSign()));
+                    }
+                }
+            });
+            if (m_objDetail.length > 0) {
+                postData({
+                    url: 'DcCdUserGroupMobileModuleManage',
+                    params: { Action: 'UpdateData', iUserGroupID: _iID, DetailData: m_objDetail.join(getSeparativeSign() + ',' + getSeparativeSign()) },
+                    success: function(ci_result) {
+                        mobile_GetMobileModule();
+                        $.messager.alert('提示', '保存成功', 'info');
+                    }
+                });
+            }
+            else {
+                $.messager.alert('提示', '保存成功', 'info');
+            }
+        }
+    </script>
+
+</body>
+</html>

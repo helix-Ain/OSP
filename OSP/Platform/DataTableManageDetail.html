@@ -1,0 +1,223 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js,../plugins/DCN/jquery.dcnplugins.js"></script>
+
+</head>
+<body style="display: none;">
+    <div id="div_Body" class="easyui-tabs" data-options="fit:true">
+        <div id="div_Detail" title="基本资料">
+            <div style="max-width: 800px; min-width: 500px;" class="TableCenter">
+                <form action="" id="form_Detail_Edit" method="post" novalidate="novalidate" class="codemasterform">
+                <table style="min-width: 100%;">
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>表数据库名：
+                        </td>
+                        <td>
+                            <input id="txt_TableDBName" name="cTableDBName" class="easyui-validatebox" data-options="required:true"
+                                style="width: 400px;" />
+                            <a id="btn_Guide" href="javascript:void(0)" class="easyui-linkbutton" style="display: none;"
+                                iconcls="icon-search" plain="true" onclick="openTableSearch()" title="查询"></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            <span class="require_sign">*</span>表别名：
+                        </td>
+                        <td>
+                            <input name="cTableAlias" class="easyui-validatebox" data-options="required:true"
+                                style="width: 400px;" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext">
+                            用户可见：
+                        </td>
+                        <td>
+                            <input id="chk_IsDisplay" type="checkbox" name="bIsDisplay" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="tabletext" style="width: 30%;">
+                            表描述：
+                        </td>
+                        <td class="tableinput" style="width: 70%;">
+                            <textarea rows="2" name="cTableName" class="TextEdit" style="width: 400px;"></textarea>
+                        </td>
+                    </tr>
+                </table>
+                </form>
+            </div>
+            <div class="ButtonBar">
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="saveDetail()">保存</a>
+                <a href="javascript:void(0)" class="easyui-linkbutton" onclick="cancelSelf();">关闭</a>
+            </div>
+        </div>
+        <div title="字段列表" group="Ex">
+        </div>
+        <div title="查询条件" group="Ex">
+        </div>
+        <!--<div title="关联列表" group="Ex">
+        </div>-->
+        <!--<div title="关联字段" group="Ex">
+        </div>-->
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _iID = 0;
+    var _strAction = "";
+    var _strFun = '';
+
+    initReady(function() {
+        setControlEnable("txt_TableDBName", false);
+
+        _strAction = getHashValue("Action");
+        if (_strAction == "new") {
+            newData();
+        }
+
+        _strFun = getHashValue("Fun");
+        if (_strFun != '') {
+            _strFun += '(m_iID)';
+        }
+
+        $('#div_Body').tabs({
+            onSelect: function(title, index) {
+                $('div[group="Ex"]').empty();
+                $('.easyui-dialog').dialog('destroy');
+                var m_obj = $('#div_Body').tabs('getTab', index);
+                switch (index) {
+                    case 1:
+                        m_obj.panel('refresh', 'DataTableManageColumns.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 2:
+                        m_obj.panel('refresh', 'DataTableManageQuery.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 3:
+                        m_obj.panel('refresh', 'DataTableManageMapping.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                    case 4:
+                        m_obj.panel('refresh', 'DataTableManageMapCol.html');
+                        $('#div_Body').tabs('resize');
+                        break;
+                }
+            }
+        });
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        dcnloader.load(['ListBox', 'ComboList'], function() {
+            if (_strAction != "AddTable") {
+                _iID = getHashValue("ID");
+                getDetail(_iID);
+            }
+            $('#txt_TableDBName').focus();
+        });
+    }
+
+    function cancelSelf() {
+        try {
+            parent.cancel();
+        }
+        catch (err) {
+            $('body').css('display', 'none');
+        }
+    }
+
+    function cancel() {
+        closedPopupDialog();
+    }
+
+    function newData() {
+        _iID = 0;
+        _strAction = 'AddTable';
+        setControlEnable("txt_TableDBName", true);
+        $('#btn_Guide').css('display', '');
+        while ($('#div_Body').tabs('exists', 1)) {
+            $('#div_Body').tabs('close', 1);
+        }
+    }
+
+    function getDetail(ci_iID) {
+        if (ci_iID > 0) {
+            postData({
+                url: "DcCdDataTableManage",
+                params: { Action: "GetTable", iTableID: ci_iID },
+                success: function(ci_result) {
+                    if (ci_result.rows != undefined && ci_result.rows.length > 0) {
+                        _strAction = 'updatetable';
+                        $("#form_Detail_Edit").form("load", ci_result.rows[0]);
+                        $('#chk_IsDisplay').attr('checked', (ci_result.rows[0].bIsDisplay ? 'checked' : false));
+                    }
+                    else {
+                        $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+                    }
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '记录不存在或已删除', 'info', function() { cancelSelf(); });
+        }
+    }
+
+    function saveDetail() {
+        postData({
+            url: 'DcCdDataTableManage',
+            params: { Action: _strAction, iTableID: _iID },
+            validate: true,
+            form: 'form_Detail_Edit',
+            success: function(ci_result) {
+                var m_iID = 0;
+                if (_strAction == 'AddTable') {
+                    if (existData(ci_result)) {
+                        m_iID = ci_result.rows[0].iTableID;
+                        location.hash = '#ID=' + m_iID + '&Fun=' + _strFun;
+                        setTimeout(function() {
+                            location.reload();
+                        }, 500);
+                    }
+                }
+                else {
+                    $.messager.alert('提示', '保存成功', 'info');
+                }
+                if (_strFun != '') {
+                    eval(_strFun);
+                }
+            }
+        });
+    }
+
+    function openTableSearch() {
+        popupDialog('SearchDBTable.html', 'parent.readDBTable', '数据表查询');
+    }
+
+    function readDBTable(ci_objData) {
+        if (ci_objData != undefined) {
+            var m_strName = ci_objData.cTableDBName.split('_');
+            switch (m_strName.length) {
+                case 3:
+                    ci_objData.cTableAlias = m_strName[1];
+                    break;
+                default:
+                    ci_objData.cTableAlias = m_strName[0];
+                    break;
+            }
+            $("#form_Detail_Edit").form("load", ci_objData);
+        }
+    }
+</script>
+

@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script>
+
+    <script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js?script=js/CurrCommonScript.js"></script>
+
+</head>
+<body class="easyui-layout" data-options="fit:true,border:false" style="display: none;">
+    <div data-options="region:'north',border:false,title:'查询条件',iconCls:'dc-icon-search'"
+        style="height: 80px;">
+        <ul class="searchForm1">
+            <li>
+                <input name="cModuleCode" type="text" class="dc-search dc-input" dc-tip="模块编号" />
+            </li>
+            <li>
+                <input name="cDesc" type="text" class="dc-search dc-input" dc-tip="描述" />
+            </li>
+            <li><a href="javascript:void(0)" onclick="searchData()" class="dc-button">查询</a></li>
+        </ul>
+    </div>
+    <div data-options="region:'center',border:false">
+        <table id="tab_List" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true">
+                    </th>
+                    <th data-options="field:'btn',fixed:true,resizable:false,formatter: function(value,row,index){return getDetailButton();}">
+                    </th>
+                    <th data-options="field:'cModuleCode',width:60,sortable:true">
+                        模块编号
+                    </th>
+                    <th data-options="field:'cDesc',width:60,sortable:true">
+                        描述
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="div_Toolbar" class="GridButtonBar" style="display: none;">
+            <span class="GridButtonBarIco"></span><a id="btn_Add" class="easyui-linkbutton" iconcls="dc-icon-editadd"
+                plain="true" href="javascript:void(0)" onclick="newData()">添加</a> <a id="btn_Delete"
+                    href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-cancel"
+                    plain="true" onclick="deleteData()">删除</a>
+        </div>
+    </div>
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _strDetailiFrameID = 'div_Detail';
+
+    initReady(function() {
+
+    });
+
+    checkPagePower({ onload: function() { initPage(); } });
+
+    function initPage() {
+        var m_iID = getHashValue("ID");
+        if (parseInt(m_iID) > 0) {
+            editData(m_iID);
+        }
+
+        bindCodeMasterData({
+            controlID: "ddl_Status",
+            cat: "carl",
+            subCat: "Status",
+            valueField: "cCodeItem",
+            success: function() {
+                $('#ddl_Status').combobox('selectEx', 2);
+                setMyDataGrid(false);
+            }
+        });
+    }
+
+    function getSearchParameter(ci_bIsBase) {
+        var m_objParams = { Action: "GetList" };
+        if (!ci_bIsBase) {
+            return getSearchParameters($(".searchForm1"), m_objParams);
+        }
+        return m_objParams;
+    }
+
+    function setMyDataGrid(ci_bIsBase) {
+        setDataGrid('tab_List', 'div_Toolbar', 'DcCdMobileModuleItemManage', getSearchParameter(ci_bIsBase), 'iModuleID', 'cModuleCode', '', {
+            checkOnSelect: true,
+            selectOnCheck: true,
+            singleSelect: false,
+            onClickRow: function(rowIndex, rowData) {
+                $("#tab_List").datagrid("unselectAll").datagrid("selectRow", rowIndex);
+            },
+            onDblClickRow: function(rowIndex, rowData) { $("#tab_List").datagrid("selectRow", rowIndex); editData(); }
+        });
+    }
+
+    function searchData() {
+        $("#tab_List").datagrid("load", getSearchParameter());
+    }
+
+    function cancel() {
+        closedPopupDialog(_strDetailiFrameID);
+    }
+
+    function newData() {
+        popupDialog('MobileModuleManageDetail.html#Action=new', '', "添加手机模块", false, 350, 200, 'dc-icon-dialog-title', _strDetailiFrameID);
+    }
+
+    function editData() {
+        var m_objData = $('#tab_List').datagrid('getSelected');
+        if (m_objData != null) {
+            popupDialog('MobileModuleManageDetail.html#ID=' + m_objData.iModuleID, '', '手机模块详细资料', false, 350, 200, 'dc-icon-dialog-title', _strDetailiFrameID);
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+
+    function deleteData() {
+        var m_row = $('#tab_List').datagrid('getChecked');
+        if (m_row.length > 0) {
+            $.messager.confirm('提示', '确定要删除所选' + m_row.length + '条记录吗？', function(r) {
+                if (r) {
+                    var m_arrID = [];
+                    $.each(m_row, function(index, value) { m_arrID.push(value.iModuleID); });
+                    postData({
+                        url: "DcCdMobileModuleItemManage",
+                        params: { iModuleID: m_arrID.join(","), Action: "Delete" },
+                        success: function(ci_result) {
+                            $('#tab_List').datagrid('reload');
+                            $.messager.alert('提示', '删除成功', 'info');
+                        }
+                    });
+                }
+            });
+        }
+        else {
+            $.messager.alert('提示', '请选择记录', 'info');
+        }
+    }
+</script>
+

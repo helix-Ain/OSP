@@ -1,0 +1,186 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>用户组与用户</title>
+
+    <script src="../JS/jquery-1.8.3.min.js" type="text/javascript"></script><script type='text/javascript' src='js/Constants.js'></script>
+
+    <script type="text/javascript" src="../JS/CommonScript.js"></script>
+
+</head>
+<body onresize="openDetail();">
+    <table id="table_UserList" style="display: none;">
+        <thead>
+            <tr>
+                <th data-options="field:'ck',checkbox:true">
+                </th>
+                <th data-options="field:'cLoginName',width:100,sortable:true">
+                    登录ID
+                </th>
+                <th data-options="field:'cUserChiName',width:100,sortable:true">
+                    用户中文名
+                </th>
+            </tr>
+        </thead>
+    </table>
+    <div id="div_Toolbar" style="display: none; text-align: right;">
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconcls="dc-icon-editadd"
+            plain="true" onclick="showAddUser()">添加</a><a href="javascript:void(0)" class="easyui-linkbutton"
+                iconcls="dc-icon-cancel" plain="true" onclick="destroyUserGroupMapping()">删除</a>
+    </div>
+    <div id="div_Add" class="easyui-dialog" data-options="closed:true,modal:true,fit:true,noheader:true,border:false,onBeforeClose:function(){_IsOpen=false;}">
+        <table id="table_AddUser" style="display: none;">
+            <thead>
+                <tr>
+                    <th data-options="field:'ck',checkbox:true">
+                    </th>
+                    <th data-options="field:'cLoginName',width:100,sortable:true">
+                        登录ID
+                    </th>
+                    <th data-options="field:'cUserChiName',width:100,sortable:true">
+                        用户中文名
+                    </th>
+                </tr>
+            </thead>
+        </table>
+        <div id="div_AddToolbar" style="display: none;">
+            <input type="text" class="easyui-searchbox" id="txt_UserName" data-options="searcher: function(ci_strValue,ci_strName){searchAddUser(true, ci_strValue);},prompt: '请输用户中文名'" />
+            <a class="easyui-linkbutton" iconcls="dc-icon-editadd" plain="true" onclick="saveAddUser()">
+                添加</a><a href="javascript:void(0)" class="easyui-linkbutton" plain="true" iconcls="dc-icon-cancel"
+                    onclick="javascript:$('#div_Add').dialog('close');">关闭</a>
+        </div>
+    </div>
+    <input type="hidden" id="hidden_GroupID" />
+</body>
+</html>
+
+<script language="javascript" type="text/javascript">
+    var _IsOpen = false;
+    var _Action;
+    var _ID;
+    var arr = new Array();
+
+    checkPagePower({ onload: function() { pageInit() }, showMask: false });
+
+    function pageInit() {
+        var m_iGroupID = getHashValue("groupid");
+        if (m_iGroupID != "") {
+            showUserDetail(m_iGroupID);
+        }
+    }
+
+    function showUserDetail(groupid) {
+        location.hash = "groupid=" + groupid;
+        setDataGrid("table_UserList", "div_Toolbar", "DcCdUserGroupMappingManage", { "action": "query", "iusergroupid": groupid }, "iID", "cLoginName", "", {
+            singleSelect: true,
+            title: ""
+        });
+
+        $('#hidden_GroupID').val(groupid);
+        $('#table_UserList').datagrid('uncheckAll');
+        if (_IsOpen) {
+            $('#div_Add').dialog('close');
+        }
+    }
+
+    function showAddUser() {
+        $('#txt_UserName').val("");
+        _IsOpen = true;
+        openDetail();
+        searchAddUser(false);
+    }
+
+    function destroyUserGroupMapping() {
+        if (!selectDelUser()) {
+            $.messager.alert('提示', '请选择用户', 'info');
+        }
+        else {
+            $.messager.confirm('提示', '确定要删除用户[' + arr + ']吗？', function(r) {
+                if (r) {
+                    $.post(getInterfaceName("DcCdUserGroupMappingManage"), { "id[]": arr, "action": "del" }, function(result) {
+                        result = convertToJson(result);
+                        if (checkReturnJson(result)) {
+                            $('#table_UserList').datagrid('uncheckAll');
+                            $.messager.alert('提示', '删除成功', 'info', function() { $('#table_UserList').datagrid('reload'); })
+                        }
+                        else {
+                            $.messager.alert('删除失败', result.DcMessage, 'error');
+                        }
+                    }, 'json');
+                }
+            });
+        }
+    }
+
+    function openDetail() {
+        if (_IsOpen) {
+            $('#div_Add').dialog({ fit: true }).dialog('open');
+        }
+    }
+
+    function searchAddUser(ci_bLoadData, ci_strValue) {
+        if (!ci_bLoadData) {
+            $('#table_AddUser').datagrid({ fit: true }).datagrid('loadData', { total: 0, rows: {} });
+            setDataGrid("table_AddUser", "div_AddToolbar", "", "", "iUserID", "cLoginName", "", { title: "添加用户" });
+        }
+        else {
+            var m_objParams = { "action": "query", "nonusergroupid": $('#hidden_GroupID').val() };
+            if (ci_strValue != "") {
+                m_objParams.cUserChiName = ci_strValue;
+            }
+            setDataGrid("table_AddUser", "div_AddToolbar", "DcCdUserManage", m_objParams, "iUserID", "cLoginName", "", {
+                onDblClickCell: function() { saveAddUser(); },
+                singleSelect: true,
+                title: "添加用户"
+            });
+        }
+    }
+
+    function saveAddUser() {
+        if (!selectAddUser()) {
+            $.messager.alert('提示', '请选择用户', 'info');
+        }
+        else {
+            $.post(getInterfaceName("DcCdUserGroupMappingManage"),
+                        { "id[]": arr, "groupid": $("#hidden_GroupID").val(), "action": "add" },
+                        function(result) {
+                            result = convertToJson(result);
+                            if (checkReturnJson(result)) {
+                                //保存成功
+                                $('#table_AddUser').datagrid('uncheckAll');
+                                $.messager.alert('提示', '保存成功，权限已修改，请更新缓存', 'info', function() {
+                                    $('#div_Add').dialog('close'); showUserDetail($('#hidden_GroupID').val()); $('#table_AddUser').datagrid('reload');
+                                })
+                            }
+                            else {
+                                //保存失败
+                                $.messager.alert('保存失败', result.DcMessage, 'error');
+                            }
+                        }
+                    ).error(function(err) { alert(err.responseText); });
+        }
+    }
+
+    function selectAddUser() {
+        arr = [];
+        var m_row = $('#table_AddUser').datagrid('getSelections');
+        if (m_row.length > 0) {
+            $.each(m_row, function(index, value) { arr[index] = m_row[index].iUserID; })
+            return true;
+        }
+        return false;
+    }
+
+    function selectDelUser() {
+        arr = [];
+        var m_row = $('#table_UserList').datagrid('getSelections');
+        if (m_row.length > 0) {
+
+            $.each(m_row, function(index, value) { arr[index] = m_row[index].iID; })
+
+            return true;
+        }
+        return false;
+    }
+</script>
+
